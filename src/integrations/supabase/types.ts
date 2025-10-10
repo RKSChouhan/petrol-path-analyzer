@@ -14,7 +14,227 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cash_denominations: {
+        Row: {
+          cashier_group: Database["public"]["Enums"]["cashier_group"]
+          coins: number | null
+          created_at: string | null
+          daily_sales_id: string | null
+          id: string
+          rs_10: number | null
+          rs_100: number | null
+          rs_20: number | null
+          rs_200: number | null
+          rs_50: number | null
+          rs_500: number | null
+          total_cash: number | null
+        }
+        Insert: {
+          cashier_group: Database["public"]["Enums"]["cashier_group"]
+          coins?: number | null
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          rs_10?: number | null
+          rs_100?: number | null
+          rs_20?: number | null
+          rs_200?: number | null
+          rs_50?: number | null
+          rs_500?: number | null
+          total_cash?: number | null
+        }
+        Update: {
+          cashier_group?: Database["public"]["Enums"]["cashier_group"]
+          coins?: number | null
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          rs_10?: number | null
+          rs_100?: number | null
+          rs_20?: number | null
+          rs_200?: number | null
+          rs_50?: number | null
+          rs_500?: number | null
+          total_cash?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_denominations_daily_sales_id_fkey"
+            columns: ["daily_sales_id"]
+            isOneToOne: false
+            referencedRelation: "daily_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_sales: {
+        Row: {
+          created_at: string | null
+          id: string
+          sale_date: string
+          total_expenses: number | null
+          total_income: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          sale_date: string
+          total_expenses?: number | null
+          total_income?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          sale_date?: string
+          total_expenses?: number | null
+          total_income?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      oil_sales: {
+        Row: {
+          created_at: string | null
+          daily_sales_id: string | null
+          distilled_water: number | null
+          id: string
+          total_amount: number | null
+          total_litres: number | null
+          waste: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_sales_id?: string | null
+          distilled_water?: number | null
+          id?: string
+          total_amount?: number | null
+          total_litres?: number | null
+          waste?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_sales_id?: string | null
+          distilled_water?: number | null
+          id?: string
+          total_amount?: number | null
+          total_litres?: number | null
+          waste?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_sales_daily_sales_id_fkey"
+            columns: ["daily_sales_id"]
+            isOneToOne: true
+            referencedRelation: "daily_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_methods: {
+        Row: {
+          bharat_fleet_card: number | null
+          cash_on_hand: number | null
+          cashier_group: Database["public"]["Enums"]["cashier_group"]
+          created_at: string | null
+          daily_sales_id: string | null
+          debit: number | null
+          evening_locker: number | null
+          fiserv: number | null
+          gpay: number | null
+          id: string
+          phone_pay: number | null
+          ubi: number | null
+        }
+        Insert: {
+          bharat_fleet_card?: number | null
+          cash_on_hand?: number | null
+          cashier_group: Database["public"]["Enums"]["cashier_group"]
+          created_at?: string | null
+          daily_sales_id?: string | null
+          debit?: number | null
+          evening_locker?: number | null
+          fiserv?: number | null
+          gpay?: number | null
+          id?: string
+          phone_pay?: number | null
+          ubi?: number | null
+        }
+        Update: {
+          bharat_fleet_card?: number | null
+          cash_on_hand?: number | null
+          cashier_group?: Database["public"]["Enums"]["cashier_group"]
+          created_at?: string | null
+          daily_sales_id?: string | null
+          debit?: number | null
+          evening_locker?: number | null
+          fiserv?: number | null
+          gpay?: number | null
+          id?: string
+          phone_pay?: number | null
+          ubi?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_daily_sales_id_fkey"
+            columns: ["daily_sales_id"]
+            isOneToOne: false
+            referencedRelation: "daily_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pump_readings: {
+        Row: {
+          closing_reading: number
+          created_at: string | null
+          daily_sales_id: string | null
+          id: string
+          opening_reading: number
+          price_per_litre: number
+          pump_number: number
+          pump_type: Database["public"]["Enums"]["pump_type"]
+          sales_amount: number | null
+          sales_litres: number | null
+        }
+        Insert: {
+          closing_reading: number
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          opening_reading: number
+          price_per_litre: number
+          pump_number: number
+          pump_type: Database["public"]["Enums"]["pump_type"]
+          sales_amount?: number | null
+          sales_litres?: number | null
+        }
+        Update: {
+          closing_reading?: number
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          opening_reading?: number
+          price_per_litre?: number
+          pump_number?: number
+          pump_type?: Database["public"]["Enums"]["pump_type"]
+          sales_amount?: number | null
+          sales_litres?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pump_readings_daily_sales_id_fkey"
+            columns: ["daily_sales_id"]
+            isOneToOne: false
+            referencedRelation: "daily_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +243,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      cashier_group: "group1" | "group2"
+      pump_type: "petrol" | "diesel"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +371,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      cashier_group: ["group1", "group2"],
+      pump_type: ["petrol", "diesel"],
+    },
   },
 } as const
