@@ -1,10 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import type { SalesData } from "@/pages/Index";
 import { format, parseISO } from "date-fns";
 
 interface SalesChartsProps {
-  salesData: SalesData[];
+  salesData: any[];
 }
 
 const COLORS = {
