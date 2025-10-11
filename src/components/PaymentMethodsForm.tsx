@@ -10,7 +10,6 @@ interface PaymentData {
   debit: number;
   ubi: number;
   evening_locker: number;
-  cash_on_hand: number;
 }
 
 interface PaymentMethodsData {
@@ -113,16 +112,6 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
                 step="0.01"
                 value={payments.evening_locker}
                 onChange={(e) => handleChange(group, 'evening_locker', e.target.value)}
-                className="h-8 text-sm"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Cash on Hand</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={payments.cash_on_hand}
-                onChange={(e) => handleChange(group, 'cash_on_hand', e.target.value)}
                 className="h-8 text-sm"
               />
             </div>

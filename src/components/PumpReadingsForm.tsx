@@ -67,7 +67,7 @@ const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Opening (09:00 AM)</Label>
+              <Label className="text-xs">Yesterday (9:00AM)</Label>
               <Input
                 type="number"
                 step="0.001"
@@ -77,7 +77,7 @@ const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
               />
             </div>
             <div>
-              <Label className="text-xs">Closing (09:00 AM)</Label>
+              <Label className="text-xs">Today (9:00AM)</Label>
               <Input
                 type="number"
                 step="0.001"

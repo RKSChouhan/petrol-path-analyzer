@@ -37,8 +37,8 @@ const Index = () => {
   });
 
   const [paymentMethods, setPaymentMethods] = useState({
-    group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0, cash_on_hand: 0 },
-    group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0, cash_on_hand: 0 },
+    group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+    group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
   });
 
   const [cashDenominations, setCashDenominations] = useState({
@@ -53,7 +53,10 @@ const Index = () => {
     waste: 0,
     oil_name: '',
     oil_price: 0,
+    oil_count: 0,
   });
+
+  const [showCashTotal, setShowCashTotal] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -88,23 +91,20 @@ const Index = () => {
   };
 
   const calculateTotalCashInHand = () => {
-    const group1Total = Object.values(cashDenominations.group1).reduce((sum, val) => {
-      return sum + (val * (val === cashDenominations.group1.rs_500 ? 500 :
-                           val === cashDenominations.group1.rs_200 ? 200 :
-                           val === cashDenominations.group1.rs_100 ? 100 :
-                           val === cashDenominations.group1.rs_50 ? 50 :
-                           val === cashDenominations.group1.rs_20 ? 20 :
-                           val === cashDenominations.group1.rs_10 ? 10 : 1));
-    }, 0);
+    const calculateGroupTotal = (group: typeof cashDenominations.group1) => {
+      return (
+        group.rs_500 * 500 +
+        group.rs_200 * 200 +
+        group.rs_100 * 100 +
+        group.rs_50 * 50 +
+        group.rs_20 * 20 +
+        group.rs_10 * 10 +
+        group.coins
+      );
+    };
     
-    const group2Total = Object.values(cashDenominations.group2).reduce((sum, val) => {
-      return sum + (val * (val === cashDenominations.group2.rs_500 ? 500 :
-                           val === cashDenominations.group2.rs_200 ? 200 :
-                           val === cashDenominations.group2.rs_100 ? 100 :
-                           val === cashDenominations.group2.rs_50 ? 50 :
-                           val === cashDenominations.group2.rs_20 ? 20 :
-                           val === cashDenominations.group2.rs_10 ? 10 : 1));
-    }, 0);
+    const group1Total = calculateGroupTotal(cashDenominations.group1);
+    const group2Total = calculateGroupTotal(cashDenominations.group2);
     
     return group1Total + group2Total;
   };
@@ -303,8 +303,24 @@ const Index = () => {
                     <CardContent className="pt-6">
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="p-4 bg-card rounded-lg">
-                          <Label className="text-sm text-muted-foreground">Total Cash in Cashier Hand</Label>
-                          <div className="text-2xl font-bold mt-2">₹{calculateTotalCashInHand().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm text-muted-foreground">Total Cash in Cashier Hand</Label>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowCashTotal(!showCashTotal)}
+                              className="h-7 px-2"
+                            >
+                              {showCashTotal ? "Hide" : "Show"}
+                            </Button>
+                          </div>
+                          <div className="text-2xl font-bold mt-2">
+                            {showCashTotal ? (
+                              `₹${calculateTotalCashInHand().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                            ) : (
+                              <span className="blur-sm select-none">₹1,234.56</span>
+                            )}
+                          </div>
                         </div>
                         <div className="p-4 bg-card rounded-lg">
                           <Label className="text-sm text-muted-foreground">Total Income Produced</Label>

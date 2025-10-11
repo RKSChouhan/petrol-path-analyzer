@@ -10,6 +10,7 @@ interface OilSalesData {
   waste: number;
   oil_name: string;
   oil_price: number;
+  oil_count: number;
 }
 
 interface OilSalesFormProps {
@@ -55,6 +56,16 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
               />
             </div>
             <div>
+              <Label className="text-sm">Oil Count</Label>
+              <Input
+                type="number"
+                value={data.oil_count}
+                onChange={(e) => handleChange('oil_count', e.target.value)}
+                className="h-9"
+                placeholder="Enter count (e.g., 2 or 3)"
+              />
+            </div>
+            <div>
               <Label className="text-sm">Oil Price (₹)</Label>
               <Input
                 type="number"
@@ -65,7 +76,7 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
               />
             </div>
             <div>
-              <Label className="text-sm">Total Litres</Label>
+              <Label className="text-sm">2T Oil</Label>
               <Input
                 type="number"
                 step="0.001"
@@ -84,7 +95,7 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
                 disabled
                 className="h-9 bg-muted"
               />
-              <p className="text-xs text-muted-foreground mt-1">Auto-calculated: Litres × 330</p>
+              <p className="text-xs text-muted-foreground mt-1">Auto-calculated: 2T Oil × 330</p>
             </div>
             <div>
               <Label className="text-sm">Distilled Water (₹)</Label>
