@@ -103,6 +103,8 @@ export type Database = {
           daily_sales_id: string | null
           distilled_water: number | null
           id: string
+          oil_name: string | null
+          oil_price: number | null
           total_amount: number | null
           total_litres: number | null
           waste: number | null
@@ -112,6 +114,8 @@ export type Database = {
           daily_sales_id?: string | null
           distilled_water?: number | null
           id?: string
+          oil_name?: string | null
+          oil_price?: number | null
           total_amount?: number | null
           total_litres?: number | null
           waste?: number | null
@@ -121,6 +125,8 @@ export type Database = {
           daily_sales_id?: string | null
           distilled_water?: number | null
           id?: string
+          oil_name?: string | null
+          oil_price?: number | null
           total_amount?: number | null
           total_litres?: number | null
           waste?: number | null

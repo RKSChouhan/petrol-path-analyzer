@@ -8,6 +8,8 @@ interface OilSalesData {
   total_amount: number;
   distilled_water: number;
   waste: number;
+  oil_name: string;
+  oil_price: number;
 }
 
 interface OilSalesFormProps {
@@ -16,11 +18,18 @@ interface OilSalesFormProps {
 }
 
 const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
-  const handleChange = (field: keyof OilSalesData, value: string) => {
-    onChange({
+  const handleChange = (field: keyof OilSalesData, value: string | number) => {
+    const updatedData = {
       ...data,
-      [field]: parseFloat(value) || 0
-    });
+      [field]: typeof value === 'string' ? (field === 'oil_name' ? value : parseFloat(value) || 0) : value
+    };
+    
+    // Auto-calculate total_amount when total_litres changes
+    if (field === 'total_litres') {
+      updatedData.total_amount = (parseFloat(value as string) || 0) * 330;
+    }
+    
+    onChange(updatedData);
   };
 
   return (
@@ -35,6 +44,26 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm">Oil Name</Label>
+              <Input
+                type="text"
+                value={data.oil_name}
+                onChange={(e) => handleChange('oil_name', e.target.value)}
+                className="h-9"
+                placeholder="Enter oil name"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">Oil Price (₹)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={data.oil_price}
+                onChange={(e) => handleChange('oil_price', e.target.value)}
+                className="h-9"
+              />
+            </div>
             <div>
               <Label className="text-sm">Total Litres</Label>
               <Input
@@ -51,9 +80,11 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
                 type="number"
                 step="0.01"
                 value={data.total_amount}
-                onChange={(e) => handleChange('total_amount', e.target.value)}
-                className="h-9"
+                readOnly
+                disabled
+                className="h-9 bg-muted"
               />
+              <p className="text-xs text-muted-foreground mt-1">Auto-calculated: Litres × 330</p>
             </div>
             <div>
               <Label className="text-sm">Distilled Water (₹)</Label>

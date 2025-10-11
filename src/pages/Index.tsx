@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { CalendarIcon, FuelIcon, BarChart3, TrendingUp, IndianRupee, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -36,8 +37,8 @@ const Index = () => {
   });
 
   const [paymentMethods, setPaymentMethods] = useState({
-    group1: { phone_pay: 0, gpay: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0, cash_on_hand: 0 },
-    group2: { phone_pay: 0, gpay: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0, cash_on_hand: 0 },
+    group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0, cash_on_hand: 0 },
+    group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0, cash_on_hand: 0 },
   });
 
   const [cashDenominations, setCashDenominations] = useState({
@@ -50,6 +51,8 @@ const Index = () => {
     total_amount: 0,
     distilled_water: 0,
     waste: 0,
+    oil_name: '',
+    oil_price: 0,
   });
 
   useEffect(() => {
@@ -79,9 +82,31 @@ const Index = () => {
     });
     
     // Oil sales
-    total += oilSales.total_amount + oilSales.distilled_water;
+    total += oilSales.total_amount + oilSales.distilled_water + oilSales.oil_price;
     
     return total;
+  };
+
+  const calculateTotalCashInHand = () => {
+    const group1Total = Object.values(cashDenominations.group1).reduce((sum, val) => {
+      return sum + (val * (val === cashDenominations.group1.rs_500 ? 500 :
+                           val === cashDenominations.group1.rs_200 ? 200 :
+                           val === cashDenominations.group1.rs_100 ? 100 :
+                           val === cashDenominations.group1.rs_50 ? 50 :
+                           val === cashDenominations.group1.rs_20 ? 20 :
+                           val === cashDenominations.group1.rs_10 ? 10 : 1));
+    }, 0);
+    
+    const group2Total = Object.values(cashDenominations.group2).reduce((sum, val) => {
+      return sum + (val * (val === cashDenominations.group2.rs_500 ? 500 :
+                           val === cashDenominations.group2.rs_200 ? 200 :
+                           val === cashDenominations.group2.rs_100 ? 100 :
+                           val === cashDenominations.group2.rs_50 ? 50 :
+                           val === cashDenominations.group2.rs_20 ? 20 :
+                           val === cashDenominations.group2.rs_10 ? 10 : 1));
+    }, 0);
+    
+    return group1Total + group2Total;
   };
 
   const handleSaveData = async () => {
@@ -128,11 +153,11 @@ const Index = () => {
       const { error: pumpError } = await supabase.from('pump_readings').insert(pumpData);
       if (pumpError) throw pumpError;
 
-      // Save payment methods
+      // Save payment methods (map upi to phone_pay for backward compatibility)
       await supabase.from('payment_methods').delete().eq('daily_sales_id', dailySales.id);
       const { error: paymentError } = await supabase.from('payment_methods').insert([
-        { daily_sales_id: dailySales.id, cashier_group: 'group1', ...paymentMethods.group1 },
-        { daily_sales_id: dailySales.id, cashier_group: 'group2', ...paymentMethods.group2 },
+        { daily_sales_id: dailySales.id, cashier_group: 'group1', phone_pay: paymentMethods.group1.upi, gpay: 0, ...paymentMethods.group1 },
+        { daily_sales_id: dailySales.id, cashier_group: 'group2', phone_pay: paymentMethods.group2.upi, gpay: 0, ...paymentMethods.group2 },
       ]);
       if (paymentError) throw paymentError;
 
@@ -264,10 +289,33 @@ const Index = () => {
               </CardHeader>
               <CardContent className="space-y-8">
                 <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} />
+                <OilSalesForm data={oilSales} onChange={setOilSales} />
                 <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} />
                 <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} />
-                <OilSalesForm data={oilSales} onChange={setOilSales} />
                 
+                {/* Total Income Summary */}
+                <div className="space-y-4 pt-6 border-t">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <IndianRupee className="h-5 w-5 text-primary" />
+                    Total Income Summary
+                  </h3>
+                  <Card className="shadow-sm bg-primary/5">
+                    <CardContent className="pt-6">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="p-4 bg-card rounded-lg">
+                          <Label className="text-sm text-muted-foreground">Total Cash in Cashier Hand</Label>
+                          <div className="text-2xl font-bold mt-2">₹{calculateTotalCashInHand().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                        </div>
+                        <div className="p-4 bg-card rounded-lg">
+                          <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
+                          <div className="text-2xl font-bold mt-2 text-primary">₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                          <p className="text-xs text-muted-foreground mt-1">Petrol + Diesel + Oil Sales</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 <div className="flex justify-end gap-3 pt-6 border-t">
                   <Button variant="outline" size="lg">Clear All</Button>
                   <Button size="lg" onClick={handleSaveData} disabled={loading}>

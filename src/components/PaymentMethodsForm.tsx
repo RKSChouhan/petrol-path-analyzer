@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, Wallet } from "lucide-react";
 
 interface PaymentData {
-  phone_pay: number;
-  gpay: number;
+  upi: number;
   bharat_fleet_card: number;
   fiserv: number;
   debit: number;
@@ -58,22 +57,12 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">PhonePay</Label>
+              <Label className="text-xs">UPI (PhonePay/GPay)</Label>
               <Input
                 type="number"
                 step="0.01"
-                value={payments.phone_pay}
-                onChange={(e) => handleChange(group, 'phone_pay', e.target.value)}
-                className="h-8 text-sm"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">GPay</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={payments.gpay}
-                onChange={(e) => handleChange(group, 'gpay', e.target.value)}
+                value={payments.upi}
+                onChange={(e) => handleChange(group, 'upi', e.target.value)}
                 className="h-8 text-sm"
               />
             </div>
