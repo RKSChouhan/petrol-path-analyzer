@@ -47,13 +47,17 @@ const Index = () => {
   });
 
   const [oilSales, setOilSales] = useState({
+    items: [
+      {
+        oil_name: '',
+        oil_count: 0,
+        oil_price: 0,
+      }
+    ],
     total_litres: 0,
     total_amount: 0,
     distilled_water: 0,
     waste: 0,
-    oil_name: '',
-    oil_price: 0,
-    oil_count: 0,
   });
 
   const [showCashTotal, setShowCashTotal] = useState(false);
@@ -85,7 +89,8 @@ const Index = () => {
     });
     
     // Oil sales
-    total += oilSales.total_amount + oilSales.distilled_water + oilSales.oil_price;
+    const oilPricesTotal = oilSales.items.reduce((sum, item) => sum + (item.oil_count * item.oil_price), 0);
+    total += oilSales.total_amount + oilSales.distilled_water + oilPricesTotal;
     
     return total;
   };
@@ -199,10 +204,17 @@ const Index = () => {
 
       // Save oil sales
       await supabase.from('oil_sales').delete().eq('daily_sales_id', dailySales.id);
-      const { error: oilError } = await supabase.from('oil_sales').insert({
+      const oilSalesData = oilSales.items.map(item => ({
         daily_sales_id: dailySales.id,
-        ...oilSales,
-      });
+        oil_name: item.oil_name,
+        oil_count: item.oil_count,
+        oil_price: item.oil_price,
+        total_litres: oilSales.total_litres,
+        total_amount: oilSales.total_amount,
+        distilled_water: oilSales.distilled_water,
+        waste: oilSales.waste,
+      }));
+      const { error: oilError } = await supabase.from('oil_sales').insert(oilSalesData);
       if (oilError) throw oilError;
 
       toast({

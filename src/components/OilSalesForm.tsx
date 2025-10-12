@@ -1,16 +1,21 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Container } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Container, Plus, Trash2 } from "lucide-react";
+
+interface OilItem {
+  oil_name: string;
+  oil_count: number;
+  oil_price: number;
+}
 
 interface OilSalesData {
+  items: OilItem[];
   total_litres: number;
   total_amount: number;
   distilled_water: number;
   waste: number;
-  oil_name: string;
-  oil_price: number;
-  oil_count: number;
 }
 
 interface OilSalesFormProps {
@@ -19,10 +24,23 @@ interface OilSalesFormProps {
 }
 
 const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
-  const handleChange = (field: keyof OilSalesData, value: string | number) => {
+  const handleItemChange = (index: number, field: keyof OilItem, value: string | number) => {
+    const updatedItems = [...data.items];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: typeof value === 'string' ? (field === 'oil_name' ? value : parseFloat(value) || 0) : value
+    };
+    
+    onChange({
+      ...data,
+      items: updatedItems
+    });
+  };
+
+  const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | number) => {
     const updatedData = {
       ...data,
-      [field]: typeof value === 'string' ? (field === 'oil_name' ? value : parseFloat(value) || 0) : value
+      [field]: typeof value === 'string' ? parseFloat(value) || 0 : value
     };
     
     // Auto-calculate total_amount when total_litres changes
@@ -31,6 +49,22 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
     }
     
     onChange(updatedData);
+  };
+
+  const addOilItem = () => {
+    onChange({
+      ...data,
+      items: [...data.items, { oil_name: '', oil_count: 0, oil_price: 0 }]
+    });
+  };
+
+  const removeOilItem = (index: number) => {
+    if (data.items.length > 1) {
+      onChange({
+        ...data,
+        items: data.items.filter((_, i) => i !== index)
+      });
+    }
   };
 
   return (
@@ -44,43 +78,70 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
           <CardTitle className="text-base">Engine Oil & Lubricants</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-3">
-            <div>
-              <Label className="text-sm">Oil Name</Label>
-              <Input
-                type="text"
-                value={data.oil_name}
-                onChange={(e) => handleChange('oil_name', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-9"
-                placeholder="Enter oil name"
-              />
-            </div>
-            <div>
-              <Label className="text-sm">Oil Count</Label>
-              <Input
-                type="number"
-                value={data.oil_count === 0 ? '' : data.oil_count}
-                onChange={(e) => handleChange('oil_count', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-9"
-                placeholder="0"
-              />
-            </div>
-            <div>
-              <Label className="text-sm">Oil Price (₹)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={data.oil_price === 0 ? '' : data.oil_price}
-                onChange={(e) => handleChange('oil_price', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-9"
-                placeholder="0"
-              />
-            </div>
+          <div className="space-y-3 mb-4">
+            {data.items.map((item, index) => (
+              <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
+                <div>
+                  <Label className="text-sm">Oil Name</Label>
+                  <Input
+                    type="text"
+                    value={item.oil_name}
+                    onChange={(e) => handleItemChange(index, 'oil_name', e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className="h-9"
+                    placeholder="Enter oil name"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Count</Label>
+                  <Input
+                    type="number"
+                    value={item.oil_count === 0 ? '' : item.oil_count}
+                    onChange={(e) => handleItemChange(index, 'oil_count', e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className="h-9"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Price (₹)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={item.oil_price === 0 ? '' : item.oil_price}
+                    onChange={(e) => handleItemChange(index, 'oil_price', e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className="h-9"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex items-end">
+                  {index === 0 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9"
+                      onClick={addOilItem}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 text-destructive hover:text-destructive"
+                      onClick={() => removeOilItem(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
             <div>
               <Label className="text-sm">2T Oil</Label>
               <Input
