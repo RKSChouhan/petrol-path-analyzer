@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, FuelIcon, BarChart3, TrendingUp, IndianRupee, LogOut } from "lucide-react";
+import { CalendarIcon, FuelIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,6 +107,34 @@ const Index = () => {
     const group2Total = calculateGroupTotal(cashDenominations.group2);
     
     return group1Total + group2Total;
+  };
+
+  const calculateTotalDigitalPayments = () => {
+    const group1Total = 
+      paymentMethods.group1.upi +
+      paymentMethods.group1.bharat_fleet_card +
+      paymentMethods.group1.fiserv +
+      paymentMethods.group1.debit +
+      paymentMethods.group1.ubi +
+      paymentMethods.group1.evening_locker;
+    
+    const group2Total = 
+      paymentMethods.group2.upi +
+      paymentMethods.group2.bharat_fleet_card +
+      paymentMethods.group2.fiserv +
+      paymentMethods.group2.debit +
+      paymentMethods.group2.ubi +
+      paymentMethods.group2.evening_locker;
+    
+    return group1Total + group2Total;
+  };
+
+  const calculateMustBe = () => {
+    return calculateTotalIncome() - calculateTotalDigitalPayments();
+  };
+
+  const calculateShortage = () => {
+    return calculateMustBe() - calculateTotalCashInHand();
   };
 
   const handleSaveData = async () => {
@@ -302,7 +330,7 @@ const Index = () => {
                   <Card className="shadow-sm bg-primary/5">
                     <CardContent className="pt-6">
                       <div className="grid md:grid-cols-2 gap-4">
-                        <div className="p-4 bg-card rounded-lg">
+                        <div className="p-4 bg-card rounded-lg relative">
                           <div className="flex items-center justify-between mb-2">
                             <Label className="text-sm text-muted-foreground">Total Cash in Cashier Hand</Label>
                             <Button
@@ -321,6 +349,42 @@ const Index = () => {
                               <span className="blur-sm select-none">₹1,234.56</span>
                             )}
                           </div>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="absolute bottom-2 right-2 h-6 w-6 p-0"
+                              >
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64" align="end">
+                              <div className="space-y-3">
+                                <div>
+                                  <Label className="text-xs text-muted-foreground">Must be</Label>
+                                  <div className="text-lg font-semibold">
+                                    ₹{calculateMustBe().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Total Income - Digital Payments
+                                  </p>
+                                </div>
+                                <div>
+                                  <Label className="text-xs text-muted-foreground">Shortage</Label>
+                                  <div className={cn(
+                                    "text-lg font-semibold",
+                                    calculateShortage() < 0 ? "text-green-600" : calculateShortage() > 0 ? "text-red-600" : ""
+                                  )}>
+                                    ₹{calculateShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Must be - Actual Cash
+                                  </p>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         </div>
                         <div className="p-4 bg-card rounded-lg">
                           <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
