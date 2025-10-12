@@ -366,9 +366,6 @@ const Index = () => {
                                   <div className="text-lg font-semibold">
                                     ₹{calculateMustBe().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                   </div>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Total Income - Digital Payments
-                                  </p>
                                 </div>
                                 <div>
                                   <Label className="text-xs text-muted-foreground">Shortage</Label>
@@ -378,9 +375,6 @@ const Index = () => {
                                   )}>
                                     ₹{calculateShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                   </div>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Must be - Actual Cash
-                                  </p>
                                 </div>
                               </div>
                             </PopoverContent>
@@ -389,7 +383,6 @@ const Index = () => {
                         <div className="p-4 bg-card rounded-lg">
                           <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
                           <div className="text-2xl font-bold mt-2 text-primary">₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                          <p className="text-xs text-muted-foreground mt-1">Petrol + Diesel + Oil Sales</p>
                         </div>
                       </div>
                     </CardContent>

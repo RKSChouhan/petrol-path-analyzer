@@ -71,9 +71,11 @@ const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
               <Input
                 type="number"
                 step="0.001"
-                value={pump.opening_reading}
+                value={pump.opening_reading === 0 ? '' : pump.opening_reading}
                 onChange={(e) => handlePumpChange(pumpKey, 'opening_reading', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
@@ -81,9 +83,11 @@ const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
               <Input
                 type="number"
                 step="0.001"
-                value={pump.closing_reading}
+                value={pump.closing_reading === 0 ? '' : pump.closing_reading}
                 onChange={(e) => handlePumpChange(pumpKey, 'closing_reading', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
           </div>
@@ -92,9 +96,11 @@ const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
             <Input
               type="number"
               step="0.01"
-              value={pump.price_per_litre}
+              value={pump.price_per_litre === 0 ? '' : pump.price_per_litre}
               onChange={(e) => handlePumpChange(pumpKey, 'price_per_litre', e.target.value)}
+              onFocus={(e) => e.target.select()}
               className="h-8 text-sm"
+              placeholder="0"
             />
           </div>
           <div className="bg-muted/50 p-2 rounded space-y-1">

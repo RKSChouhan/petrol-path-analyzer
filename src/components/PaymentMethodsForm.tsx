@@ -60,9 +60,11 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
               <Input
                 type="number"
                 step="0.01"
-                value={payments.upi}
+                value={payments.upi === 0 ? '' : payments.upi}
                 onChange={(e) => handleChange(group, 'upi', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
@@ -70,9 +72,11 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
               <Input
                 type="number"
                 step="0.01"
-                value={payments.bharat_fleet_card}
+                value={payments.bharat_fleet_card === 0 ? '' : payments.bharat_fleet_card}
                 onChange={(e) => handleChange(group, 'bharat_fleet_card', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
@@ -80,9 +84,11 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
               <Input
                 type="number"
                 step="0.01"
-                value={payments.fiserv}
+                value={payments.fiserv === 0 ? '' : payments.fiserv}
                 onChange={(e) => handleChange(group, 'fiserv', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
@@ -90,9 +96,11 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
               <Input
                 type="number"
                 step="0.01"
-                value={payments.debit}
+                value={payments.debit === 0 ? '' : payments.debit}
                 onChange={(e) => handleChange(group, 'debit', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
@@ -100,9 +108,11 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
               <Input
                 type="number"
                 step="0.01"
-                value={payments.ubi}
+                value={payments.ubi === 0 ? '' : payments.ubi}
                 onChange={(e) => handleChange(group, 'ubi', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
@@ -110,9 +120,11 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
               <Input
                 type="number"
                 step="0.01"
-                value={payments.evening_locker}
+                value={payments.evening_locker === 0 ? '' : payments.evening_locker}
                 onChange={(e) => handleChange(group, 'evening_locker', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
           </div>

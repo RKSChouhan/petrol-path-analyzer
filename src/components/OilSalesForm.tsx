@@ -44,13 +44,14 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
           <CardTitle className="text-base">Engine Oil & Lubricants</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-3">
             <div>
               <Label className="text-sm">Oil Name</Label>
               <Input
                 type="text"
                 value={data.oil_name}
                 onChange={(e) => handleChange('oil_name', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-9"
                 placeholder="Enter oil name"
               />
@@ -59,10 +60,11 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
               <Label className="text-sm">Oil Count</Label>
               <Input
                 type="number"
-                value={data.oil_count}
+                value={data.oil_count === 0 ? '' : data.oil_count}
                 onChange={(e) => handleChange('oil_count', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-9"
-                placeholder="Enter count (e.g., 2 or 3)"
+                placeholder="0"
               />
             </div>
             <div>
@@ -70,19 +72,25 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
               <Input
                 type="number"
                 step="0.01"
-                value={data.oil_price}
+                value={data.oil_price === 0 ? '' : data.oil_price}
                 onChange={(e) => handleChange('oil_price', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-9"
+                placeholder="0"
               />
             </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
             <div>
               <Label className="text-sm">2T Oil</Label>
               <Input
                 type="number"
                 step="0.001"
-                value={data.total_litres}
+                value={data.total_litres === 0 ? '' : data.total_litres}
                 onChange={(e) => handleChange('total_litres', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-9"
+                placeholder="0"
               />
             </div>
             <div>
@@ -95,16 +103,17 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
                 disabled
                 className="h-9 bg-muted"
               />
-              <p className="text-xs text-muted-foreground mt-1">Auto-calculated: 2T Oil × 330</p>
             </div>
             <div>
               <Label className="text-sm">Distilled Water (₹)</Label>
               <Input
                 type="number"
                 step="0.01"
-                value={data.distilled_water}
+                value={data.distilled_water === 0 ? '' : data.distilled_water}
                 onChange={(e) => handleChange('distilled_water', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-9"
+                placeholder="0"
               />
             </div>
             <div>
@@ -112,9 +121,11 @@ const OilSalesForm = ({ data, onChange }: OilSalesFormProps) => {
               <Input
                 type="number"
                 step="0.01"
-                value={data.waste}
+                value={data.waste === 0 ? '' : data.waste}
                 onChange={(e) => handleChange('waste', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-9"
+                placeholder="0"
               />
             </div>
           </div>

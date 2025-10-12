@@ -68,54 +68,66 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
               <Label className="text-xs">₹500 Notes</Label>
               <Input
                 type="number"
-                value={cash.rs_500}
+                value={cash.rs_500 === 0 ? '' : cash.rs_500}
                 onChange={(e) => handleChange(group, 'rs_500', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
               <Label className="text-xs">₹200 Notes</Label>
               <Input
                 type="number"
-                value={cash.rs_200}
+                value={cash.rs_200 === 0 ? '' : cash.rs_200}
                 onChange={(e) => handleChange(group, 'rs_200', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
               <Label className="text-xs">₹100 Notes</Label>
               <Input
                 type="number"
-                value={cash.rs_100}
+                value={cash.rs_100 === 0 ? '' : cash.rs_100}
                 onChange={(e) => handleChange(group, 'rs_100', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
               <Label className="text-xs">₹50 Notes</Label>
               <Input
                 type="number"
-                value={cash.rs_50}
+                value={cash.rs_50 === 0 ? '' : cash.rs_50}
                 onChange={(e) => handleChange(group, 'rs_50', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
               <Label className="text-xs">₹20 Notes</Label>
               <Input
                 type="number"
-                value={cash.rs_20}
+                value={cash.rs_20 === 0 ? '' : cash.rs_20}
                 onChange={(e) => handleChange(group, 'rs_20', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
             <div>
               <Label className="text-xs">₹10 Notes</Label>
               <Input
                 type="number"
-                value={cash.rs_10}
+                value={cash.rs_10 === 0 ? '' : cash.rs_10}
                 onChange={(e) => handleChange(group, 'rs_10', e.target.value)}
+                onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
+                placeholder="0"
               />
             </div>
           </div>
@@ -124,9 +136,11 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
             <Input
               type="number"
               step="0.01"
-              value={cash.coins}
+              value={cash.coins === 0 ? '' : cash.coins}
               onChange={(e) => handleChange(group, 'coins', e.target.value)}
+              onFocus={(e) => e.target.select()}
               className="h-8 text-sm"
+              placeholder="0"
             />
           </div>
           <div className="bg-accent/10 p-2 rounded">
