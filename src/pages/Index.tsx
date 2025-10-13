@@ -63,17 +63,26 @@ const Index = () => {
   const [showCashTotal, setShowCashTotal] = useState(false);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/login");
+      } else {
+        setUserId(session.user.id);
+      }
+    });
 
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate("/login");
-    } else {
-      setUserId(session.user.id);
-    }
-  };
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/login");
+      } else {
+        setUserId(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -307,8 +316,17 @@ const Index = () => {
               <BarChart3 className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">₹{oilSales.total_amount.toLocaleString('en-IN')}</div>
-              <p className="text-xs text-muted-foreground mt-1">{oilSales.total_litres.toFixed(2)}L sold</p>
+              <div className="text-3xl font-bold text-foreground">
+                ₹{(oilSales.total_amount + oilSales.items.reduce((sum, item) => sum + (item.oil_count * item.oil_price), 0)).toLocaleString('en-IN')}
+              </div>
+              <div className="space-y-1 mt-2">
+                <p className="text-xs text-muted-foreground">{oilSales.total_litres.toFixed(2)}L sold</p>
+                {oilSales.items.filter(item => item.oil_name || item.oil_count > 0 || item.oil_price > 0).map((item, index) => (
+                  <p key={index} className="text-xs text-muted-foreground">
+                    {item.oil_name || `Oil ${index + 1}`}: ₹{(item.oil_count * item.oil_price).toLocaleString('en-IN')}
+                  </p>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>
