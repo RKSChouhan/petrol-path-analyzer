@@ -198,8 +198,30 @@ const Index = () => {
       // Save payment methods (map upi to phone_pay for backward compatibility)
       await supabase.from('payment_methods').delete().eq('daily_sales_id', dailySales.id);
       const { error: paymentError } = await supabase.from('payment_methods').insert([
-        { daily_sales_id: dailySales.id, cashier_group: 'group1', phone_pay: paymentMethods.group1.upi, gpay: 0, ...paymentMethods.group1 },
-        { daily_sales_id: dailySales.id, cashier_group: 'group2', phone_pay: paymentMethods.group2.upi, gpay: 0, ...paymentMethods.group2 },
+        { 
+          daily_sales_id: dailySales.id, 
+          cashier_group: 'group1', 
+          phone_pay: paymentMethods.group1.upi, 
+          gpay: 0, 
+          bharat_fleet_card: paymentMethods.group1.bharat_fleet_card,
+          fiserv: paymentMethods.group1.fiserv,
+          debit: paymentMethods.group1.debit,
+          ubi: paymentMethods.group1.ubi,
+          evening_locker: paymentMethods.group1.evening_locker,
+          cash_on_hand: 0
+        },
+        { 
+          daily_sales_id: dailySales.id, 
+          cashier_group: 'group2', 
+          phone_pay: paymentMethods.group2.upi, 
+          gpay: 0, 
+          bharat_fleet_card: paymentMethods.group2.bharat_fleet_card,
+          fiserv: paymentMethods.group2.fiserv,
+          debit: paymentMethods.group2.debit,
+          ubi: paymentMethods.group2.ubi,
+          evening_locker: paymentMethods.group2.evening_locker,
+          cash_on_hand: 0
+        },
       ]);
       if (paymentError) throw paymentError;
 
