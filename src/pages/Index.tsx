@@ -61,6 +61,7 @@ const Index = () => {
   });
 
   const [showCashTotal, setShowCashTotal] = useState(false);
+  const [salesData, setSalesData] = useState<any[]>([]);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -83,6 +84,62 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchSalesData();
+    }
+  }, [userId]);
+
+  const fetchSalesData = async () => {
+    if (!userId) return;
+    
+    try {
+      // Fetch daily sales with related data
+      const { data: sales, error } = await supabase
+        .from('daily_sales')
+        .select(`
+          *,
+          pump_readings(*),
+          oil_sales(*)
+        `)
+        .eq('user_id', userId)
+        .order('sale_date', { ascending: false })
+        .limit(30);
+
+      if (error) throw error;
+
+      // Transform data for charts
+      const transformedData = sales?.map(sale => {
+        const pumpReadings = Array.isArray(sale.pump_readings) ? sale.pump_readings : [];
+        const oilSales = Array.isArray(sale.oil_sales) ? sale.oil_sales : [];
+
+        const petrolSales = pumpReadings
+          .filter((p: any) => p.pump_type === 'petrol')
+          .reduce((sum: number, p: any) => sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
+
+        const dieselSales = pumpReadings
+          .filter((p: any) => p.pump_type === 'diesel')
+          .reduce((sum: number, p: any) => sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
+
+        const oilTotal = oilSales.reduce((sum: number, o: any) => 
+          sum + (o.total_amount || 0) + (o.waste || 0) + ((o.oil_count || 0) * (o.oil_price || 0)), 0);
+
+        return {
+          date: sale.sale_date,
+          petrol: petrolSales,
+          diesel: dieselSales,
+          engineOil: oilTotal,
+          lubricants: 0,
+          total: sale.total_income || 0,
+        };
+      }) || [];
+
+      setSalesData(transformedData);
+    } catch (error) {
+      console.error('Error fetching sales data:', error);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -149,6 +206,38 @@ const Index = () => {
 
   const calculateShortage = () => {
     return calculateMustBe() - calculateTotalCashInHand();
+  };
+
+  const handleClearAll = () => {
+    setPumpReadings({
+      petrol1: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+      petrol2: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+      petrol3: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+      petrol4: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+      diesel1: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+      diesel2: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+      diesel3: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+      diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+    });
+    setPaymentMethods({
+      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+    });
+    setCashDenominations({
+      group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
+      group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
+    });
+    setOilSales({
+      items: [{ oil_name: '', oil_count: 0, oil_price: 0 }],
+      total_litres: 0,
+      total_amount: 0,
+      distilled_water: 0,
+      waste: 0,
+    });
+    toast({
+      title: "Cleared",
+      description: "All form fields have been reset",
+    });
   };
 
   const handleSaveData = async () => {
@@ -252,6 +341,9 @@ const Index = () => {
         title: "Success",
         description: "Daily sales data saved successfully",
       });
+      
+      // Refresh statistics data
+      fetchSalesData();
     } catch (error) {
       console.error('Error saving data:', error);
       toast({
@@ -442,7 +534,7 @@ const Index = () => {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-6 border-t">
-                  <Button variant="outline" size="lg">Clear All</Button>
+                  <Button variant="outline" size="lg" onClick={handleClearAll}>Clear All</Button>
                   <Button size="lg" onClick={handleSaveData} disabled={loading}>
                     {loading ? "Saving..." : "Save Sales Data"}
                   </Button>
@@ -452,7 +544,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="statistics" className="space-y-4">
-            <SalesCharts salesData={[]} />
+            <SalesCharts salesData={salesData} />
           </TabsContent>
         </Tabs>
       </main>
