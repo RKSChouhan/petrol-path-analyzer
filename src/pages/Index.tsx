@@ -99,7 +99,7 @@ const Index = () => {
     
     // Oil sales
     const oilPricesTotal = oilSales.items.reduce((sum, item) => sum + (item.oil_count * item.oil_price), 0);
-    total += oilSales.total_amount + oilSales.distilled_water + oilPricesTotal;
+    total += oilSales.total_amount + oilSales.distilled_water + oilSales.waste + oilPricesTotal;
     
     return total;
   };

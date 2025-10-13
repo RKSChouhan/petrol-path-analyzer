@@ -33,9 +33,20 @@ const Login = () => {
         <div className="bg-card p-8 rounded-lg shadow-lg">
           <Auth
             supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: 'hsl(var(--primary))',
+                    brandAccent: 'hsl(var(--primary))',
+                  },
+                },
+              },
+            }}
             theme="light"
             providers={[]}
+            view="sign_in"
           />
         </div>
       </div>
