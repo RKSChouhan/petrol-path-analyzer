@@ -248,7 +248,7 @@ const Index = () => {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       const totalIncome = calculateTotalIncome();
 
-      // Insert or update daily_sales
+      // Insert or update daily_sales with proper user_id in conflict resolution
       const { data: dailySales, error: salesError } = await supabase
         .from('daily_sales')
         .upsert({
@@ -256,11 +256,14 @@ const Index = () => {
           sale_date: dateStr,
           total_income: totalIncome,
           total_expenses: 0,
-        }, { onConflict: 'sale_date' })
+        })
         .select()
         .single();
 
-      if (salesError) throw salesError;
+      if (salesError) {
+        console.error('Sales error:', salesError);
+        throw salesError;
+      }
 
       // Save pump readings
       const pumpData = [];
@@ -544,7 +547,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="statistics" className="space-y-4">
-            <SalesCharts salesData={salesData} />
+            <SalesCharts salesData={salesData} onRefresh={fetchSalesData} />
           </TabsContent>
         </Tabs>
       </main>

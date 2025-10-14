@@ -1,9 +1,22 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, parseISO } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface SalesChartsProps {
   salesData: any[];
+  onRefresh?: () => void;
 }
 
 const COLORS = {
@@ -13,8 +26,34 @@ const COLORS = {
   lubricants: "hsl(var(--chart-4))",
 };
 
-const SalesCharts = ({ salesData }: SalesChartsProps) => {
+const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
+  const { toast } = useToast();
   const sortedData = [...salesData].sort((a, b) => a.date.localeCompare(b.date));
+
+  const handleDelete = async (date: string) => {
+    try {
+      const { error } = await supabase
+        .from('daily_sales')
+        .delete()
+        .eq('sale_date', date);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Sales record deleted successfully",
+      });
+      
+      onRefresh?.();
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete record",
+        variant: "destructive",
+      });
+    }
+  };
   
   const chartData = sortedData.slice(-30).map(item => ({
     date: format(parseISO(item.date), "dd MMM"),
@@ -54,6 +93,51 @@ const SalesCharts = ({ salesData }: SalesChartsProps) => {
 
   return (
     <div className="space-y-6">
+      <Card className="shadow-[var(--shadow-card)]">
+        <CardHeader>
+          <CardTitle>Sales Records</CardTitle>
+          <CardDescription>View and manage daily sales entries</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Petrol</TableHead>
+                  <TableHead className="text-right">Diesel</TableHead>
+                  <TableHead className="text-right">Engine Oil</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedData.slice(-10).reverse().map((sale) => (
+                  <TableRow key={sale.date}>
+                    <TableCell className="font-medium">{format(parseISO(sale.date), "dd MMM yyyy")}</TableCell>
+                    <TableCell className="text-right">₹{sale.petrol.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right">₹{sale.diesel.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right">₹{sale.engineOil.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right font-semibold">₹{sale.total.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(sale.date)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
           <CardTitle>Daily Sales Trend</CardTitle>
