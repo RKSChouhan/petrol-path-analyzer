@@ -88,8 +88,48 @@ const Index = () => {
   useEffect(() => {
     if (userId) {
       fetchSalesData();
+      fetchPreviousDayReadings();
     }
-  }, [userId]);
+  }, [userId, selectedDate]);
+
+  const fetchPreviousDayReadings = async () => {
+    if (!userId) return;
+    
+    try {
+      // Calculate previous day
+      const previousDate = new Date(selectedDate);
+      previousDate.setDate(previousDate.getDate() - 1);
+      const previousDateStr = format(previousDate, "yyyy-MM-dd");
+
+      // Fetch previous day's pump readings
+      const { data: previousSales, error } = await supabase
+        .from('daily_sales')
+        .select('id, pump_readings(*)')
+        .eq('user_id', userId)
+        .eq('sale_date', previousDateStr)
+        .single();
+
+      if (error || !previousSales) return;
+
+      // Auto-populate opening readings from previous day's closing readings
+      const previousReadings = previousSales.pump_readings || [];
+      const newPumpReadings = { ...pumpReadings };
+
+      previousReadings.forEach((reading: any) => {
+        const key = `${reading.pump_type}${reading.pump_number}` as keyof typeof pumpReadings;
+        if (newPumpReadings[key]) {
+          newPumpReadings[key] = {
+            ...newPumpReadings[key],
+            opening_reading: reading.closing_reading,
+          };
+        }
+      });
+
+      setPumpReadings(newPumpReadings);
+    } catch (error) {
+      console.error('Error fetching previous day readings:', error);
+    }
+  };
 
   const fetchSalesData = async () => {
     if (!userId) return;

@@ -2,9 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import * as XLSX from 'xlsx';
 import {
   Table,
   TableBody,
@@ -54,6 +55,41 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
       });
     }
   };
+
+  const handleExportToExcel = () => {
+    try {
+      // Prepare data for Excel export
+      const excelData = sortedData.map(sale => ({
+        'Date': format(parseISO(sale.date), "dd MMM yyyy"),
+        'Petrol (₹)': sale.petrol,
+        'Diesel (₹)': sale.diesel,
+        'Engine Oil (₹)': sale.engineOil,
+        'Total (₹)': sale.total,
+      }));
+
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sales Records");
+      
+      // Generate Excel file and trigger download
+      XLSX.writeFile(wb, `Sales_Records_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      
+      toast({
+        title: "Success",
+        description: "Sales records exported to Excel successfully",
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export to Excel",
+        variant: "destructive",
+      });
+    }
+  };
   
   const chartData = sortedData.slice(-30).map(item => ({
     date: format(parseISO(item.date), "dd MMM"),
@@ -95,8 +131,16 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
     <div className="space-y-6">
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
-          <CardTitle>Sales Records</CardTitle>
-          <CardDescription>View and manage daily sales entries</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Sales Records</CardTitle>
+              <CardDescription>View and manage daily sales entries</CardDescription>
+            </div>
+            <Button onClick={handleExportToExcel} variant="outline" size="sm">
+              <Download className="mr-2 h-4 w-4" />
+              Export to Excel
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
