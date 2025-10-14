@@ -288,21 +288,52 @@ const Index = () => {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       const totalIncome = calculateTotalIncome();
 
-      // Insert or update daily_sales with proper user_id in conflict resolution
-      const { data: dailySales, error: salesError } = await supabase
+      // Check if record exists for this date
+      const { data: existingRecord } = await supabase
         .from('daily_sales')
-        .upsert({
-          user_id: userId,
-          sale_date: dateStr,
-          total_income: totalIncome,
-          total_expenses: 0,
-        })
-        .select()
-        .single();
+        .select('id')
+        .eq('user_id', userId)
+        .eq('sale_date', dateStr)
+        .maybeSingle();
 
-      if (salesError) {
-        console.error('Sales error:', salesError);
-        throw salesError;
+      let dailySales;
+      
+      if (existingRecord) {
+        // Update existing record
+        const { data, error: updateError } = await supabase
+          .from('daily_sales')
+          .update({
+            total_income: totalIncome,
+            total_expenses: 0,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingRecord.id)
+          .select()
+          .single();
+        
+        if (updateError) {
+          console.error('Update error:', updateError);
+          throw updateError;
+        }
+        dailySales = data;
+      } else {
+        // Insert new record
+        const { data, error: insertError } = await supabase
+          .from('daily_sales')
+          .insert({
+            user_id: userId,
+            sale_date: dateStr,
+            total_income: totalIncome,
+            total_expenses: 0,
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
+        dailySales = data;
       }
 
       // Save pump readings

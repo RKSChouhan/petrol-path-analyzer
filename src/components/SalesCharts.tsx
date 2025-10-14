@@ -56,30 +56,194 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
     }
   };
 
-  const handleExportToExcel = () => {
+  const handleExportSingleDate = async (date: string) => {
     try {
-      // Prepare data for Excel export
-      const excelData = sortedData.map(sale => ({
-        'Date': format(parseISO(sale.date), "dd MMM yyyy"),
-        'Petrol (₹)': sale.petrol,
-        'Diesel (₹)': sale.diesel,
-        'Engine Oil (₹)': sale.engineOil,
-        'Total (₹)': sale.total,
-      }));
+      // Fetch detailed data for specific date
+      const { data: sale, error } = await supabase
+        .from('daily_sales')
+        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*)')
+        .eq('sale_date', date)
+        .single();
 
-      // Create worksheet
-      const ws = XLSX.utils.json_to_sheet(excelData);
-      
-      // Create workbook
+      if (error) throw error;
+
+      const pumpReadings = sale.pump_readings || [];
+      const oilSales = sale.oil_sales?.[0] || {};
+      const paymentMethods = sale.payment_methods || [];
+      const cashDenom = sale.cash_denominations || [];
+
+      // Create detailed rows similar to the Excel format
+      const detailData = [
+        ['DAILY SALES REPORT - ' + format(parseISO(date), "dd MMM yyyy")],
+        [],
+        ['PUMP READINGS'],
+        ['Pump', 'Type', 'Opening Reading (9:00 AM)', 'Closing Reading', 'Sales in Litres', 'Price per Litre', 'Sales Amount'],
+        ...pumpReadings.map((p: any) => [
+          `${p.pump_type.toUpperCase()} PUMP-${p.pump_number}`,
+          p.pump_type.toUpperCase(),
+          p.opening_reading,
+          p.closing_reading,
+          p.sales_litres,
+          `₹${p.price_per_litre}`,
+          `₹${p.sales_amount}`
+        ]),
+        [],
+        ['OIL SALES'],
+        ['Oil Name', 'Count', 'Price', 'Total Litres', 'Total Amount', 'Distilled Water', 'Waste'],
+        [
+          oilSales.oil_name || '-',
+          oilSales.oil_count || 0,
+          `₹${oilSales.oil_price || 0}`,
+          oilSales.total_litres || 0,
+          `₹${oilSales.total_amount || 0}`,
+          oilSales.distilled_water || 0,
+          oilSales.waste || 0
+        ],
+        [],
+        ['PAYMENT METHODS'],
+        ['Cashier Group', 'Phone Pay', 'GPay', 'Bharat Fleet Card', 'Fiserv', 'Debit', 'UBI', 'Evening Locker', 'Cash on Hand'],
+        ...paymentMethods.map((pm: any) => [
+          pm.cashier_group.toUpperCase(),
+          `₹${pm.phone_pay || 0}`,
+          `₹${pm.gpay || 0}`,
+          `₹${pm.bharat_fleet_card || 0}`,
+          `₹${pm.fiserv || 0}`,
+          `₹${pm.debit || 0}`,
+          `₹${pm.ubi || 0}`,
+          `₹${pm.evening_locker || 0}`,
+          `₹${pm.cash_on_hand || 0}`
+        ]),
+        [],
+        ['CASH DENOMINATIONS'],
+        ['Cashier Group', '₹10 Notes', '₹20 Notes', '₹50 Notes', '₹100 Notes', '₹200 Notes', '₹500 Notes', 'Coins (₹)', 'Total Cash'],
+        ...cashDenom.map((cd: any) => [
+          cd.cashier_group.toUpperCase(),
+          cd.rs_10 || 0,
+          cd.rs_20 || 0,
+          cd.rs_50 || 0,
+          cd.rs_100 || 0,
+          cd.rs_200 || 0,
+          cd.rs_500 || 0,
+          `₹${cd.coins || 0}`,
+          `₹${cd.total_cash || 0}`
+        ]),
+        [],
+        ['SUMMARY'],
+        ['Total Income', `₹${sale.total_income}`],
+        ['Total Expenses', `₹${sale.total_expenses}`],
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(detailData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Sales Records");
-      
+      XLSX.utils.book_append_sheet(wb, ws, format(parseISO(date), "dd-MMM-yyyy"));
+
       // Generate Excel file and trigger download
-      XLSX.writeFile(wb, `Sales_Records_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      XLSX.writeFile(wb, `Daily_Sales_${format(parseISO(date), "dd-MMM-yyyy")}.xlsx`);
       
       toast({
         title: "Success",
-        description: "Sales records exported to Excel successfully",
+        description: `Sales record for ${format(parseISO(date), "dd MMM yyyy")} exported successfully`,
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export to Excel",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportToExcel = async () => {
+    try {
+      // Fetch detailed data with all related information
+      const { data: detailedSales, error } = await supabase
+        .from('daily_sales')
+        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*)')
+        .order('sale_date', { ascending: false });
+
+      if (error) throw error;
+
+      const wb = XLSX.utils.book_new();
+
+      // Create a sheet for each date's detailed data
+      detailedSales?.forEach((sale: any) => {
+        const date = format(parseISO(sale.sale_date), "dd-MMM-yyyy");
+        
+        const pumpReadings = sale.pump_readings || [];
+        const oilSales = sale.oil_sales?.[0] || {};
+        const paymentMethods = sale.payment_methods || [];
+        const cashDenom = sale.cash_denominations || [];
+
+        const detailData = [
+          ['DAILY SALES REPORT - ' + date],
+          [],
+          ['PUMP READINGS'],
+          ['Pump', 'Type', 'Opening Reading (9:00 AM)', 'Closing Reading', 'Sales in Litres', 'Price per Litre', 'Sales Amount'],
+          ...pumpReadings.map((p: any) => [
+            `${p.pump_type.toUpperCase()} PUMP-${p.pump_number}`,
+            p.pump_type.toUpperCase(),
+            p.opening_reading,
+            p.closing_reading,
+            p.sales_litres,
+            `₹${p.price_per_litre}`,
+            `₹${p.sales_amount}`
+          ]),
+          [],
+          ['OIL SALES'],
+          ['Oil Name', 'Count', 'Price', 'Total Litres', 'Total Amount', 'Distilled Water', 'Waste'],
+          [
+            oilSales.oil_name || '-',
+            oilSales.oil_count || 0,
+            `₹${oilSales.oil_price || 0}`,
+            oilSales.total_litres || 0,
+            `₹${oilSales.total_amount || 0}`,
+            oilSales.distilled_water || 0,
+            oilSales.waste || 0
+          ],
+          [],
+          ['PAYMENT METHODS'],
+          ['Cashier Group', 'Phone Pay', 'GPay', 'Bharat Fleet Card', 'Fiserv', 'Debit', 'UBI', 'Evening Locker', 'Cash on Hand'],
+          ...paymentMethods.map((pm: any) => [
+            pm.cashier_group.toUpperCase(),
+            `₹${pm.phone_pay || 0}`,
+            `₹${pm.gpay || 0}`,
+            `₹${pm.bharat_fleet_card || 0}`,
+            `₹${pm.fiserv || 0}`,
+            `₹${pm.debit || 0}`,
+            `₹${pm.ubi || 0}`,
+            `₹${pm.evening_locker || 0}`,
+            `₹${pm.cash_on_hand || 0}`
+          ]),
+          [],
+          ['CASH DENOMINATIONS'],
+          ['Cashier Group', '₹10 Notes', '₹20 Notes', '₹50 Notes', '₹100 Notes', '₹200 Notes', '₹500 Notes', 'Coins (₹)', 'Total Cash'],
+          ...cashDenom.map((cd: any) => [
+            cd.cashier_group.toUpperCase(),
+            cd.rs_10 || 0,
+            cd.rs_20 || 0,
+            cd.rs_50 || 0,
+            cd.rs_100 || 0,
+            cd.rs_200 || 0,
+            cd.rs_500 || 0,
+            `₹${cd.coins || 0}`,
+            `₹${cd.total_cash || 0}`
+          ]),
+          [],
+          ['SUMMARY'],
+          ['Total Income', `₹${sale.total_income}`],
+          ['Total Expenses', `₹${sale.total_expenses}`],
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(detailData);
+        XLSX.utils.book_append_sheet(wb, ws, date);
+      });
+
+      XLSX.writeFile(wb, `All_Daily_Sales_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+      
+      toast({
+        title: "Success",
+        description: "All sales records exported to Excel successfully",
       });
     } catch (error) {
       console.error('Error exporting to Excel:', error);
@@ -168,7 +332,16 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          onClick={() => handleExportSingleDate(sale.date)}
+                          title="Export to Excel"
+                        >
+                          <Download className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDelete(sale.date)}
+                          title="Delete record"
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
