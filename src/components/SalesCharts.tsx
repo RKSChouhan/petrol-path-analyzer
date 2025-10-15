@@ -449,6 +449,32 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="shadow-[var(--shadow-card)]">
+        <CardHeader>
+          <CardTitle>Oil Sales Trend</CardTitle>
+          <CardDescription>Daily engine oil sales over time</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "var(--radius)",
+                }}
+                formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`}
+              />
+              <Legend />
+              <Bar dataKey="Engine Oil" fill={COLORS.engineOil} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 };

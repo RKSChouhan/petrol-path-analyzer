@@ -88,48 +88,89 @@ const Index = () => {
   useEffect(() => {
     if (userId) {
       fetchSalesData();
-      fetchPreviousDayReadings();
+      checkAndResetForNewDay();
     }
   }, [userId, selectedDate]);
 
-  const fetchPreviousDayReadings = async () => {
+  const checkAndResetForNewDay = async () => {
     if (!userId) return;
     
     try {
-      // Calculate previous day
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      
+      // Check if data exists for selected date
+      const { data: existingData } = await supabase
+        .from('daily_sales')
+        .select('id, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*)')
+        .eq('user_id', userId)
+        .eq('sale_date', dateStr)
+        .maybeSingle();
+
+      if (existingData) {
+        // Load existing data for editing
+        // This will be handled by existing logic
+        return;
+      }
+
+      // No data exists for this date - fetch previous day's closing readings and reset form
       const previousDate = new Date(selectedDate);
       previousDate.setDate(previousDate.getDate() - 1);
       const previousDateStr = format(previousDate, "yyyy-MM-dd");
 
-      // Fetch previous day's pump readings
-      const { data: previousSales, error } = await supabase
+      const { data: previousSales } = await supabase
         .from('daily_sales')
         .select('id, pump_readings(*)')
         .eq('user_id', userId)
         .eq('sale_date', previousDateStr)
-        .single();
+        .maybeSingle();
 
-      if (error || !previousSales) return;
+      const newPumpReadings = {
+        petrol1: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+        petrol2: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+        petrol3: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+        petrol4: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+        diesel1: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+        diesel2: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+        diesel3: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+        diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+      };
 
       // Auto-populate opening readings from previous day's closing readings
-      const previousReadings = previousSales.pump_readings || [];
-      const newPumpReadings = { ...pumpReadings };
+      if (previousSales?.pump_readings) {
+        const previousReadings = previousSales.pump_readings || [];
+        previousReadings.forEach((reading: any) => {
+          const key = `${reading.pump_type}${reading.pump_number}` as keyof typeof newPumpReadings;
+          if (newPumpReadings[key]) {
+            newPumpReadings[key] = {
+              ...newPumpReadings[key],
+              opening_reading: reading.closing_reading,
+            };
+          }
+        });
+      }
 
-      previousReadings.forEach((reading: any) => {
-        const key = `${reading.pump_type}${reading.pump_number}` as keyof typeof pumpReadings;
-        if (newPumpReadings[key]) {
-          newPumpReadings[key] = {
-            ...newPumpReadings[key],
-            opening_reading: reading.closing_reading,
-          };
-        }
-      });
-
+      // Reset all form fields to zero for new day
       setPumpReadings(newPumpReadings);
+      setPaymentMethods({
+        group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+        group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+      });
+      setCashDenominations({
+        group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
+        group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
+      });
+      setOilSales({
+        items: [{ oil_name: '', oil_count: 0, oil_price: 0 }],
+        total_litres: 0,
+        total_amount: 0,
+        distilled_water: 0,
+        waste: 0,
+      });
     } catch (error) {
-      console.error('Error fetching previous day readings:', error);
+      console.error('Error checking/resetting for new day:', error);
     }
   };
+
 
   const fetchSalesData = async () => {
     if (!userId) return;
@@ -162,8 +203,9 @@ const Index = () => {
           .filter((p: any) => p.pump_type === 'diesel')
           .reduce((sum: number, p: any) => sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
 
+        // Engine oil value should match the total_amount from oil sales
         const oilTotal = oilSales.reduce((sum: number, o: any) => 
-          sum + (o.total_amount || 0) + (o.waste || 0) + ((o.oil_count || 0) * (o.oil_price || 0)), 0);
+          sum + (o.total_amount || 0), 0);
 
         return {
           date: sale.sale_date,
