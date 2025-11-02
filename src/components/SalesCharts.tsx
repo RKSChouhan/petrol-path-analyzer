@@ -95,21 +95,23 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
         ]),
         [],
         ['OIL SALES'],
-        ['Oil Name', 'Count', 'Price', 'Total Litres', 'Total Amount', 'Distilled Water', 'Waste'],
+        ['Oil Name', 'Count', 'Price', '2T Oil Yesterday', '2T Oil Today', 'Total Oil Litres', 'Total Amount', 'Distilled Water', 'Waste'],
         ...(oilSalesArray.length > 0 
           ? oilSalesArray.map((oil: any) => [
               oil.oil_name || '-',
               oil.oil_count || 0,
               `₹${oil.oil_price || 0}`,
+              oil.yesterday_reading || 0,
+              oil.today_reading || 0,
               oil.total_litres || 0,
               `₹${oil.total_amount || 0}`,
               oil.distilled_water || 0,
               oil.waste || 0
             ])
-          : [['-', 0, '₹0', 0, '₹0', 0, 0]]
+          : [['-', 0, '₹0', 0, 0, 0, '₹0', 0, 0]]
         ),
         [],
-        ['TOTALS', '', '', totalOilLitres, `₹${totalOilAmount}`, totalDistilledWater, totalWaste],
+        ['TOTALS', '', '', '', '', totalOilLitres, `₹${totalOilAmount}`, totalDistilledWater, totalWaste],
         [],
         ['PAYMENT METHODS'],
         ['Cashier Group', 'Phone Pay', 'GPay', 'Bharat Fleet Card', 'Fiserv', 'Debit', 'UBI', 'Evening Locker', 'Cash on Hand'],
@@ -208,21 +210,23 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
           ]),
           [],
           ['OIL SALES'],
-          ['Oil Name', 'Count', 'Price', 'Total Litres', 'Total Amount', 'Distilled Water', 'Waste'],
+          ['Oil Name', 'Count', 'Price', '2T Oil Yesterday', '2T Oil Today', 'Total Oil Litres', 'Total Amount', 'Distilled Water', 'Waste'],
           ...(oilSalesArray.length > 0 
             ? oilSalesArray.map((oil: any) => [
                 oil.oil_name || '-',
                 oil.oil_count || 0,
                 `₹${oil.oil_price || 0}`,
+                oil.yesterday_reading || 0,
+                oil.today_reading || 0,
                 oil.total_litres || 0,
                 `₹${oil.total_amount || 0}`,
                 oil.distilled_water || 0,
                 oil.waste || 0
               ])
-            : [['-', 0, '₹0', 0, '₹0', 0, 0]]
+            : [['-', 0, '₹0', 0, 0, 0, '₹0', 0, 0]]
           ),
           [],
-          ['TOTALS', '', '', totalOilLitres, `₹${totalOilAmount}`, totalDistilledWater, totalWaste],
+          ['TOTALS', '', '', '', '', totalOilLitres, `₹${totalOilAmount}`, totalDistilledWater, totalWaste],
           [],
           ['PAYMENT METHODS'],
           ['Cashier Group', 'Phone Pay', 'GPay', 'Bharat Fleet Card', 'Fiserv', 'Debit', 'UBI', 'Evening Locker', 'Cash on Hand'],

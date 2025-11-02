@@ -10,6 +10,8 @@ interface OilItem {
 }
 interface OilSalesData {
   items: OilItem[];
+  yesterday_reading: number;
+  today_reading: number;
   total_litres: number;
   total_amount: number;
   distilled_water: number;
@@ -40,9 +42,12 @@ const OilSalesForm = ({
       [field]: typeof value === 'string' ? parseFloat(value) || 0 : value
     };
 
-    // Auto-calculate total_amount when total_litres changes
-    if (field === 'total_litres') {
-      updatedData.total_amount = (parseFloat(value as string) || 0) * 330;
+    // Auto-calculate total_litres and total_amount when readings change
+    if (field === 'yesterday_reading' || field === 'today_reading') {
+      const yesterday = field === 'yesterday_reading' ? (parseFloat(value as string) || 0) : data.yesterday_reading;
+      const today = field === 'today_reading' ? (parseFloat(value as string) || 0) : data.today_reading;
+      updatedData.total_litres = today - yesterday;
+      updatedData.total_amount = updatedData.total_litres * 330;
     }
     onChange(updatedData);
   };
@@ -99,8 +104,16 @@ const OilSalesForm = ({
           </div>
           <div className="grid md:grid-cols-2 gap-4 mt-4">
             <div>
-              <Label className="text-sm">2T Oil</Label>
-              <Input type="number" step="0.001" value={data.total_litres === 0 ? '' : data.total_litres} onChange={e => handleChange('total_litres', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+              <Label className="text-sm">2T Oil - Yesterday Reading</Label>
+              <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+            </div>
+            <div>
+              <Label className="text-sm">2T Oil - Today Reading</Label>
+              <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+            </div>
+            <div>
+              <Label className="text-sm">Total Oil Liters</Label>
+              <Input type="number" step="0.001" value={data.total_litres} readOnly disabled className="h-9 bg-muted" />
             </div>
             <div>
               <Label className="text-sm">Total Amount (₹)</Label>

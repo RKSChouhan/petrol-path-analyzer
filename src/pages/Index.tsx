@@ -54,6 +54,8 @@ const Index = () => {
         oil_price: 0,
       }
     ],
+    yesterday_reading: 0,
+    today_reading: 0,
     total_litres: 0,
     total_amount: 0,
     distilled_water: 0,
@@ -161,6 +163,8 @@ const Index = () => {
       });
       setOilSales({
         items: [{ oil_name: '', oil_count: 0, oil_price: 0 }],
+        yesterday_reading: 0,
+        today_reading: 0,
         total_litres: 0,
         total_amount: 0,
         distilled_water: 0,
@@ -311,6 +315,8 @@ const Index = () => {
     });
     setOilSales({
       items: [{ oil_name: '', oil_count: 0, oil_price: 0 }],
+      yesterday_reading: 0,
+      today_reading: 0,
       total_litres: 0,
       total_amount: 0,
       distilled_water: 0,
@@ -445,6 +451,8 @@ const Index = () => {
         oil_name: item.oil_name,
         oil_count: item.oil_count,
         oil_price: item.oil_price,
+        yesterday_reading: oilSales.yesterday_reading,
+        today_reading: oilSales.today_reading,
         total_litres: oilSales.total_litres,
         total_amount: oilSales.total_amount,
         distilled_water: oilSales.distilled_water,

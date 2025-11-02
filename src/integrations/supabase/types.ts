@@ -106,9 +106,11 @@ export type Database = {
           oil_count: number | null
           oil_name: string | null
           oil_price: number | null
+          today_reading: number | null
           total_amount: number | null
           total_litres: number | null
           waste: number | null
+          yesterday_reading: number | null
         }
         Insert: {
           created_at?: string | null
@@ -118,9 +120,11 @@ export type Database = {
           oil_count?: number | null
           oil_name?: string | null
           oil_price?: number | null
+          today_reading?: number | null
           total_amount?: number | null
           total_litres?: number | null
           waste?: number | null
+          yesterday_reading?: number | null
         }
         Update: {
           created_at?: string | null
@@ -130,9 +134,11 @@ export type Database = {
           oil_count?: number | null
           oil_name?: string | null
           oil_price?: number | null
+          today_reading?: number | null
           total_amount?: number | null
           total_litres?: number | null
           waste?: number | null
+          yesterday_reading?: number | null
         }
         Relationships: [
           {
