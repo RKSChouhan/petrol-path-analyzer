@@ -2,14 +2,19 @@
 -- Run this entire script in your Supabase SQL Editor
 
 -- =============================================
--- STEP 1: Create enum types
+-- STEP 1: Create enum types (drop if exists first)
 -- =============================================
+DROP TYPE IF EXISTS pump_type CASCADE;
+DROP TYPE IF EXISTS cashier_group CASCADE;
+
 CREATE TYPE pump_type AS ENUM ('petrol', 'diesel');
 CREATE TYPE cashier_group AS ENUM ('group1', 'group2');
 
 -- =============================================
--- STEP 2: Create main daily sales table
+-- STEP 2: Create main daily sales table (drop if exists first)
 -- =============================================
+DROP TABLE IF EXISTS public.daily_sales CASCADE;
+
 CREATE TABLE public.daily_sales (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
@@ -21,8 +26,10 @@ CREATE TABLE public.daily_sales (
 );
 
 -- =============================================
--- STEP 3: Create pump readings table
+-- STEP 3: Create pump readings table (drop if exists first)
 -- =============================================
+DROP TABLE IF EXISTS public.pump_readings CASCADE;
+
 CREATE TABLE public.pump_readings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   daily_sales_id UUID REFERENCES public.daily_sales(id) ON DELETE CASCADE,
@@ -38,8 +45,10 @@ CREATE TABLE public.pump_readings (
 );
 
 -- =============================================
--- STEP 4: Create payment methods table
+-- STEP 4: Create payment methods table (drop if exists first)
 -- =============================================
+DROP TABLE IF EXISTS public.payment_methods CASCADE;
+
 CREATE TABLE public.payment_methods (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   daily_sales_id UUID REFERENCES public.daily_sales(id) ON DELETE CASCADE,
@@ -57,8 +66,10 @@ CREATE TABLE public.payment_methods (
 );
 
 -- =============================================
--- STEP 5: Create cash denominations table
+-- STEP 5: Create cash denominations table (drop if exists first)
 -- =============================================
+DROP TABLE IF EXISTS public.cash_denominations CASCADE;
+
 CREATE TABLE public.cash_denominations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   daily_sales_id UUID REFERENCES public.daily_sales(id) ON DELETE CASCADE,
@@ -79,8 +90,10 @@ CREATE TABLE public.cash_denominations (
 );
 
 -- =============================================
--- STEP 6: Create oil sales table
+-- STEP 6: Create oil sales table (drop if exists first)
 -- =============================================
+DROP TABLE IF EXISTS public.oil_sales CASCADE;
+
 CREATE TABLE public.oil_sales (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   daily_sales_id UUID REFERENCES public.daily_sales(id) ON DELETE CASCADE,
@@ -274,8 +287,10 @@ CREATE INDEX idx_cash_denominations_daily_sales ON public.cash_denominations(dai
 CREATE INDEX idx_oil_sales_daily_sales ON public.oil_sales(daily_sales_id);
 
 -- =============================================
--- STEP 14: Create trigger function for updated_at
+-- STEP 14: Create trigger function for updated_at (drop if exists first)
 -- =============================================
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER 
 LANGUAGE plpgsql
