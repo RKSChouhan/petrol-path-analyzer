@@ -6,16 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [secretCode, setSecretCode] = useState("");
+  const [showForgetDialog, setShowForgetDialog] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -32,37 +38,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        if (secretCode !== "Chouhan") {
-          toast({
-            title: "Invalid Code",
-            description: "Please enter the correct secret code to create an account.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
-        });
-        if (error) throw error;
-        toast({
-          title: "Success!",
-          description: "Account created successfully. You can now sign in.",
-        });
-        setIsSignUp(false);
-        setPassword("");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
     } catch (error: any) {
       toast({
         title: "Error",
@@ -89,12 +69,8 @@ const Login = () => {
         <div className="bg-card p-8 rounded-lg shadow-lg">
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-foreground">
-                {isSignUp ? "Create Account" : "Welcome Back"}
-              </h2>
-              <p className="text-sm text-muted-foreground mt-2">
-                {isSignUp ? "Sign up to get started" : "Sign in to your account"}
-              </p>
+              <h2 className="text-2xl font-semibold text-foreground">Welcome Back</h2>
+              <p className="text-sm text-muted-foreground mt-2">Sign in to your account</p>
             </div>
 
             <form onSubmit={handleAuth} className="space-y-4">
@@ -132,41 +108,40 @@ const Login = () => {
                 </div>
               </div>
 
-              {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="secretCode">Secret Code</Label>
-                  <Input
-                    id="secretCode"
-                    type="password"
-                    placeholder="Enter secret code"
-                    value={secretCode}
-                    onChange={(e) => setSecretCode(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
-
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+                {loading ? "Loading..." : "Sign In"}
               </Button>
             </form>
 
             <div className="text-center">
               <button
                 type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setPassword("");
-                  setSecretCode("");
-                }}
+                onClick={() => setShowForgetDialog(true)}
                 className="text-sm text-primary hover:underline"
               >
-                {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+                Forget detail
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <Dialog open={showForgetDialog} onOpenChange={setShowForgetDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contact Owner</DialogTitle>
+            <DialogDescription>
+              Please contact the owner for assistance with your account details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <p className="text-lg font-medium text-foreground">+91 82487 60240</p>
+            <Button onClick={() => setShowForgetDialog(false)} className="w-full">
+              Back
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
