@@ -70,7 +70,7 @@ const Login = () => {
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="text-2xl font-semibold text-foreground">Welcome Back</h2>
-              <p className="text-sm text-muted-foreground mt-2">Sign in to your account</p>
+              <p className="text-sm text-muted-foreground mt-2">Login to your account</p>
             </div>
 
             <form onSubmit={handleAuth} className="space-y-4">
@@ -109,7 +109,7 @@ const Login = () => {
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Loading..." : "Sign In"}
+                {loading ? "Loading..." : "Login"}
               </Button>
             </form>
 
