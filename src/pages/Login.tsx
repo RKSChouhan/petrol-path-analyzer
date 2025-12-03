@@ -15,6 +15,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [secretCode, setSecretCode] = useState("");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -32,6 +33,15 @@ const Login = () => {
 
     try {
       if (isSignUp) {
+        if (secretCode !== "Chouhan") {
+          toast({
+            title: "Invalid Code",
+            description: "Please enter the correct secret code to create an account.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -122,6 +132,20 @@ const Login = () => {
                 </div>
               </div>
 
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="secretCode">Secret Code</Label>
+                  <Input
+                    id="secretCode"
+                    type="password"
+                    placeholder="Enter secret code"
+                    value={secretCode}
+                    onChange={(e) => setSecretCode(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
               </Button>
@@ -133,6 +157,7 @@ const Login = () => {
                 onClick={() => {
                   setIsSignUp(!isSignUp);
                   setPassword("");
+                  setSecretCode("");
                 }}
                 className="text-sm text-primary hover:underline"
               >
