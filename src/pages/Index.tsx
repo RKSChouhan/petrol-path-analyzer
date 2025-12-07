@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import PumpReadingsForm from "@/components/PumpReadingsForm";
 import PaymentMethodsForm from "@/components/PaymentMethodsForm";
 import CashDenominationsForm from "@/components/CashDenominationsForm";
 import OilSalesForm from "@/components/OilSalesForm";
-import SalesCharts from "@/components/SalesCharts";
+import EmptyFieldsDialog from "@/components/EmptyFieldsDialog";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -24,6 +23,8 @@ const Index = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [emptyFieldsDialogOpen, setEmptyFieldsDialogOpen] = useState(false);
+  const [emptyFields, setEmptyFields] = useState<string[]>([]);
 
   // Form states
   const [pumpReadings, setPumpReadings] = useState({
@@ -64,7 +65,6 @@ const Index = () => {
   });
 
   const [showCashTotal, setShowCashTotal] = useState(false);
-  const [salesData, setSalesData] = useState<any[]>([]);
 
   useEffect(() => {
     // Check for role in sessionStorage
@@ -80,7 +80,6 @@ const Index = () => {
 
   useEffect(() => {
     if (userId) {
-      fetchSalesData();
       checkAndResetForNewDay();
     }
   }, [userId, selectedDate]);
@@ -166,61 +165,13 @@ const Index = () => {
     }
   };
 
-
-  const fetchSalesData = async () => {
-    if (!userId) return;
-    
-    try {
-      // Fetch daily sales with related data
-      const { data: sales, error } = await supabase
-        .from('daily_sales')
-        .select(`
-          *,
-          pump_readings(*),
-          oil_sales(*)
-        `)
-        .eq('user_id', userId)
-        .order('sale_date', { ascending: false })
-        .limit(30);
-
-      if (error) throw error;
-
-      // Transform data for charts
-      const transformedData = sales?.map(sale => {
-        const pumpReadings = Array.isArray(sale.pump_readings) ? sale.pump_readings : [];
-        const oilSales = Array.isArray(sale.oil_sales) ? sale.oil_sales : [];
-
-        const petrolSales = pumpReadings
-          .filter((p: any) => p.pump_type === 'petrol')
-          .reduce((sum: number, p: any) => sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
-
-        const dieselSales = pumpReadings
-          .filter((p: any) => p.pump_type === 'diesel')
-          .reduce((sum: number, p: any) => sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
-
-        // Engine oil value should match the total_amount from oil sales
-        const oilTotal = oilSales.reduce((sum: number, o: any) => 
-          sum + (o.total_amount || 0), 0);
-
-        return {
-          date: sale.sale_date,
-          petrol: petrolSales,
-          diesel: dieselSales,
-          engineOil: oilTotal,
-          lubricants: 0,
-          total: sale.total_income || 0,
-        };
-      }) || [];
-
-      setSalesData(transformedData);
-    } catch (error) {
-      console.error('Error fetching sales data:', error);
-    }
-  };
-
   const handleLogout = () => {
     sessionStorage.removeItem("userRole");
     navigate("/login");
+  };
+
+  const handleGoToStat = () => {
+    navigate("/stat");
   };
 
   const calculateTotalIncome = () => {
@@ -456,9 +407,6 @@ const Index = () => {
         title: "Success",
         description: "Daily sales data saved successfully",
       });
-      
-      // Refresh statistics data
-      fetchSalesData();
     } catch (error) {
       console.error('Error saving data:', error);
       toast({
@@ -471,8 +419,87 @@ const Index = () => {
     }
   };
 
+  const checkEmptyFields = (): string[] => {
+    const empty: string[] = [];
+    
+    // Check pump readings
+    const pumpKeys = Object.keys(pumpReadings) as Array<keyof typeof pumpReadings>;
+    for (const key of pumpKeys) {
+      const pump = pumpReadings[key];
+      const pumpName = key.replace(/(\d)/, ' $1').replace('petrol', 'Petrol').replace('diesel', 'Diesel');
+      if (pump.opening_reading === 0) empty.push(`${pumpName} - Opening Reading`);
+      if (pump.closing_reading === 0) empty.push(`${pumpName} - Closing Reading`);
+    }
+    
+    // Check oil sales
+    if (oilSales.yesterday_reading === 0) empty.push("Oil Sales - Yesterday Reading");
+    if (oilSales.today_reading === 0) empty.push("Oil Sales - Today Reading");
+    
+    // Check payment methods
+    const paymentLabels: Record<string, string> = {
+      upi: "UPI",
+      bharat_fleet_card: "Bharat Fleet Card",
+      fiserv: "Fiserv",
+      debit: "Debit",
+      ubi: "UBI",
+      evening_locker: "Evening Locker"
+    };
+    
+    (["group1", "group2"] as const).forEach((group) => {
+      const groupLabel = group === "group1" ? "Group 1" : "Group 2";
+      Object.entries(paymentMethods[group]).forEach(([key, value]) => {
+        if (value === 0 && paymentLabels[key]) {
+          empty.push(`Payment ${groupLabel} - ${paymentLabels[key]}`);
+        }
+      });
+    });
+    
+    // Check cash denominations
+    const denomLabels: Record<string, string> = {
+      rs_500: "₹500 Notes",
+      rs_200: "₹200 Notes",
+      rs_100: "₹100 Notes",
+      rs_50: "₹50 Notes",
+      rs_20: "₹20 Notes",
+      rs_10: "₹10 Notes",
+      coins: "Coins"
+    };
+    
+    (["group1", "group2"] as const).forEach((group) => {
+      const groupLabel = group === "group1" ? "Group 1" : "Group 2";
+      Object.entries(cashDenominations[group]).forEach(([key, value]) => {
+        if (value === 0 && denomLabels[key]) {
+          empty.push(`Cash ${groupLabel} - ${denomLabels[key]}`);
+        }
+      });
+    });
+    
+    return empty;
+  };
+
+  const handleSaveButtonClick = () => {
+    const empty = checkEmptyFields();
+    if (empty.length > 0) {
+      setEmptyFields(empty);
+      setEmptyFieldsDialogOpen(true);
+    } else {
+      handleSaveData();
+    }
+  };
+
+  const handleSaveAnyway = () => {
+    setEmptyFieldsDialogOpen(false);
+    handleSaveData();
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <EmptyFieldsDialog
+        open={emptyFieldsDialogOpen}
+        onOpenChange={setEmptyFieldsDialogOpen}
+        emptyFields={emptyFields}
+        onSave={handleSaveAnyway}
+      />
       <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
@@ -481,7 +508,7 @@ const Index = () => {
                 <FuelIcon className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Petrol Pump Manager</h1>
+                <h1 className="text-2xl font-bold text-foreground">Daily tree</h1>
                 <p className="text-sm text-muted-foreground">Digital Sales Tracking System</p>
               </div>
             </div>
@@ -502,6 +529,10 @@ const Index = () => {
                   />
                 </PopoverContent>
               </Popover>
+              <Button variant="outline" onClick={handleGoToStat}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Stat
+              </Button>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -560,108 +591,95 @@ const Index = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="entry" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-            <TabsTrigger value="entry">Daily Entry</TabsTrigger>
-            <TabsTrigger value="statistics">Statistics</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="entry" className="space-y-6">
-            <Card className="shadow-[var(--shadow-card)]">
-              <CardHeader>
-                <CardTitle>Daily Sales Entry</CardTitle>
-                <CardDescription>
-                  Enter complete sales data for {format(selectedDate, "dd MMMM yyyy")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} />
-                <OilSalesForm data={oilSales} onChange={setOilSales} />
-                <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} />
-                <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} />
-                
-                {/* Total Income Summary */}
-                <div className="space-y-4 pt-6 border-t">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <IndianRupee className="h-5 w-5 text-primary" />
-                    Total Income Summary
-                  </h3>
-                  <Card className="shadow-sm bg-primary/5">
-                    <CardContent className="pt-6">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="p-4 bg-card rounded-lg relative">
-                          <div className="flex items-center justify-between mb-2">
-                            <Label className="text-sm text-muted-foreground">Total Cash in Cashier Hand</Label>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowCashTotal(!showCashTotal)}
-                              className="h-7 px-2"
-                            >
-                              {showCashTotal ? "Hide" : "Show"}
-                            </Button>
-                          </div>
-                          <div className="text-2xl font-bold mt-2">
-                            {showCashTotal ? (
-                              `₹${calculateTotalCashInHand().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
-                            ) : (
-                              <span className="blur-sm select-none">₹1,234.56</span>
-                            )}
-                          </div>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="absolute bottom-2 right-2 h-6 w-6 p-0"
-                              >
-                                <Info className="h-4 w-4 text-muted-foreground" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-64" align="end">
-                              <div className="space-y-3">
-                                <div>
-                                  <Label className="text-xs text-muted-foreground">Must be</Label>
-                                  <div className="text-lg font-semibold">
-                                    ₹{calculateMustBe().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                  </div>
-                                </div>
-                                <div>
-                                  <Label className="text-xs text-muted-foreground">Shortage</Label>
-                                  <div className={cn(
-                                    "text-lg font-semibold",
-                                    calculateShortage() < 0 ? "text-green-600" : calculateShortage() > 0 ? "text-red-600" : ""
-                                  )}>
-                                    ₹{calculateShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                  </div>
-                                </div>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                        <div className="p-4 bg-card rounded-lg">
-                          <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
-                          <div className="text-2xl font-bold mt-2 text-primary">₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
-                        </div>
+        <Card className="shadow-[var(--shadow-card)]">
+          <CardHeader>
+            <CardTitle>Daily Sales Entry</CardTitle>
+            <CardDescription>
+              Enter complete sales data for {format(selectedDate, "dd MMMM yyyy")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} />
+            <OilSalesForm data={oilSales} onChange={setOilSales} />
+            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} />
+            <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} />
+            
+            {/* Total Income Summary */}
+            <div className="space-y-4 pt-6 border-t">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <IndianRupee className="h-5 w-5 text-primary" />
+                Total Income Summary
+              </h3>
+              <Card className="shadow-sm bg-primary/5">
+                <CardContent className="pt-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-card rounded-lg relative">
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-sm text-muted-foreground">Total Cash in Cashier Hand</Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowCashTotal(!showCashTotal)}
+                          className="h-7 px-2"
+                        >
+                          {showCashTotal ? "Hide" : "Show"}
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                      <div className="text-2xl font-bold mt-2">
+                        {showCashTotal ? (
+                          `₹${calculateTotalCashInHand().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                        ) : (
+                          <span className="blur-sm select-none">₹1,234.56</span>
+                        )}
+                      </div>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute bottom-2 right-2 h-6 w-6 p-0"
+                          >
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64" align="end">
+                          <div className="space-y-3">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Must be</Label>
+                              <div className="text-lg font-semibold">
+                                ₹{calculateMustBe().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Shortage</Label>
+                              <div className={cn(
+                                "text-lg font-semibold",
+                                calculateShortage() < 0 ? "text-green-600" : calculateShortage() > 0 ? "text-red-600" : ""
+                              )}>
+                                ₹{calculateShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="p-4 bg-card rounded-lg">
+                      <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
+                      <div className="text-2xl font-bold mt-2 text-primary">₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t">
-                  <Button variant="outline" size="lg" onClick={handleClearAll}>Clear All</Button>
-                  <Button size="lg" onClick={handleSaveData} disabled={loading}>
-                    {loading ? "Saving..." : "Save Sales Data"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="statistics" className="space-y-4">
-            <SalesCharts salesData={salesData} onRefresh={fetchSalesData} />
-          </TabsContent>
-        </Tabs>
+            <div className="flex justify-end gap-3 pt-6 border-t">
+              <Button variant="outline" size="lg" onClick={handleClearAll}>Clear All</Button>
+              <Button size="lg" onClick={handleSaveButtonClick} disabled={loading}>
+                {loading ? "Saving..." : "Save Sales Data"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
