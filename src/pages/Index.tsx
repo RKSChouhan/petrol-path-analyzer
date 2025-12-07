@@ -21,6 +21,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -66,25 +67,15 @@ const Index = () => {
   const [salesData, setSalesData] = useState<any[]>([]);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/login");
-      } else {
-        setUserId(session.user.id);
-      }
-    });
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/login");
-      } else {
-        setUserId(session.user.id);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    // Check for role in sessionStorage
+    const role = sessionStorage.getItem("userRole");
+    if (!role) {
+      navigate("/login");
+    } else {
+      setUserRole(role);
+      // Use a fixed userId for data storage since we're not using Supabase auth
+      setUserId("local-user");
+    }
   }, [navigate]);
 
   useEffect(() => {
@@ -227,8 +218,8 @@ const Index = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    sessionStorage.removeItem("userRole");
     navigate("/login");
   };
 

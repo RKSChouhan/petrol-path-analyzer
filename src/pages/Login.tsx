@@ -1,6 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FuelIcon, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,44 +13,51 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+type Role = "Proprietor" | "Manager" | "Supervisor";
+
+const ROLE_PASSWORDS: Record<Role, string> = {
+  Supervisor: "MahaBunk",
+  Manager: "Rajapalayam",
+  Proprietor: "KRish",
+};
+
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [password, setPassword] = useState("");
   const [showForgetDialog, setShowForgetDialog] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate("/");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-    } catch (error: any) {
+    
+    if (!selectedRole) {
       toast({
         title: "Error",
-        description: error.message || "Authentication failed",
+        description: "Please select a role",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    setLoading(true);
+
+    // Check if password matches the selected role
+    if (password === ROLE_PASSWORDS[selectedRole]) {
+      // Store role in sessionStorage
+      sessionStorage.setItem("userRole", selectedRole);
+      navigate("/");
+    } else {
+      toast({
+        title: "Error",
+        description: "Incorrect password for the selected role",
+        variant: "destructive",
+      });
+    }
+    
+    setLoading(false);
   };
 
   return (
@@ -75,15 +81,23 @@ const Login = () => {
 
             <form onSubmit={handleAuth} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                <Label>Role</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["Proprietor", "Manager", "Supervisor"] as Role[]).map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setSelectedRole(role)}
+                      className={`p-3 text-sm font-medium rounded-lg border transition-colors ${
+                        selectedRole === role
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                      }`}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -96,7 +110,6 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
                   />
                   <button
                     type="button"
