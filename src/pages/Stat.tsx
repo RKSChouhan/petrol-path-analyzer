@@ -38,7 +38,7 @@ const Stat = () => {
     if (!userId) return;
     
     try {
-      const { data: sales, error } = await supabase
+      let query = supabase
         .from('daily_sales')
         .select(`
           *,
@@ -46,8 +46,14 @@ const Stat = () => {
           oil_sales(*)
         `)
         .eq('user_id', userId)
-        .order('sale_date', { ascending: false })
-        .limit(15);
+        .order('sale_date', { ascending: false });
+
+      // Supervisor sees only last 15 days, Proprietor and Manager see all
+      if (userRole === 'Supervisor') {
+        query = query.limit(15);
+      }
+
+      const { data: sales, error } = await query;
 
       if (error) throw error;
 
