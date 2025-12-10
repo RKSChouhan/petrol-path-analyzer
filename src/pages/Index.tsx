@@ -612,7 +612,7 @@ const Index = () => {
 
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle>Daily Sales Entry</CardTitle>
+            <CardTitle>Daily Ntee</CardTitle>
             <CardDescription>
               Enter complete sales data for {format(selectedDate, "dd MMMM yyyy")}
             </CardDescription>
