@@ -549,7 +549,7 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
+        <div className="grid gap-6 md:grid-cols-4 mb-8">
           <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Today's Income</CardTitle>
@@ -565,14 +565,27 @@ const Index = () => {
 
           <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Fuel Sales</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Petrol in litres</CardTitle>
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
-                {Object.values(pumpReadings).reduce((sum, p) => sum + (p.closing_reading - p.opening_reading), 0).toFixed(2)}L
+                {(['petrol1', 'petrol2', 'petrol3', 'petrol4'] as const).reduce((sum, key) => sum + (pumpReadings[key].closing_reading - pumpReadings[key].opening_reading), 0).toFixed(2)}L
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Total litres sold</p>
+              <p className="text-xs text-muted-foreground mt-1">Total petrol sold</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Diesel in litres</CardTitle>
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-foreground">
+                {(['diesel1', 'diesel2', 'diesel3', 'diesel4'] as const).reduce((sum, key) => sum + (pumpReadings[key].closing_reading - pumpReadings[key].opening_reading), 0).toFixed(2)}L
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Total diesel sold</p>
             </CardContent>
           </Card>
 
