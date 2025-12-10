@@ -18,7 +18,13 @@ const Stat = () => {
       navigate("/login");
     } else {
       setUserRole(role);
-      setUserId("local-user");
+      // Use the same UUID stored in localStorage
+      let storedUserId = localStorage.getItem("localUserId");
+      if (!storedUserId) {
+        storedUserId = crypto.randomUUID();
+        localStorage.setItem("localUserId", storedUserId);
+      }
+      setUserId(storedUserId);
     }
   }, [navigate]);
 
