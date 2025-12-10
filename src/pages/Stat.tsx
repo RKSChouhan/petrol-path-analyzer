@@ -47,7 +47,7 @@ const Stat = () => {
         `)
         .eq('user_id', userId)
         .order('sale_date', { ascending: false })
-        .limit(30);
+        .limit(15);
 
       if (error) throw error;
 
