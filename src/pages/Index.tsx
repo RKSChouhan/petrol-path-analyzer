@@ -73,14 +73,9 @@ const Index = () => {
       navigate("/login");
     } else {
       setUserRole(role);
-      // Use a consistent UUID for data storage since we're not using Supabase auth
-      // This UUID is generated once and stored in localStorage for persistence
-      let storedUserId = localStorage.getItem("localUserId");
-      if (!storedUserId) {
-        storedUserId = crypto.randomUUID();
-        localStorage.setItem("localUserId", storedUserId);
-      }
-      setUserId(storedUserId);
+      // Use a fixed station ID so all devices share the same data
+      const STATION_ID = "fuel-station-main";
+      setUserId(STATION_ID);
     }
   }, [navigate]);
 
