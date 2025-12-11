@@ -73,8 +73,8 @@ const Index = () => {
       navigate("/login");
     } else {
       setUserRole(role);
-      // Use a fixed station ID so all devices share the same data
-      const STATION_ID = "fuel-station-main";
+      // Use a fixed UUID so all devices share the same data
+      const STATION_ID = "00000000-0000-0000-0000-000000000001";
       setUserId(STATION_ID);
     }
   }, [navigate]);
