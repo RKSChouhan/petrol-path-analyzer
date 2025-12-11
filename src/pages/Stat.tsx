@@ -18,13 +18,9 @@ const Stat = () => {
       navigate("/login");
     } else {
       setUserRole(role);
-      // Use the same UUID stored in localStorage
-      let storedUserId = localStorage.getItem("localUserId");
-      if (!storedUserId) {
-        storedUserId = crypto.randomUUID();
-        localStorage.setItem("localUserId", storedUserId);
-      }
-      setUserId(storedUserId);
+      // Use a fixed station ID so all devices share the same data
+      const STATION_ID = "fuel-station-main";
+      setUserId(STATION_ID);
     }
   }, [navigate]);
 
