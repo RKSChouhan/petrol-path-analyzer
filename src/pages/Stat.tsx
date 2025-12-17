@@ -156,7 +156,7 @@ const Stat = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <SalesCharts salesData={salesData} onRefresh={fetchSalesData} />
+        <SalesCharts salesData={salesData} onRefresh={fetchSalesData} userRole={userRole} />
       </main>
     </div>
   );

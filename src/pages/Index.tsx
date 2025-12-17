@@ -620,7 +620,7 @@ const Index = () => {
 
           <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Oil Sales</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Lubricant Sales</CardTitle>
               <BarChart3 className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>

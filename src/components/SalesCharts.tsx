@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Trash2, Download } from "lucide-react";
+import { Trash2, Download, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
@@ -18,6 +19,7 @@ import {
 interface SalesChartsProps {
   salesData: any[];
   onRefresh?: () => void;
+  userRole?: string | null;
 }
 
 const COLORS = {
@@ -27,9 +29,22 @@ const COLORS = {
   lubricants: "hsl(var(--chart-4))",
 };
 
-const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
+const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
   const { toast } = useToast();
-  const sortedData = [...salesData].sort((a, b) => a.date.localeCompare(b.date));
+  const [sortOrder, setSortOrder] = useState<'new-to-old' | 'old-to-new' | 'edited'>('new-to-old');
+  
+  const getSortedData = () => {
+    const data = [...salesData];
+    if (sortOrder === 'new-to-old') {
+      return data.sort((a, b) => b.date.localeCompare(a.date));
+    } else if (sortOrder === 'old-to-new') {
+      return data.sort((a, b) => a.date.localeCompare(b.date));
+    }
+    // 'edited' - keep original order (most recently modified first based on fetch order)
+    return data;
+  };
+  
+  const sortedData = getSortedData();
 
   const handleDelete = async (date: string) => {
     try {
@@ -285,7 +300,7 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
     date: format(parseISO(item.date), "dd MMM"),
     Petrol: item.petrol,
     Diesel: item.diesel,
-    "Engine Oil": item.engineOil,
+    "Lubricant": item.engineOil,
     Lubricants: item.lubricants,
     total: item.petrol + item.diesel + item.engineOil + item.lubricants,
   }));
@@ -303,7 +318,7 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
   const pieData = [
     { name: "Petrol", value: productTotals.petrol },
     { name: "Diesel", value: productTotals.diesel },
-    { name: "Engine Oil", value: productTotals.engineOil },
+    { name: "Lubricant", value: productTotals.engineOil },
     { name: "Lubricants", value: productTotals.lubricants },
   ].filter(item => item.value > 0);
 
@@ -321,15 +336,43 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
     <div className="space-y-6">
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle>Sales Records</CardTitle>
               <CardDescription>View and manage daily sales entries</CardDescription>
             </div>
-            <Button onClick={handleExportToExcel} variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" />
-              Export to Excel
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <div className="flex gap-1 border rounded-md p-1">
+                <Button 
+                  variant={sortOrder === 'new-to-old' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setSortOrder('new-to-old')}
+                  className="text-xs"
+                >
+                  New to Old
+                </Button>
+                <Button 
+                  variant={sortOrder === 'old-to-new' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setSortOrder('old-to-new')}
+                  className="text-xs"
+                >
+                  Old to New
+                </Button>
+                <Button 
+                  variant={sortOrder === 'edited' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setSortOrder('edited')}
+                  className="text-xs"
+                >
+                  Edited
+                </Button>
+              </div>
+              <Button onClick={handleExportToExcel} variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -340,13 +383,13 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Petrol</TableHead>
                   <TableHead className="text-right">Diesel</TableHead>
-                  <TableHead className="text-right">Engine Oil</TableHead>
+                  <TableHead className="text-right">Lubricant</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedData.slice(-10).reverse().map((sale) => (
+                {sortedData.slice(-10).map((sale) => (
                   <TableRow key={sale.date}>
                     <TableCell className="font-medium">{format(parseISO(sale.date), "dd MMM yyyy")}</TableCell>
                     <TableCell className="text-right">₹{sale.petrol.toLocaleString('en-IN')}</TableCell>
@@ -363,14 +406,16 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
                         >
                           <Download className="h-4 w-4 text-primary" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(sale.date)}
-                          title="Delete record"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {userRole !== 'Supervisor' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(sale.date)}
+                            title="Delete record"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -402,7 +447,7 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
               <Legend />
               <Bar dataKey="Petrol" fill={COLORS.petrol} radius={[4, 4, 0, 0]} />
               <Bar dataKey="Diesel" fill={COLORS.diesel} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Engine Oil" fill={COLORS.engineOil} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Lubricant" fill={COLORS.engineOil} radius={[4, 4, 0, 0]} />
               <Bar dataKey="Lubricants" fill={COLORS.lubricants} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -478,8 +523,8 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
 
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader>
-          <CardTitle>Oil Sales Trend</CardTitle>
-          <CardDescription>Daily engine oil sales over time</CardDescription>
+          <CardTitle>Lubricant Sales Trend</CardTitle>
+          <CardDescription>Daily lubricant sales over time</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={350}>
@@ -496,7 +541,7 @@ const SalesCharts = ({ salesData, onRefresh }: SalesChartsProps) => {
                 formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`}
               />
               <Legend />
-              <Bar dataKey="Engine Oil" fill={COLORS.engineOil} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Lubricant" fill={COLORS.engineOil} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
