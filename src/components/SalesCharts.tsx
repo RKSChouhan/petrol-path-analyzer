@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Trash2, Download, ArrowUpDown } from "lucide-react";
+import { Trash2, Download, ArrowUpDown, Undo2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
@@ -30,8 +30,20 @@ const COLORS = {
 };
 
 const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
-  const { toast } = useToast();
-  const [sortOrder, setSortOrder] = useState<'new-to-old' | 'old-to-new' | 'edited'>('edited');
+  const { toast, dismiss } = useToast();
+  const [sortOrder, setSortOrder] = useState<'new-to-old' | 'old-to-new' | 'edited'>('new-to-old');
+  const [pendingDelete, setPendingDelete] = useState<{ date: string; entryNumber: number } | null>(null);
+  const deleteTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const toastIdRef = useRef<string | null>(null);
+  
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (deleteTimerRef.current) {
+        clearTimeout(deleteTimerRef.current);
+      }
+    };
+  }, []);
   
   const getSortedData = () => {
     const data = [...salesData];
@@ -46,7 +58,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
   
   const sortedData = getSortedData();
 
-  const handleDelete = async (date: string, entryNumber: number) => {
+  const executeDelete = async (date: string, entryNumber: number) => {
     try {
       const { error } = await supabase
         .from('daily_sales')
@@ -57,8 +69,8 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: `Entry ${entryNumber} deleted successfully`,
+        title: "Deleted",
+        description: `Entry ${entryNumber} for ${format(parseISO(date), "dd MMM yyyy")} deleted`,
       });
       
       onRefresh?.();
@@ -70,6 +82,63 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
         variant: "destructive",
       });
     }
+    setPendingDelete(null);
+  };
+
+  const handleUndo = () => {
+    if (deleteTimerRef.current) {
+      clearTimeout(deleteTimerRef.current);
+      deleteTimerRef.current = null;
+    }
+    if (toastIdRef.current) {
+      dismiss(toastIdRef.current);
+      toastIdRef.current = null;
+    }
+    setPendingDelete(null);
+    toast({
+      title: "Undo successful",
+      description: "Delete cancelled",
+    });
+  };
+
+  const handleDelete = (date: string, entryNumber: number) => {
+    // Cancel any existing pending delete
+    if (deleteTimerRef.current) {
+      clearTimeout(deleteTimerRef.current);
+    }
+    if (toastIdRef.current) {
+      dismiss(toastIdRef.current);
+    }
+
+    setPendingDelete({ date, entryNumber });
+
+    // Show toast with undo button
+    const { id } = toast({
+      title: "Deleting...",
+      description: (
+        <div className="flex items-center justify-between gap-4">
+          <span>Entry {entryNumber} will be deleted in 10 seconds</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleUndo}
+            className="shrink-0"
+          >
+            <Undo2 className="mr-1 h-3 w-3" />
+            Undo
+          </Button>
+        </div>
+      ),
+      duration: 10000,
+    });
+    toastIdRef.current = id;
+
+    // Set timer for actual delete
+    deleteTimerRef.current = setTimeout(() => {
+      executeDelete(date, entryNumber);
+      toastIdRef.current = null;
+      deleteTimerRef.current = null;
+    }, 10000);
   };
 
   const handleExportSingleDate = async (date: string, entryNumber: number) => {
