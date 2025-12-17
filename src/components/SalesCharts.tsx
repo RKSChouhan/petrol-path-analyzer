@@ -46,18 +46,19 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
   
   const sortedData = getSortedData();
 
-  const handleDelete = async (date: string) => {
+  const handleDelete = async (date: string, entryNumber: number) => {
     try {
       const { error } = await supabase
         .from('daily_sales')
         .delete()
-        .eq('sale_date', date);
+        .eq('sale_date', date)
+        .eq('entry_number', entryNumber);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Sales record deleted successfully",
+        description: `Entry ${entryNumber} deleted successfully`,
       });
       
       onRefresh?.();
@@ -71,16 +72,25 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
     }
   };
 
-  const handleExportSingleDate = async (date: string) => {
+  const handleExportSingleDate = async (date: string, entryNumber: number) => {
     try {
-      // Fetch detailed data for specific date
+      // Fetch detailed data for specific date and entry
       const { data: sale, error } = await supabase
         .from('daily_sales')
         .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*)')
         .eq('sale_date', date)
-        .single();
+        .eq('entry_number', entryNumber)
+        .maybeSingle();
 
       if (error) throw error;
+      if (!sale) {
+        toast({
+          title: "Error",
+          description: "No data found for this entry",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const pumpReadings = sale.pump_readings || [];
       const oilSalesArray = sale.oil_sales || [];
@@ -95,7 +105,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
 
       // Create detailed rows similar to the Excel format
       const detailData = [
-        ['DAILY SALES REPORT - ' + format(parseISO(date), "dd MMM yyyy")],
+        [`DAILY SALES REPORT - ${format(parseISO(date), "dd MMM yyyy")} (Entry ${entryNumber})`],
         [],
         ['PUMP READINGS'],
         ['Pump', 'Type', 'Opening Reading (9:00 AM)', 'Closing Reading', 'Sales in Litres', 'Price per Litre', 'Sales Amount'],
@@ -163,14 +173,14 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
 
       const ws = XLSX.utils.aoa_to_sheet(detailData);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, format(parseISO(date), "dd-MMM-yyyy"));
+      XLSX.utils.book_append_sheet(wb, ws, `${format(parseISO(date), "dd-MMM-yyyy")}_E${entryNumber}`);
 
       // Generate Excel file and trigger download
-      XLSX.writeFile(wb, `Daily_Sales_${format(parseISO(date), "dd-MMM-yyyy")}.xlsx`);
+      XLSX.writeFile(wb, `Daily_Sales_${format(parseISO(date), "dd-MMM-yyyy")}_Entry${entryNumber}.xlsx`);
       
       toast({
         title: "Success",
-        description: `Sales record for ${format(parseISO(date), "dd MMM yyyy")} exported successfully`,
+        description: `Entry ${entryNumber} for ${format(parseISO(date), "dd MMM yyyy")} exported successfully`,
       });
     } catch (error) {
       console.error('Error exporting to Excel:', error);
@@ -381,6 +391,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-center">Entry</TableHead>
                   <TableHead className="text-right">Petrol</TableHead>
                   <TableHead className="text-right">Diesel</TableHead>
                   <TableHead className="text-right">Lubricant</TableHead>
@@ -390,8 +401,13 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
               </TableHeader>
               <TableBody>
                 {sortedData.slice(-10).map((sale) => (
-                  <TableRow key={sale.date}>
+                  <TableRow key={`${sale.date}-${sale.entryNumber || 1}`}>
                     <TableCell className="font-medium">{format(parseISO(sale.date), "dd MMM yyyy")}</TableCell>
+                    <TableCell className="text-center">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                        {sale.entryNumber || 1}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right">₹{sale.petrol.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-right">₹{sale.diesel.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-right">₹{sale.engineOil.toLocaleString('en-IN')}</TableCell>
@@ -401,7 +417,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleExportSingleDate(sale.date)}
+                          onClick={() => handleExportSingleDate(sale.date, sale.entryNumber || 1)}
                           title="Export to Excel"
                         >
                           <Download className="h-4 w-4 text-primary" />
@@ -410,7 +426,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(sale.date)}
+                            onClick={() => handleDelete(sale.date, sale.entryNumber || 1)}
                             title="Delete record"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
