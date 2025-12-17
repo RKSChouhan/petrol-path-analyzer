@@ -67,16 +67,38 @@ const Index = () => {
   const [showCashTotal, setShowCashTotal] = useState(false);
 
   useEffect(() => {
-    // Check for role in sessionStorage
-    const role = sessionStorage.getItem("userRole");
-    if (!role) {
-      navigate("/login");
-    } else {
-      setUserRole(role);
-      // Use a fixed UUID so all devices share the same data
-      const STATION_ID = "00000000-0000-0000-0000-000000000001";
-      setUserId(STATION_ID);
-    }
+    const checkAuth = async () => {
+      // Check for Supabase session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+
+      // Check for role in sessionStorage
+      const role = sessionStorage.getItem("userRole");
+      if (!role) {
+        navigate("/login");
+      } else {
+        setUserRole(role);
+        // Use a fixed UUID so all devices share the same data
+        const STATION_ID = "00000000-0000-0000-0000-000000000001";
+        setUserId(STATION_ID);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        sessionStorage.removeItem("userRole");
+        navigate("/login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   useEffect(() => {
@@ -166,7 +188,8 @@ const Index = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     sessionStorage.removeItem("userRole");
     navigate("/login");
   };
