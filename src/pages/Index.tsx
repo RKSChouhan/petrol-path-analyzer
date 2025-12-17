@@ -395,6 +395,17 @@ const Index = () => {
         .eq('entry_number', selectedEntry)
         .maybeSingle();
 
+      // Supervisor cannot edit existing saved data
+      if (existingRecord && userRole === 'Supervisor') {
+        setLoading(false);
+        toast({
+          title: "Cannot Edit Saved Data",
+          description: "Data is being saved before, delete the whole entry to save the edited data",
+          variant: "destructive",
+        });
+        return;
+      }
+
       let dailySales;
       
       if (existingRecord) {
