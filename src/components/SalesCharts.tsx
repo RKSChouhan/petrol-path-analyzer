@@ -31,17 +31,17 @@ const COLORS = {
 
 const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
   const { toast } = useToast();
-  const [sortOrder, setSortOrder] = useState<'new-to-old' | 'old-to-new' | 'edited'>('new-to-old');
+  const [sortOrder, setSortOrder] = useState<'new-to-old' | 'old-to-new' | 'edited'>('edited');
   
   const getSortedData = () => {
     const data = [...salesData];
     if (sortOrder === 'new-to-old') {
-      return data.sort((a, b) => b.date.localeCompare(a.date));
+      return data.sort((a, b) => b.date.localeCompare(a.date) || (b.entryNumber || 1) - (a.entryNumber || 1));
     } else if (sortOrder === 'old-to-new') {
-      return data.sort((a, b) => a.date.localeCompare(b.date));
+      return data.sort((a, b) => a.date.localeCompare(b.date) || (a.entryNumber || 1) - (b.entryNumber || 1));
     }
-    // 'edited' - keep original order (most recently modified first based on fetch order)
-    return data;
+    // 'edited' - sort by most recently updated first (already sorted from fetch)
+    return data.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
   };
   
   const sortedData = getSortedData();
