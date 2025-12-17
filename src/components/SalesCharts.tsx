@@ -33,14 +33,19 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
   const { toast, dismiss } = useToast();
   const [sortOrder, setSortOrder] = useState<'new-to-old' | 'old-to-new' | 'edited'>('new-to-old');
   const [pendingDelete, setPendingDelete] = useState<{ date: string; entryNumber: number } | null>(null);
+  const [countdown, setCountdown] = useState(10);
   const deleteTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const toastIdRef = useRef<string | null>(null);
   
-  // Cleanup timer on unmount
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (deleteTimerRef.current) {
         clearTimeout(deleteTimerRef.current);
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
       }
     };
   }, []);
@@ -90,34 +95,32 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
       clearTimeout(deleteTimerRef.current);
       deleteTimerRef.current = null;
     }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
     if (toastIdRef.current) {
       dismiss(toastIdRef.current);
       toastIdRef.current = null;
     }
     setPendingDelete(null);
+    setCountdown(10);
     toast({
       title: "Undo successful",
       description: "Delete cancelled",
     });
   };
 
-  const handleDelete = (date: string, entryNumber: number) => {
-    // Cancel any existing pending delete
-    if (deleteTimerRef.current) {
-      clearTimeout(deleteTimerRef.current);
-    }
+  // Update toast with countdown
+  const updateToastWithCountdown = (entryNumber: number, secondsLeft: number) => {
     if (toastIdRef.current) {
       dismiss(toastIdRef.current);
     }
-
-    setPendingDelete({ date, entryNumber });
-
-    // Show toast with undo button
     const { id } = toast({
       title: "Deleting...",
       description: (
         <div className="flex items-center justify-between gap-4">
-          <span>Entry {entryNumber} will be deleted in 10 seconds</span>
+          <span>Entry {entryNumber} will be deleted in <strong>{secondsLeft}s</strong></span>
           <Button 
             variant="outline" 
             size="sm" 
@@ -125,19 +128,53 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
             className="shrink-0"
           >
             <Undo2 className="mr-1 h-3 w-3" />
-            Undo
+            Undo ({secondsLeft})
           </Button>
         </div>
       ),
-      duration: 10000,
+      duration: secondsLeft * 1000 + 500,
     });
     toastIdRef.current = id;
+  };
+
+  const handleDelete = (date: string, entryNumber: number) => {
+    // Cancel any existing pending delete
+    if (deleteTimerRef.current) {
+      clearTimeout(deleteTimerRef.current);
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    if (toastIdRef.current) {
+      dismiss(toastIdRef.current);
+    }
+
+    setPendingDelete({ date, entryNumber });
+    setCountdown(10);
+
+    // Show initial toast
+    updateToastWithCountdown(entryNumber, 10);
+
+    // Start countdown interval
+    let secondsLeft = 10;
+    countdownIntervalRef.current = setInterval(() => {
+      secondsLeft--;
+      setCountdown(secondsLeft);
+      if (secondsLeft > 0) {
+        updateToastWithCountdown(entryNumber, secondsLeft);
+      }
+    }, 1000);
 
     // Set timer for actual delete
     deleteTimerRef.current = setTimeout(() => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
       executeDelete(date, entryNumber);
       toastIdRef.current = null;
       deleteTimerRef.current = null;
+      setCountdown(10);
     }, 10000);
   };
 
