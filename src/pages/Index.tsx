@@ -67,6 +67,14 @@ const Index = () => {
   const [showCashTotal, setShowCashTotal] = useState(false);
 
   useEffect(() => {
+    // Sign out on page close/refresh
+    const handleBeforeUnload = () => {
+      sessionStorage.removeItem("userRole");
+      supabase.auth.signOut();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     const checkAuth = async () => {
       // Check for Supabase session
       const { data: { session } } = await supabase.auth.getSession();
@@ -98,7 +106,10 @@ const Index = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   useEffect(() => {
