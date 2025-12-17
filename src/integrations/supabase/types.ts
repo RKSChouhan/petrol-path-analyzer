@@ -70,6 +70,7 @@ export type Database = {
       daily_sales: {
         Row: {
           created_at: string | null
+          entry_number: number
           id: string
           sale_date: string
           total_expenses: number | null
@@ -79,6 +80,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          entry_number?: number
           id?: string
           sale_date: string
           total_expenses?: number | null
@@ -88,6 +90,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          entry_number?: number
           id?: string
           sale_date?: string
           total_expenses?: number | null

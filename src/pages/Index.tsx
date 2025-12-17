@@ -20,6 +20,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedEntry, setSelectedEntry] = useState<1 | 2>(1);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -114,40 +115,130 @@ const Index = () => {
 
   useEffect(() => {
     if (userId) {
-      checkAndResetForNewDay();
+      loadEntryData();
     }
-  }, [userId, selectedDate]);
+  }, [userId, selectedDate, selectedEntry]);
 
-  const checkAndResetForNewDay = async () => {
+  const loadEntryData = async () => {
     if (!userId) return;
     
     try {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       
-      // Check if data exists for selected date
+      // Check if data exists for selected date and entry
       const { data: existingData } = await supabase
         .from('daily_sales')
         .select('id, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*)')
         .eq('user_id', userId)
         .eq('sale_date', dateStr)
+        .eq('entry_number', selectedEntry)
         .maybeSingle();
 
       if (existingData) {
         // Load existing data for editing
-        // This will be handled by existing logic
+        const pumpReadingsData = existingData.pump_readings || [];
+        const oilSalesData = existingData.oil_sales || [];
+        const paymentMethodsData = existingData.payment_methods || [];
+        const cashDenomData = existingData.cash_denominations || [];
+
+        // Load pump readings
+        const newPumpReadings = {
+          petrol1: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+          petrol2: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+          petrol3: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+          petrol4: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+          diesel1: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+          diesel2: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+          diesel3: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+          diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+        };
+
+        pumpReadingsData.forEach((reading: any) => {
+          const key = `${reading.pump_type}${reading.pump_number}` as keyof typeof newPumpReadings;
+          if (newPumpReadings[key]) {
+            newPumpReadings[key] = {
+              opening_reading: reading.opening_reading,
+              closing_reading: reading.closing_reading,
+              price_per_litre: reading.price_per_litre,
+            };
+          }
+        });
+        setPumpReadings(newPumpReadings);
+
+        // Load oil sales
+        if (oilSalesData.length > 0) {
+          const firstOil = oilSalesData[0];
+          setOilSales({
+            items: oilSalesData.map((o: any) => ({
+              oil_name: o.oil_name || '',
+              oil_count: o.oil_count || 0,
+              oil_price: o.oil_price || 0,
+            })),
+            yesterday_reading: firstOil.yesterday_reading || 0,
+            today_reading: firstOil.today_reading || 0,
+            total_litres: firstOil.total_litres || 0,
+            total_amount: firstOil.total_amount || 0,
+            distilled_water: firstOil.distilled_water || 0,
+            waste: firstOil.waste || 0,
+          });
+        }
+
+        // Load payment methods
+        const newPaymentMethods = {
+          group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+          group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+        };
+        paymentMethodsData.forEach((pm: any) => {
+          const group = pm.cashier_group as 'group1' | 'group2';
+          if (newPaymentMethods[group]) {
+            newPaymentMethods[group] = {
+              upi: pm.phone_pay || 0,
+              bharat_fleet_card: pm.bharat_fleet_card || 0,
+              fiserv: pm.fiserv || 0,
+              debit: pm.debit || 0,
+              ubi: pm.ubi || 0,
+              evening_locker: pm.evening_locker || 0,
+            };
+          }
+        });
+        setPaymentMethods(newPaymentMethods);
+
+        // Load cash denominations
+        const newCashDenom = {
+          group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
+          group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
+        };
+        cashDenomData.forEach((cd: any) => {
+          const group = cd.cashier_group as 'group1' | 'group2';
+          if (newCashDenom[group]) {
+            newCashDenom[group] = {
+              rs_500: cd.rs_500 || 0,
+              rs_200: cd.rs_200 || 0,
+              rs_100: cd.rs_100 || 0,
+              rs_50: cd.rs_50 || 0,
+              rs_20: cd.rs_20 || 0,
+              rs_10: cd.rs_10 || 0,
+              coins: cd.coins || 0,
+            };
+          }
+        });
+        setCashDenominations(newCashDenom);
         return;
       }
 
-      // No data exists for this date - fetch previous day's closing readings and reset form
+      // No data exists for this date/entry - fetch previous day's closing readings and reset form
       const previousDate = new Date(selectedDate);
       previousDate.setDate(previousDate.getDate() - 1);
       const previousDateStr = format(previousDate, "yyyy-MM-dd");
 
+      // Get closing readings from previous entry or previous day
       const { data: previousSales } = await supabase
         .from('daily_sales')
         .select('id, pump_readings(*)')
         .eq('user_id', userId)
         .eq('sale_date', previousDateStr)
+        .order('entry_number', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       const newPumpReadings = {
@@ -175,7 +266,7 @@ const Index = () => {
         });
       }
 
-      // Reset all form fields to zero for new day
+      // Reset all form fields to zero for new entry
       setPumpReadings(newPumpReadings);
       setPaymentMethods({
         group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
@@ -195,7 +286,7 @@ const Index = () => {
         waste: 0,
       });
     } catch (error) {
-      console.error('Error checking/resetting for new day:', error);
+      console.error('Error loading entry data:', error);
     }
   };
 
@@ -313,12 +404,13 @@ const Index = () => {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       const totalIncome = calculateTotalIncome();
 
-      // Check if record exists for this date
+      // Check if record exists for this date and entry
       const { data: existingRecord } = await supabase
         .from('daily_sales')
         .select('id')
         .eq('user_id', userId)
         .eq('sale_date', dateStr)
+        .eq('entry_number', selectedEntry)
         .maybeSingle();
 
       let dailySales;
@@ -348,6 +440,7 @@ const Index = () => {
           .insert({
             user_id: userId,
             sale_date: dateStr,
+            entry_number: selectedEntry,
             total_income: totalIncome,
             total_expenses: 0,
           })
@@ -547,7 +640,23 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Digital Sales Tracking System</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
+              <div className="flex gap-1 border rounded-md p-1">
+                <Button 
+                  variant={selectedEntry === 1 ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setSelectedEntry(1)}
+                >
+                  Entry 1
+                </Button>
+                <Button 
+                  variant={selectedEntry === 2 ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setSelectedEntry(2)}
+                >
+                  Entry 2
+                </Button>
+              </div>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal")}>

@@ -75,7 +75,8 @@ const Stat = () => {
           oil_sales(*)
         `)
         .eq('user_id', userId)
-        .order('sale_date', { ascending: false });
+        .order('sale_date', { ascending: false })
+        .order('entry_number', { ascending: true });
 
       // Supervisor sees only last 15 days, Proprietor and Manager see all
       if (userRole === 'Supervisor') {
@@ -106,6 +107,7 @@ const Stat = () => {
 
         return {
           date: sale.sale_date,
+          entryNumber: sale.entry_number || 1,
           petrol: petrolSales,
           diesel: dieselSales,
           engineOil: oilTotal,
