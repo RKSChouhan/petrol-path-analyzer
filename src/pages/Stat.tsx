@@ -98,8 +98,11 @@ const Stat = () => {
           .filter((p: any) => p.pump_type === 'diesel')
           .reduce((sum: number, p: any) => sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
 
-        const oilTotal = oilSales.reduce((sum: number, o: any) => 
-          sum + (o.total_amount || 0), 0);
+        // Calculate full lubricant sales: total_amount + (oil_count * oil_price) + distilled_water + waste
+        const oilTotal = oilSales.reduce((sum: number, o: any) => {
+          const itemTotal = (o.oil_count || 0) * (o.oil_price || 0);
+          return sum + (o.total_amount || 0) + itemTotal + (o.distilled_water || 0) + (o.waste || 0);
+        }, 0);
 
         return {
           date: sale.sale_date,
