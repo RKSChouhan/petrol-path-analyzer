@@ -119,10 +119,7 @@ const Index = () => {
     }
   }, [userId, selectedDate, selectedEntry]);
 
-  const loadEntryData = async () => {
-    if (!userId) return;
-    
-    // Always clear all form fields when switching entry or date
+  const clearFormFields = () => {
     setPumpReadings({
       petrol1: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
       petrol2: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
@@ -150,6 +147,129 @@ const Index = () => {
       distilled_water: 0,
       waste: 0,
     });
+  };
+
+  const loadEntryData = async () => {
+    if (!userId) return;
+    
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    
+    // Fetch existing entry data from database
+    const { data: existingEntry } = await supabase
+      .from("daily_sales")
+      .select(`
+        id,
+        pump_readings (*),
+        oil_sales (*),
+        payment_methods (*),
+        cash_denominations (*)
+      `)
+      .eq("user_id", userId)
+      .eq("sale_date", dateStr)
+      .eq("entry_number", selectedEntry)
+      .maybeSingle();
+    
+    // If no data exists, clear the form
+    if (!existingEntry) {
+      clearFormFields();
+      return;
+    }
+    
+    // Populate pump readings
+    const newPumpReadings = {
+      petrol1: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+      petrol2: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+      petrol3: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+      petrol4: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
+      diesel1: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+      diesel2: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+      diesel3: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+      diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
+    };
+    
+    if (existingEntry.pump_readings) {
+      existingEntry.pump_readings.forEach((reading: any) => {
+        const key = `${reading.pump_type}${reading.pump_number}` as keyof typeof newPumpReadings;
+        if (newPumpReadings[key]) {
+          newPumpReadings[key] = {
+            opening_reading: reading.opening_reading || 0,
+            closing_reading: reading.closing_reading || 0,
+            price_per_litre: reading.price_per_litre || (reading.pump_type === 'petrol' ? 101.88 : 93.48),
+          };
+        }
+      });
+    }
+    setPumpReadings(newPumpReadings);
+    
+    // Populate oil sales
+    if (existingEntry.oil_sales && existingEntry.oil_sales.length > 0) {
+      const oilData = existingEntry.oil_sales[0];
+      const items = existingEntry.oil_sales.map((oil: any) => ({
+        oil_name: oil.oil_name || '',
+        oil_count: oil.oil_count || 0,
+        oil_price: oil.oil_price || 0,
+      }));
+      setOilSales({
+        items: items.length > 0 ? items : [{ oil_name: '', oil_count: 0, oil_price: 0 }],
+        yesterday_reading: oilData.yesterday_reading || 0,
+        today_reading: oilData.today_reading || 0,
+        total_litres: oilData.total_litres || 0,
+        total_amount: oilData.total_amount || 0,
+        distilled_water: oilData.distilled_water || 0,
+        waste: oilData.waste || 0,
+      });
+    } else {
+      setOilSales({
+        items: [{ oil_name: '', oil_count: 0, oil_price: 0 }],
+        yesterday_reading: 0,
+        today_reading: 0,
+        total_litres: 0,
+        total_amount: 0,
+        distilled_water: 0,
+        waste: 0,
+      });
+    }
+    
+    // Populate payment methods
+    const newPaymentMethods = {
+      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+    };
+    if (existingEntry.payment_methods) {
+      existingEntry.payment_methods.forEach((payment: any) => {
+        const group = payment.cashier_group === 'group1' ? 'group1' : 'group2';
+        newPaymentMethods[group] = {
+          upi: (payment.phone_pay || 0) + (payment.gpay || 0),
+          bharat_fleet_card: payment.bharat_fleet_card || 0,
+          fiserv: payment.fiserv || 0,
+          debit: payment.debit || 0,
+          ubi: payment.ubi || 0,
+          evening_locker: payment.evening_locker || 0,
+        };
+      });
+    }
+    setPaymentMethods(newPaymentMethods);
+    
+    // Populate cash denominations
+    const newCashDenominations = {
+      group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
+      group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
+    };
+    if (existingEntry.cash_denominations) {
+      existingEntry.cash_denominations.forEach((cash: any) => {
+        const group = cash.cashier_group === 'group1' ? 'group1' : 'group2';
+        newCashDenominations[group] = {
+          rs_500: cash.rs_500 || 0,
+          rs_200: cash.rs_200 || 0,
+          rs_100: cash.rs_100 || 0,
+          rs_50: cash.rs_50 || 0,
+          rs_20: cash.rs_20 || 0,
+          rs_10: cash.rs_10 || 0,
+          coins: cash.coins || 0,
+        };
+      });
+    }
+    setCashDenominations(newCashDenominations);
   };
 
   const handleLogout = async () => {
