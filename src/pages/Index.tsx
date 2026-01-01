@@ -15,7 +15,7 @@ import PaymentMethodsForm from "@/components/PaymentMethodsForm";
 import CashDenominationsForm from "@/components/CashDenominationsForm";
 import OilSalesForm from "@/components/OilSalesForm";
 import EmptyFieldsDialog from "@/components/EmptyFieldsDialog";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-cropped.png";
 
 const Index = () => {
   const navigate = useNavigate();

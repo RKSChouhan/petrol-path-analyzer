@@ -5,7 +5,7 @@ import { FuelIcon, LogOut, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import SalesCharts from "@/components/SalesCharts";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-cropped.png";
 
 const Stat = () => {
   const navigate = useNavigate();
