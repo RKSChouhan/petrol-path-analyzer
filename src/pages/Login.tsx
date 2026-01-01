@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-cropped.png";
 
 type Role = "Proprietor" | "Manager" | "Supervisor";
 
