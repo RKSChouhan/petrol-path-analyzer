@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FuelIcon, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import logo from "@/assets/logo.png";
 
 type Role = "Proprietor" | "Manager" | "Supervisor";
 
@@ -163,9 +164,7 @@ const Login = () => {
         <div className="w-full max-w-md space-y-6">
           <div className="text-center">
             <div className="flex justify-center mb-3">
-              <div className="p-3 bg-primary/10 rounded-xl">
-                <FuelIcon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
-              </div>
+              <img src={logo} alt="Sri MahaLingam Agency" className="h-20 sm:h-24 w-auto object-contain" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Select Your Role</h1>
             <p className="text-sm text-muted-foreground mt-1 truncate px-4">{authUser.email}</p>
@@ -266,11 +265,9 @@ const Login = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <div className="flex justify-center mb-3">
-            <div className="p-3 bg-primary/10 rounded-xl">
-              <FuelIcon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
-            </div>
+            <img src={logo} alt="Sri MahaLingam Agency" className="h-24 sm:h-28 w-auto object-contain" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Petrol Pump Manager</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Sri MahaLingam Agency</h1>
           <p className="text-sm text-muted-foreground mt-1">Digital Sales Tracking System</p>
         </div>
         <div className="bg-card p-5 sm:p-8 rounded-xl shadow-lg">

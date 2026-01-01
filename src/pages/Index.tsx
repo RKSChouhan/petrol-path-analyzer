@@ -4,7 +4,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, FuelIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info } from "lucide-react";
+import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import PaymentMethodsForm from "@/components/PaymentMethodsForm";
 import CashDenominationsForm from "@/components/CashDenominationsForm";
 import OilSalesForm from "@/components/OilSalesForm";
 import EmptyFieldsDialog from "@/components/EmptyFieldsDialog";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -625,9 +626,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FuelIcon className="h-8 w-8 text-primary" />
-              </div>
+              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Daily tree</h1>
                 <p className="text-sm text-muted-foreground">Digital Sales Tracking System</p>

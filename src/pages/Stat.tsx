@@ -5,6 +5,7 @@ import { FuelIcon, LogOut, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import SalesCharts from "@/components/SalesCharts";
+import logo from "@/assets/logo.png";
 
 const Stat = () => {
   const navigate = useNavigate();
@@ -138,9 +139,7 @@ const Stat = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <BarChart3 className="h-8 w-8 text-primary" />
-              </div>
+              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Stat</h1>
                 <p className="text-sm text-muted-foreground">Sales Statistics & Reports</p>
