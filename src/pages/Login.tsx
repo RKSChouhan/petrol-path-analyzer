@@ -15,11 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import logo from "@/assets/logo-cropped.png";
 
-type Role = "Proprietor" | "Manager" | "Supervisor";
+type Role = "Proprietor" | "Supervisor";
 
 const ROLE_PASSWORDS: Record<Role, string> = {
   Supervisor: "MahaBunk",
-  Manager: "Rajapalayam",
   Proprietor: "KRish",
 };
 
@@ -174,7 +173,7 @@ const Login = () => {
               <div className="space-y-3">
                 <Label className="text-base">Role</Label>
                 <div className="grid grid-cols-1 gap-3">
-                  {(["Proprietor", "Manager", "Supervisor"] as Role[]).map((role) => (
+                  {(["Proprietor", "Supervisor"] as Role[]).map((role) => (
                     <button
                       key={role}
                       type="button"
