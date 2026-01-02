@@ -649,6 +649,9 @@ const Index = () => {
                   Entry 2
                 </Button>
               </div>
+              <div className="flex items-center gap-2 px-3 py-1 border-2 border-primary rounded-md bg-primary/10">
+                <span className="text-sm font-bold text-primary">{format(selectedDate, "EEEE")}</span>
+              </div>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal")}>
@@ -679,17 +682,39 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-4 mb-8">
+        <div className="grid gap-6 md:grid-cols-6 mb-8">
           <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Today's Income</CardTitle>
               <IndianRupee className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">₹{calculateTotalIncome().toLocaleString('en-IN')}</div>
+              <div className="text-2xl font-bold text-foreground">₹{calculateTotalIncome().toLocaleString('en-IN')}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 {format(selectedDate, "dd MMM yyyy")}
               </p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-400">Expense</CardTitle>
+              <IndianRupee className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">₹0</div>
+              <p className="text-xs text-muted-foreground mt-1">Daily expenses</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow border-2 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Debtor</CardTitle>
+              <IndianRupee className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">₹0</div>
+              <p className="text-xs text-muted-foreground mt-1">Outstanding debt</p>
             </CardContent>
           </Card>
 
@@ -699,7 +724,7 @@ const Index = () => {
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-foreground">
                 {(['petrol1', 'petrol2', 'petrol3', 'petrol4'] as const).reduce((sum, key) => sum + (pumpReadings[key].closing_reading - pumpReadings[key].opening_reading), 0).toFixed(2)}L
               </div>
               <p className="text-xs text-muted-foreground mt-1">Total petrol sold</p>
@@ -712,7 +737,7 @@ const Index = () => {
               <TrendingUp className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-foreground">
                 {(['diesel1', 'diesel2', 'diesel3', 'diesel4'] as const).reduce((sum, key) => sum + (pumpReadings[key].closing_reading - pumpReadings[key].opening_reading), 0).toFixed(2)}L
               </div>
               <p className="text-xs text-muted-foreground mt-1">Total diesel sold</p>
@@ -725,11 +750,11 @@ const Index = () => {
               <BarChart3 className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">
+              <div className="text-2xl font-bold text-foreground">
                 ₹{(oilSales.total_amount + oilSales.items.reduce((sum, item) => sum + (item.oil_count * item.oil_price), 0)).toLocaleString('en-IN')}
               </div>
               <div className="space-y-1 mt-2">
-                <p className="text-xs text-muted-foreground">{oilSales.total_litres.toFixed(2)}L sold</p>
+                <p className="text-xs text-muted-foreground">{oilSales.total_litres.toFixed(3)}L sold</p>
                 {oilSales.items.filter(item => item.oil_name || item.oil_count > 0 || item.oil_price > 0).map((item, index) => (
                   <p key={index} className="text-xs text-muted-foreground">
                     {item.oil_name || `Oil ${index + 1}`}: ₹{(item.oil_count * item.oil_price).toLocaleString('en-IN')}

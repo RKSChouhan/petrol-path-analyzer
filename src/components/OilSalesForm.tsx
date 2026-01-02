@@ -103,21 +103,28 @@ const OilSalesForm = ({
               </div>)}
           </div>
           <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <div>
-              <Label className="text-sm">2T Oil - Yesterday Reading</Label>
-              <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
-            </div>
-            <div>
-              <Label className="text-sm">2T Oil - Today Reading</Label>
-              <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
-            </div>
-            <div>
-              <Label className="text-sm">Total Oil Liters</Label>
-              <Input type="number" step="0.001" value={data.total_litres} readOnly disabled className="h-9 bg-muted" />
-            </div>
-            <div>
-              <Label className="text-sm">Total Amount (₹)</Label>
-              <Input type="number" step="0.01" value={data.total_amount} readOnly disabled className="h-9 bg-muted" />
+            <Card className="p-4 border-2 border-primary/20 bg-primary/5">
+              <CardTitle className="text-sm font-semibold mb-3">2T Oil Readings</CardTitle>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Yesterday</Label>
+                  <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+                </div>
+                <div>
+                  <Label className="text-xs">Today</Label>
+                  <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+                </div>
+              </div>
+            </Card>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Total Oil Liters</Label>
+                <Input type="number" step="0.001" value={data.total_litres.toFixed(3)} readOnly disabled className="h-9 bg-muted font-semibold" />
+              </div>
+              <div>
+                <Label className="text-sm">Total Amount (₹)</Label>
+                <Input type="number" step="0.01" value={data.total_amount.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
+              </div>
             </div>
             <div>
               <Label className="text-sm">Distilled Water (₹)</Label>
