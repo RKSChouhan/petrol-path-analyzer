@@ -15,6 +15,8 @@ import PaymentMethodsForm from "@/components/PaymentMethodsForm";
 import CashDenominationsForm from "@/components/CashDenominationsForm";
 import OilSalesForm from "@/components/OilSalesForm";
 import EmptyFieldsDialog from "@/components/EmptyFieldsDialog";
+import ExpenseForm from "@/components/ExpenseForm";
+import DebtorForm from "@/components/DebtorForm";
 import logo from "@/assets/logo-cropped.png";
 
 const Index = () => {
@@ -67,6 +69,8 @@ const Index = () => {
   });
 
   const [showCashTotal, setShowCashTotal] = useState(false);
+  const [expense, setExpense] = useState(0);
+  const [debtors, setDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
 
   useEffect(() => {
     // Sign out on page close/refresh
@@ -682,7 +686,7 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-6 mb-8">
+        <div className="grid gap-6 md:grid-cols-4 mb-6">
           <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Today's Income</CardTitle>
@@ -693,28 +697,6 @@ const Index = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 {format(selectedDate, "dd MMM yyyy")}
               </p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-400">Expense</CardTitle>
-              <IndianRupee className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">₹0</div>
-              <p className="text-xs text-muted-foreground mt-1">Daily expenses</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow border-2 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Debtor</CardTitle>
-              <IndianRupee className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">₹0</div>
-              <p className="text-xs text-muted-foreground mt-1">Outstanding debt</p>
             </CardContent>
           </Card>
 
@@ -765,6 +747,31 @@ const Index = () => {
           </Card>
         </div>
 
+        {/* Final Expense and Debtor Summary Row */}
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
+          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-400">Final Expense</CardTitle>
+              <IndianRupee className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">₹{expense.toLocaleString('en-IN')}</div>
+              <p className="text-xs text-muted-foreground mt-1">Daily expenses</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow border-2 border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-red-600 dark:text-red-400">Final Debtor</CardTitle>
+              <IndianRupee className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">₹{debtors.reduce((sum, d) => sum + d.amount, 0).toLocaleString('en-IN')}</div>
+              <p className="text-xs text-muted-foreground mt-1">Outstanding debt</p>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
             <CardTitle>Daily Ntee</CardTitle>
@@ -776,6 +783,13 @@ const Index = () => {
             <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} />
             <OilSalesForm data={oilSales} onChange={setOilSales} />
             <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} />
+            
+            {/* Expense and Debtor Input Forms */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <ExpenseForm value={expense} onChange={setExpense} />
+              <DebtorForm items={debtors} onChange={setDebtors} />
+            </div>
+            
             <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} />
             
             {/* Total Income Summary */}
