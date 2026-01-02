@@ -78,7 +78,7 @@ const Stat = () => {
         .eq('user_id', userId)
         .order('updated_at', { ascending: false });
 
-      // Supervisor sees only last 15 days, Proprietor and Manager see all
+      // Supervisor sees only last 15 days, Proprietor sees all
       if (userRole === 'Supervisor') {
         query = query.limit(15);
       }
