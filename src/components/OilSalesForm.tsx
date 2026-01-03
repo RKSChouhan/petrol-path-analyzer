@@ -14,6 +14,7 @@ interface OilSalesData {
   today_reading: number;
   total_litres: number;
   total_amount: number;
+  distilled_water_count: number;
   distilled_water: number;
   waste: number;
 }
@@ -36,7 +37,7 @@ const OilSalesForm = ({
       items: updatedItems
     });
   };
-  const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | number) => {
+const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | number) => {
     const updatedData = {
       ...data,
       [field]: typeof value === 'string' ? parseFloat(value) || 0 : value
@@ -49,6 +50,14 @@ const OilSalesForm = ({
       updatedData.total_litres = today - yesterday;
       updatedData.total_amount = updatedData.total_litres * 330;
     }
+    
+    // Auto-calculate distilled water cost when count changes
+    if (field === 'distilled_water_count') {
+      const count = parseFloat(value as string) || 0;
+      updatedData.distilled_water_count = count;
+      updatedData.distilled_water = count * 20;
+    }
+    
     onChange(updatedData);
   };
   const addOilItem = () => {
@@ -107,12 +116,12 @@ const OilSalesForm = ({
               <CardTitle className="text-sm font-semibold mb-3">2T Oil Readings</CardTitle>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">Yesterday</Label>
-                  <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
-                </div>
-                <div>
                   <Label className="text-xs">Today</Label>
                   <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+                </div>
+                <div>
+                  <Label className="text-xs">Yesterday</Label>
+                  <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
                 </div>
               </div>
             </Card>
@@ -126,9 +135,15 @@ const OilSalesForm = ({
                 <Input type="number" step="0.01" value={data.total_amount.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
               </div>
             </div>
-            <div>
-              <Label className="text-sm">Distilled Water (₹)</Label>
-              <Input type="number" step="0.01" value={data.distilled_water === 0 ? '' : data.distilled_water} onChange={e => handleChange('distilled_water', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Distilled Water (Count)</Label>
+                <Input type="number" value={data.distilled_water_count === 0 ? '' : data.distilled_water_count} onChange={e => handleChange('distilled_water_count', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+              </div>
+              <div>
+                <Label className="text-sm">Distilled Water (₹)</Label>
+                <Input type="number" step="0.01" value={data.distilled_water.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
+              </div>
             </div>
             <div>
               <Label className="text-sm">Waste (₹)</Label>

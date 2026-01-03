@@ -64,12 +64,13 @@ const Index = () => {
     today_reading: 0,
     total_litres: 0,
     total_amount: 0,
+    distilled_water_count: 0,
     distilled_water: 0,
     waste: 0,
   });
 
   const [showCashTotal, setShowCashTotal] = useState(false);
-  const [expense, setExpense] = useState(0);
+  const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [debtors, setDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
 
   useEffect(() => {
@@ -149,6 +150,7 @@ const Index = () => {
       today_reading: 0,
       total_litres: 0,
       total_amount: 0,
+      distilled_water_count: 0,
       distilled_water: 0,
       waste: 0,
     });
@@ -167,7 +169,9 @@ const Index = () => {
         pump_readings (*),
         oil_sales (*),
         payment_methods (*),
-        cash_denominations (*)
+        cash_denominations (*),
+        expenses (*),
+        debtors (*)
       `)
       .eq("user_id", userId)
       .eq("sale_date", dateStr)
@@ -177,6 +181,8 @@ const Index = () => {
     // If no data exists, clear the form
     if (!existingEntry) {
       clearFormFields();
+      setExpenses([{ name: "", amount: 0 }]);
+      setDebtors([{ name: "", amount: 0 }]);
       return;
     }
     
@@ -220,6 +226,7 @@ const Index = () => {
         today_reading: oilData.today_reading || 0,
         total_litres: oilData.total_litres || 0,
         total_amount: oilData.total_amount || 0,
+        distilled_water_count: oilData.distilled_water_count || 0,
         distilled_water: oilData.distilled_water || 0,
         waste: oilData.waste || 0,
       });
@@ -230,6 +237,7 @@ const Index = () => {
         today_reading: 0,
         total_litres: 0,
         total_amount: 0,
+        distilled_water_count: 0,
         distilled_water: 0,
         waste: 0,
       });
@@ -275,6 +283,26 @@ const Index = () => {
       });
     }
     setCashDenominations(newCashDenominations);
+    
+    // Populate expenses
+    if (existingEntry.expenses && existingEntry.expenses.length > 0) {
+      setExpenses(existingEntry.expenses.map((exp: any) => ({
+        name: exp.name || '',
+        amount: exp.amount || 0,
+      })));
+    } else {
+      setExpenses([{ name: "", amount: 0 }]);
+    }
+    
+    // Populate debtors
+    if (existingEntry.debtors && existingEntry.debtors.length > 0) {
+      setDebtors(existingEntry.debtors.map((deb: any) => ({
+        name: deb.name || '',
+        amount: deb.amount || 0,
+      })));
+    } else {
+      setDebtors([{ name: "", amount: 0 }]);
+    }
   };
 
   const handleLogout = async () => {
@@ -374,6 +402,7 @@ const Index = () => {
       today_reading: 0,
       total_litres: 0,
       total_amount: 0,
+      distilled_water_count: 0,
       distilled_water: 0,
       waste: 0,
     });
@@ -523,11 +552,36 @@ const Index = () => {
         today_reading: oilSales.today_reading,
         total_litres: oilSales.total_litres,
         total_amount: oilSales.total_amount,
+        distilled_water_count: oilSales.distilled_water_count,
         distilled_water: oilSales.distilled_water,
         waste: oilSales.waste,
       }));
       const { error: oilError } = await supabase.from('oil_sales').insert(oilSalesData);
       if (oilError) throw oilError;
+
+      // Save expenses
+      await supabase.from('expenses').delete().eq('daily_sales_id', dailySales.id);
+      const expensesData = expenses.filter(e => e.name || e.amount > 0).map(exp => ({
+        daily_sales_id: dailySales.id,
+        name: exp.name,
+        amount: exp.amount,
+      }));
+      if (expensesData.length > 0) {
+        const { error: expenseError } = await supabase.from('expenses').insert(expensesData);
+        if (expenseError) throw expenseError;
+      }
+
+      // Save debtors
+      await supabase.from('debtors').delete().eq('daily_sales_id', dailySales.id);
+      const debtorsData = debtors.filter(d => d.name || d.amount > 0).map(deb => ({
+        daily_sales_id: dailySales.id,
+        name: deb.name,
+        amount: deb.amount,
+      }));
+      if (debtorsData.length > 0) {
+        const { error: debtorError } = await supabase.from('debtors').insert(debtorsData);
+        if (debtorError) throw debtorError;
+      }
 
       toast({
         title: "Success",
@@ -755,7 +809,7 @@ const Index = () => {
               <IndianRupee className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">₹{expense.toLocaleString('en-IN')}</div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">₹{expenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString('en-IN')}</div>
               <p className="text-xs text-muted-foreground mt-1">Daily expenses</p>
             </CardContent>
           </Card>
@@ -786,7 +840,7 @@ const Index = () => {
             
             {/* Expense and Debtor Input Forms */}
             <div className="grid md:grid-cols-2 gap-6">
-              <ExpenseForm value={expense} onChange={setExpense} />
+              <ExpenseForm items={expenses} onChange={setExpenses} />
               <DebtorForm items={debtors} onChange={setDebtors} />
             </div>
             
