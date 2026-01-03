@@ -21,9 +21,10 @@ interface CashDenominationsData {
 interface CashDenominationsFormProps {
   data: CashDenominationsData;
   onChange: (data: CashDenominationsData) => void;
+  disabled?: boolean;
 }
 
-const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) => {
+const CashDenominationsForm = ({ data, onChange, disabled = false }: CashDenominationsFormProps) => {
   const handleChange = (
     group: keyof CashDenominationsData,
     field: keyof CashData,
@@ -73,6 +74,7 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -84,6 +86,7 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -95,6 +98,7 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -106,6 +110,7 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -117,6 +122,7 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -128,6 +134,7 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
           </div>
@@ -141,6 +148,7 @@ const CashDenominationsForm = ({ data, onChange }: CashDenominationsFormProps) =
               onFocus={(e) => e.target.select()}
               className="h-8 text-sm"
               placeholder="0"
+              disabled={disabled}
             />
           </div>
           <div className="bg-accent/10 p-2 rounded">

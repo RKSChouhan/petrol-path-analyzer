@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInDays, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -315,6 +315,17 @@ const Index = () => {
     navigate("/stat");
   };
 
+  // Check if editing should be disabled for Supervisor role (last 2 days)
+  const isEditingDisabled = () => {
+    if (userRole !== 'Supervisor') return false;
+    const today = startOfDay(new Date());
+    const selected = startOfDay(selectedDate);
+    const daysDiff = differenceInDays(today, selected);
+    return daysDiff <= 2 && daysDiff >= 0;
+  };
+
+  const editDisabled = isEditingDisabled();
+
   const calculateTotalIncome = () => {
     let total = 0;
     
@@ -323,9 +334,9 @@ const Index = () => {
       total += (pump.closing_reading - pump.opening_reading) * pump.price_per_litre;
     });
     
-    // Oil sales
+    // Oil sales (removed distilled_water and waste)
     const oilPricesTotal = oilSales.items.reduce((sum, item) => sum + (item.oil_count * item.oil_price), 0);
-    total += oilSales.total_amount + oilSales.distilled_water + oilSales.waste + oilPricesTotal;
+    total += oilSales.total_amount + oilPricesTotal;
     
     return total;
   };
@@ -834,17 +845,24 @@ const Index = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
-            <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} />
-            <OilSalesForm data={oilSales} onChange={setOilSales} />
-            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} />
+            {editDisabled && (
+              <div className="p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  Editing is disabled for entries within the last 2 days. Only Proprietor can edit these entries.
+                </p>
+              </div>
+            )}
+            <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} disabled={editDisabled} />
+            <OilSalesForm data={oilSales} onChange={setOilSales} disabled={editDisabled} />
+            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} />
             
             {/* Expense and Debtor Input Forms */}
             <div className="grid md:grid-cols-2 gap-6">
-              <ExpenseForm items={expenses} onChange={setExpenses} />
-              <DebtorForm items={debtors} onChange={setDebtors} />
+              <ExpenseForm items={expenses} onChange={setExpenses} disabled={editDisabled} />
+              <DebtorForm items={debtors} onChange={setDebtors} disabled={editDisabled} />
             </div>
             
-            <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} />
+            <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} disabled={editDisabled} />
             
             {/* Total Income Summary */}
             <div className="space-y-4 pt-6 border-t">
@@ -915,8 +933,8 @@ const Index = () => {
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t">
-              <Button variant="outline" size="lg" onClick={handleClearAll}>Clear All</Button>
-              <Button size="lg" onClick={handleSaveButtonClick} disabled={loading}>
+              <Button variant="outline" size="lg" onClick={handleClearAll} disabled={editDisabled}>Clear All</Button>
+              <Button size="lg" onClick={handleSaveButtonClick} disabled={loading || editDisabled}>
                 {loading ? "Saving..." : "Save Sales Data"}
               </Button>
             </div>

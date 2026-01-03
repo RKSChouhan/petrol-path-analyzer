@@ -12,9 +12,10 @@ interface ExpenseItem {
 interface ExpenseFormProps {
   items: ExpenseItem[];
   onChange: (items: ExpenseItem[]) => void;
+  disabled?: boolean;
 }
 
-const ExpenseForm = ({ items, onChange }: ExpenseFormProps) => {
+const ExpenseForm = ({ items, onChange, disabled = false }: ExpenseFormProps) => {
   const handleAdd = () => {
     onChange([...items, { name: "", amount: 0 }]);
   };
@@ -46,15 +47,17 @@ const ExpenseForm = ({ items, onChange }: ExpenseFormProps) => {
             <IndianRupee className="h-5 w-5" />
             Expense
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAdd}
-            className="h-8 px-2 border-orange-300 text-orange-600 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
-          </Button>
+          {!disabled && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAdd}
+              className="h-8 px-2 border-orange-300 text-orange-600 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -68,6 +71,7 @@ const ExpenseForm = ({ items, onChange }: ExpenseFormProps) => {
                 onChange={(e) => handleChange(index, "name", e.target.value)}
                 placeholder="Expense name"
                 className="h-9"
+                disabled={disabled}
               />
             </div>
             <div className="w-28 space-y-1">
@@ -78,16 +82,19 @@ const ExpenseForm = ({ items, onChange }: ExpenseFormProps) => {
                 onChange={(e) => handleChange(index, "amount", e.target.value)}
                 placeholder="0"
                 className="h-9"
+                disabled={disabled}
               />
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(index)}
-              className="h-9 w-9 p-0 text-orange-500 hover:text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!disabled && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(index)}
+                className="h-9 w-9 p-0 text-orange-500 hover:text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         ))}
         <div className="pt-3 border-t border-orange-200 dark:border-orange-800">

@@ -20,9 +20,10 @@ interface PaymentMethodsData {
 interface PaymentMethodsFormProps {
   data: PaymentMethodsData;
   onChange: (data: PaymentMethodsData) => void;
+  disabled?: boolean;
 }
 
-const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
+const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethodsFormProps) => {
   const handleChange = (
     group: keyof PaymentMethodsData,
     field: keyof PaymentData,
@@ -65,6 +66,7 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -77,6 +79,7 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -89,6 +92,7 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -101,6 +105,7 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -113,6 +118,7 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
             <div>
@@ -125,6 +131,7 @@ const PaymentMethodsForm = ({ data, onChange }: PaymentMethodsFormProps) => {
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
           </div>
