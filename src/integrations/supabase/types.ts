@@ -100,11 +100,76 @@ export type Database = {
         }
         Relationships: []
       }
+      debtors: {
+        Row: {
+          amount: number
+          created_at: string | null
+          daily_sales_id: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          name?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debtors_daily_sales_id_fkey"
+            columns: ["daily_sales_id"]
+            isOneToOne: false
+            referencedRelation: "daily_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          created_at: string | null
+          daily_sales_id: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          name?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_daily_sales_id_fkey"
+            columns: ["daily_sales_id"]
+            isOneToOne: false
+            referencedRelation: "daily_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oil_sales: {
         Row: {
           created_at: string | null
           daily_sales_id: string | null
           distilled_water: number | null
+          distilled_water_count: number | null
           id: string
           oil_count: number | null
           oil_name: string | null
@@ -119,6 +184,7 @@ export type Database = {
           created_at?: string | null
           daily_sales_id?: string | null
           distilled_water?: number | null
+          distilled_water_count?: number | null
           id?: string
           oil_count?: number | null
           oil_name?: string | null
@@ -133,6 +199,7 @@ export type Database = {
           created_at?: string | null
           daily_sales_id?: string | null
           distilled_water?: number | null
+          distilled_water_count?: number | null
           id?: string
           oil_count?: number | null
           oil_name?: string | null
