@@ -23,9 +23,10 @@ interface PumpReadingsData {
 interface PumpReadingsFormProps {
   data: PumpReadingsData;
   onChange: (data: PumpReadingsData) => void;
+  disabled?: boolean;
 }
 
-const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
+const PumpReadingsForm = ({ data, onChange, disabled = false }: PumpReadingsFormProps) => {
   const handlePumpChange = (
     pumpKey: keyof PumpReadingsData,
     field: keyof PumpReading,
@@ -67,18 +68,6 @@ const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Yesterday (9:00AM)</Label>
-              <Input
-                type="number"
-                step="0.001"
-                value={pump.opening_reading === 0 ? '' : pump.opening_reading}
-                onChange={(e) => handlePumpChange(pumpKey, 'opening_reading', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-8 text-sm"
-                placeholder="0"
-              />
-            </div>
-            <div>
               <Label className="text-xs">Today (9:00AM)</Label>
               <Input
                 type="number"
@@ -88,6 +77,20 @@ const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
                 onFocus={(e) => e.target.select()}
                 className="h-8 text-sm"
                 placeholder="0"
+                disabled={disabled}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Yesterday (9:00AM)</Label>
+              <Input
+                type="number"
+                step="0.001"
+                value={pump.opening_reading === 0 ? '' : pump.opening_reading}
+                onChange={(e) => handlePumpChange(pumpKey, 'opening_reading', e.target.value)}
+                onFocus={(e) => e.target.select()}
+                className="h-8 text-sm"
+                placeholder="0"
+                disabled={disabled}
               />
             </div>
           </div>
@@ -101,6 +104,7 @@ const PumpReadingsForm = ({ data, onChange }: PumpReadingsFormProps) => {
               onFocus={(e) => e.target.select()}
               className="h-8 text-sm"
               placeholder="0"
+              disabled={disabled}
             />
           </div>
           <div className="bg-muted/50 p-2 rounded space-y-1">

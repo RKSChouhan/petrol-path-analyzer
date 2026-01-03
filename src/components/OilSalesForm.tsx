@@ -21,10 +21,12 @@ interface OilSalesData {
 interface OilSalesFormProps {
   data: OilSalesData;
   onChange: (data: OilSalesData) => void;
+  disabled?: boolean;
 }
 const OilSalesForm = ({
   data,
-  onChange
+  onChange,
+  disabled = false
 }: OilSalesFormProps) => {
   const handleItemChange = (index: number, field: keyof OilItem, value: string | number) => {
     const updatedItems = [...data.items];
@@ -85,70 +87,64 @@ const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | 
       </h3>
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Engine Oil & Lubricants</CardTitle>
+          <CardTitle className="text-base">2T Oil</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3 mb-4">
-            {data.items.map((item, index) => <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
-                <div>
-                  <Label className="text-sm">Oil Code </Label>
-                  <Input type="text" value={item.oil_name} onChange={e => handleItemChange(index, 'oil_name', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="Enter oil name" />
-                </div>
-                <div>
-                  <Label className="text-sm">Count</Label>
-                  <Input type="number" value={item.oil_count === 0 ? '' : item.oil_count} onChange={e => handleItemChange(index, 'oil_count', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
-                </div>
-                <div>
-                  <Label className="text-sm">Price (₹)</Label>
-                  <Input type="number" step="0.01" value={item.oil_price === 0 ? '' : item.oil_price} onChange={e => handleItemChange(index, 'oil_price', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
-                </div>
-                <div className="flex items-end">
-                  {index === 0 ? <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={addOilItem}>
-                      <Plus className="h-4 w-4" />
-                    </Button> : <Button type="button" variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => removeOilItem(index)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>}
-                </div>
-              </div>)}
-          </div>
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
+          <div className="grid md:grid-cols-2 gap-4">
             <Card className="p-4 border-2 border-primary/20 bg-primary/5">
               <CardTitle className="text-sm font-semibold mb-3">2T Oil Readings</CardTitle>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Today</Label>
-                  <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+                  <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
                 </div>
                 <div>
                   <Label className="text-xs">Yesterday</Label>
-                  <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
+                  <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
                 </div>
               </div>
             </Card>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-sm">Total Oil Liters</Label>
+                <Label className="text-sm">Total 2T Oil Liters</Label>
                 <Input type="number" step="0.001" value={data.total_litres.toFixed(3)} readOnly disabled className="h-9 bg-muted font-semibold" />
               </div>
               <div>
-                <Label className="text-sm">Total Amount (₹)</Label>
+                <Label className="text-sm">Total 2T Oil Amount (₹)</Label>
                 <Input type="number" step="0.01" value={data.total_amount.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm">Distilled Water (Count)</Label>
-                <Input type="number" value={data.distilled_water_count === 0 ? '' : data.distilled_water_count} onChange={e => handleChange('distilled_water_count', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
-              </div>
-              <div>
-                <Label className="text-sm">Distilled Water (₹)</Label>
-                <Input type="number" step="0.01" value={data.distilled_water.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
-              </div>
-            </div>
-            <div>
-              <Label className="text-sm">Waste (₹)</Label>
-              <Input type="number" step="0.01" value={data.waste === 0 ? '' : data.waste} onChange={e => handleChange('waste', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" />
-            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Engine Oil & Lubricants</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {data.items.map((item, index) => <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
+                <div>
+                  <Label className="text-sm">Oil Code </Label>
+                  <Input type="text" value={item.oil_name} onChange={e => handleItemChange(index, 'oil_name', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="Enter oil name" disabled={disabled} />
+                </div>
+                <div>
+                  <Label className="text-sm">Count</Label>
+                  <Input type="number" value={item.oil_count === 0 ? '' : item.oil_count} onChange={e => handleItemChange(index, 'oil_count', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
+                </div>
+                <div>
+                  <Label className="text-sm">Price (₹)</Label>
+                  <Input type="number" step="0.01" value={item.oil_price === 0 ? '' : item.oil_price} onChange={e => handleItemChange(index, 'oil_price', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
+                </div>
+                <div className="flex items-end">
+                  {!disabled && (index === 0 ? <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={addOilItem}>
+                      <Plus className="h-4 w-4" />
+                    </Button> : <Button type="button" variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => removeOilItem(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>)}
+                </div>
+              </div>)}
           </div>
         </CardContent>
       </Card>

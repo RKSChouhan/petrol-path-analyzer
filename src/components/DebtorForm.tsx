@@ -12,9 +12,10 @@ interface DebtorItem {
 interface DebtorFormProps {
   items: DebtorItem[];
   onChange: (items: DebtorItem[]) => void;
+  disabled?: boolean;
 }
 
-const DebtorForm = ({ items, onChange }: DebtorFormProps) => {
+const DebtorForm = ({ items, onChange, disabled = false }: DebtorFormProps) => {
   const handleAdd = () => {
     onChange([...items, { name: "", amount: 0 }]);
   };
@@ -46,15 +47,17 @@ const DebtorForm = ({ items, onChange }: DebtorFormProps) => {
             <IndianRupee className="h-5 w-5" />
             Debtor
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAdd}
-            className="h-8 px-2 border-red-300 text-red-600 hover:bg-red-100 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/30"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
-          </Button>
+          {!disabled && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAdd}
+              className="h-8 px-2 border-red-300 text-red-600 hover:bg-red-100 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/30"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -68,6 +71,7 @@ const DebtorForm = ({ items, onChange }: DebtorFormProps) => {
                 onChange={(e) => handleChange(index, "name", e.target.value)}
                 placeholder="Debtor name"
                 className="h-9"
+                disabled={disabled}
               />
             </div>
             <div className="w-28 space-y-1">
@@ -78,16 +82,19 @@ const DebtorForm = ({ items, onChange }: DebtorFormProps) => {
                 onChange={(e) => handleChange(index, "amount", e.target.value)}
                 placeholder="0"
                 className="h-9"
+                disabled={disabled}
               />
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(index)}
-              className="h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!disabled && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(index)}
+                className="h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         ))}
         <div className="pt-3 border-t border-red-200 dark:border-red-800">
