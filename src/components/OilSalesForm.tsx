@@ -3,11 +3,49 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Container, Plus, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Oil varieties with prices from the provided list
+const OIL_VARIETIES = [
+  { name: "2T OIL-1/2 Ltr", price: 173.00 },
+  { name: "DWATER", price: 20.00 },
+  { name: "WASTE", price: 20.00 },
+  { name: "HYDROL OIL-26 Ltr", price: 4800.00 },
+  { name: "MAK ATF-1 Ltr", price: 338.00 },
+  { name: "MG 500ml", price: 182.00 },
+  { name: "MAK 4T PLUS", price: 422.00 },
+  { name: "MAK GOLD -1/2 ltr", price: 144.00 },
+  { name: "BRAKE OIL", price: 106.00 },
+  { name: "REDI COOL -1 Ltr", price: 238.00 },
+  { name: "MG -5 Ltr", price: 1339.00 },
+  { name: "MAK 4T ZIPP", price: 422.00 },
+  { name: "MG 20WX40 -1 Ltr", price: 360.00 },
+  { name: "SCOOTY OIL-800 ml", price: 444.00 },
+  { name: "TVS TRUE -900ml", price: 250.00 },
+  { name: "HERO HONDA- 900ml", price: 338.00 },
+  { name: "GREASE-500 Gm", price: 265.00 },
+  { name: "REDI COOL -1/2 ltr", price: 134.00 },
+  { name: "GEAR OIL - 1Lt", price: 319.00 },
+  { name: "SPIRAL EB - 1/2 Lt", price: 134.00 },
+  { name: "TVS TRUE -1 Ltr", price: 275.00 },
+  { name: "MAK DIAMOND -1 ltr", price: 380.00 },
+  { name: "MAK DIAMOND -1/2 ltr", price: 192.00 },
+  { name: "HONDA POWER-1 Ltr", price: 404.00 },
+  { name: "OTHERS", price: 0 },
+];
+
 interface OilItem {
   oil_name: string;
   oil_count: number;
   oil_price: number;
 }
+
 interface OilSalesData {
   items: OilItem[];
   yesterday_reading: number;
@@ -18,11 +56,13 @@ interface OilSalesData {
   distilled_water: number;
   waste: number;
 }
+
 interface OilSalesFormProps {
   data: OilSalesData;
   onChange: (data: OilSalesData) => void;
   disabled?: boolean;
 }
+
 const OilSalesForm = ({
   data,
   onChange,
@@ -30,16 +70,37 @@ const OilSalesForm = ({
 }: OilSalesFormProps) => {
   const handleItemChange = (index: number, field: keyof OilItem, value: string | number) => {
     const updatedItems = [...data.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: typeof value === 'string' ? field === 'oil_name' ? value : parseFloat(value) || 0 : value
-    };
+    
+    if (field === 'oil_name') {
+      // Find the selected oil variety
+      const selectedOil = OIL_VARIETIES.find(oil => oil.name === value);
+      const unitPrice = selectedOil?.price || 0;
+      const count = updatedItems[index].oil_count;
+      
+      updatedItems[index] = {
+        ...updatedItems[index],
+        oil_name: value as string,
+        oil_price: unitPrice * count,
+      };
+    } else if (field === 'oil_count') {
+      const count = typeof value === 'string' ? parseFloat(value) || 0 : value;
+      const selectedOil = OIL_VARIETIES.find(oil => oil.name === updatedItems[index].oil_name);
+      const unitPrice = selectedOil?.price || 0;
+      
+      updatedItems[index] = {
+        ...updatedItems[index],
+        oil_count: count,
+        oil_price: unitPrice * count,
+      };
+    }
+    
     onChange({
       ...data,
       items: updatedItems
     });
   };
-const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | number) => {
+
+  const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | number) => {
     const updatedData = {
       ...data,
       [field]: typeof value === 'string' ? parseFloat(value) || 0 : value
@@ -53,15 +114,9 @@ const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | 
       updatedData.total_amount = updatedData.total_litres * 330;
     }
     
-    // Auto-calculate distilled water cost when count changes
-    if (field === 'distilled_water_count') {
-      const count = parseFloat(value as string) || 0;
-      updatedData.distilled_water_count = count;
-      updatedData.distilled_water = count * 20;
-    }
-    
     onChange(updatedData);
   };
+
   const addOilItem = () => {
     onChange({
       ...data,
@@ -72,6 +127,7 @@ const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | 
       }]
     });
   };
+
   const removeOilItem = (index: number) => {
     if (data.items.length > 1) {
       onChange({
@@ -80,7 +136,9 @@ const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | 
       });
     }
   };
-  return <div className="space-y-4">
+
+  return (
+    <div className="space-y-4">
       <h3 className="text-lg font-semibold flex items-center gap-2">
         <Container className="h-5 w-5 text-chart-3" />
         Oil Sales
@@ -93,19 +151,51 @@ const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | 
           <div className="grid md:grid-cols-4 gap-4">
             <div>
               <Label className="text-xs">Today Reading</Label>
-              <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
+              <Input 
+                type="number" 
+                step="0.001" 
+                value={data.today_reading === 0 ? '' : data.today_reading} 
+                onChange={e => handleChange('today_reading', e.target.value)} 
+                onFocus={e => e.target.select()} 
+                className="h-9" 
+                placeholder="0" 
+                disabled={disabled} 
+              />
             </div>
             <div>
               <Label className="text-xs">Yesterday Reading</Label>
-              <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
+              <Input 
+                type="number" 
+                step="0.001" 
+                value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} 
+                onChange={e => handleChange('yesterday_reading', e.target.value)} 
+                onFocus={e => e.target.select()} 
+                className="h-9" 
+                placeholder="0" 
+                disabled={disabled} 
+              />
             </div>
             <div>
               <Label className="text-xs">Total 2T Oil Liters</Label>
-              <Input type="number" step="0.001" value={data.total_litres.toFixed(3)} readOnly disabled className="h-9 bg-muted font-semibold" />
+              <Input 
+                type="number" 
+                step="0.001" 
+                value={data.total_litres.toFixed(3)} 
+                readOnly 
+                disabled 
+                className="h-9 bg-muted font-semibold" 
+              />
             </div>
             <div>
               <Label className="text-xs">Total 2T Oil Amount (₹)</Label>
-              <Input type="number" step="0.01" value={data.total_amount.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
+              <Input 
+                type="number" 
+                step="0.01" 
+                value={data.total_amount.toFixed(2)} 
+                readOnly 
+                disabled 
+                className="h-9 bg-muted font-semibold" 
+              />
             </div>
           </div>
         </CardContent>
@@ -117,30 +207,80 @@ const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | 
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {data.items.map((item, index) => <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
+            {data.items.map((item, index) => (
+              <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
                 <div>
-                  <Label className="text-sm">Oil Code </Label>
-                  <Input type="text" value={item.oil_name} onChange={e => handleItemChange(index, 'oil_name', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="Enter oil name" disabled={disabled} />
+                  <Label className="text-sm">Oil Type</Label>
+                  <Select
+                    value={item.oil_name}
+                    onValueChange={(value) => handleItemChange(index, 'oil_name', value)}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Select oil type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50 max-h-[300px]">
+                      {OIL_VARIETIES.map((oil) => (
+                        <SelectItem key={oil.name} value={oil.name}>
+                          {oil.name} - ₹{oil.price.toFixed(2)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label className="text-sm">Count</Label>
-                  <Input type="number" value={item.oil_count === 0 ? '' : item.oil_count} onChange={e => handleItemChange(index, 'oil_count', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
+                  <Input 
+                    type="number" 
+                    value={item.oil_count === 0 ? '' : item.oil_count} 
+                    onChange={e => handleItemChange(index, 'oil_count', e.target.value)} 
+                    onFocus={e => e.target.select()} 
+                    className="h-9" 
+                    placeholder="0" 
+                    disabled={disabled} 
+                  />
                 </div>
                 <div>
                   <Label className="text-sm">Price (₹)</Label>
-                  <Input type="number" step="0.01" value={item.oil_price === 0 ? '' : item.oil_price} onChange={e => handleItemChange(index, 'oil_price', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={item.oil_price === 0 ? '' : item.oil_price.toFixed(2)} 
+                    readOnly
+                    disabled
+                    className="h-9 bg-muted font-semibold" 
+                  />
                 </div>
                 <div className="flex items-end">
-                  {!disabled && (index === 0 ? <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={addOilItem}>
+                  {!disabled && (index === 0 ? (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-9 w-9" 
+                      onClick={addOilItem}
+                    >
                       <Plus className="h-4 w-4" />
-                    </Button> : <Button type="button" variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => removeOilItem(index)}>
+                    </Button>
+                  ) : (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-9 w-9 text-destructive hover:text-destructive" 
+                      onClick={() => removeOilItem(index)}
+                    >
                       <Trash2 className="h-4 w-4" />
-                    </Button>)}
+                    </Button>
+                  ))}
                 </div>
-              </div>)}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default OilSalesForm;

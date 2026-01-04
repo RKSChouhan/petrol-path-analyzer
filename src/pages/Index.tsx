@@ -746,79 +746,84 @@ const Index = () => {
       />
       <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Daily tree</h1>
-                <p className="text-sm text-muted-foreground">Digital Sales Tracking System</p>
+          <div className="flex flex-col gap-4">
+            {/* First row: Logo, Entry buttons, Date, Stat, Logout */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">Daily tree</h1>
+                  <p className="text-sm text-muted-foreground">Digital Sales Tracking System</p>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <div className="flex gap-1 border rounded-md p-1">
-                <Button 
-                  variant={selectedEntry === 1 ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setSelectedEntry(1)}
-                >
-                  Entry 1
-                </Button>
-                <Button 
-                  variant={selectedEntry === 2 ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setSelectedEntry(2)}
-                >
-                  Entry 2
-                </Button>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1 border-2 border-primary rounded-md bg-primary/10">
-                <span className="text-sm font-bold text-primary">{format(selectedDate, "EEEE")}</span>
-              </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(selectedDate, "PPP")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              {userRole === 'Proprietor' && (
-                <>
+              <div className="flex flex-wrap gap-3">
+                <div className="flex gap-1 border rounded-md p-1">
                   <Button 
-                    variant={supervisorLocked ? "destructive" : "outline"} 
-                    onClick={() => toggleLock('supervisor')}
+                    variant={selectedEntry === 1 ? 'default' : 'ghost'} 
                     size="sm"
+                    onClick={() => setSelectedEntry(1)}
                   >
-                    {supervisorLocked ? <Lock className="mr-2 h-4 w-4" /> : <Unlock className="mr-2 h-4 w-4" />}
-                    {supervisorLocked ? "Unlock Supervisor" : "Lock Supervisor"}
+                    Entry 1
                   </Button>
                   <Button 
-                    variant={proprietorLocked ? "destructive" : "outline"} 
-                    onClick={() => toggleLock('proprietor')}
+                    variant={selectedEntry === 2 ? 'default' : 'ghost'} 
                     size="sm"
+                    onClick={() => setSelectedEntry(2)}
                   >
-                    {proprietorLocked ? <Lock className="mr-2 h-4 w-4" /> : <Unlock className="mr-2 h-4 w-4" />}
-                    {proprietorLocked ? "Unlock Proprietor" : "Lock Proprietor"}
+                    Entry 2
                   </Button>
-                </>
-              )}
-              <Button variant="outline" onClick={handleGoToStat}>
-                <BarChart3 className="mr-2 h-4 w-4" />
-                Stat
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 border-2 border-primary rounded-md bg-primary/10">
+                  <span className="text-sm font-bold text-primary">{format(selectedDate, "EEEE")}</span>
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(selectedDate, "PPP")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Button variant="outline" onClick={handleGoToStat}>
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Stat
+                </Button>
+                <Button variant="outline" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
             </div>
+            
+            {/* Second row: Lock buttons (only for Proprietor) */}
+            {userRole === 'Proprietor' && (
+              <div className="flex justify-end gap-3">
+                <Button 
+                  variant={supervisorLocked ? "destructive" : "outline"} 
+                  onClick={() => toggleLock('supervisor')}
+                  size="sm"
+                >
+                  {supervisorLocked ? <Lock className="mr-2 h-4 w-4" /> : <Unlock className="mr-2 h-4 w-4" />}
+                  {supervisorLocked ? "Unlock Supervisor" : "Lock Supervisor"}
+                </Button>
+                <Button 
+                  variant={proprietorLocked ? "destructive" : "outline"} 
+                  onClick={() => toggleLock('proprietor')}
+                  size="sm"
+                >
+                  {proprietorLocked ? <Lock className="mr-2 h-4 w-4" /> : <Unlock className="mr-2 h-4 w-4" />}
+                  {proprietorLocked ? "Unlock Proprietor" : "Lock Proprietor"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </header>
