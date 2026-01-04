@@ -4,7 +4,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info } from "lucide-react";
+import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock } from "lucide-react";
 import { format, differenceInDays, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -315,13 +315,66 @@ const Index = () => {
     navigate("/stat");
   };
 
-  // Check if editing should be disabled for Supervisor role (last 2 days)
+  const [supervisorLocked, setSupervisorLocked] = useState(false);
+  const [proprietorLocked, setProprietorLocked] = useState(false);
+
+  // Load lock settings
+  useEffect(() => {
+    const loadLockSettings = async () => {
+      const { data } = await supabase
+        .from('lock_settings')
+        .select('supervisor_locked, proprietor_locked')
+        .eq('id', '00000000-0000-0000-0000-000000000001')
+        .single();
+      
+      if (data) {
+        setSupervisorLocked(data.supervisor_locked || false);
+        setProprietorLocked(data.proprietor_locked || false);
+      }
+    };
+    loadLockSettings();
+  }, []);
+
+  const toggleLock = async (lockType: 'supervisor' | 'proprietor') => {
+    const newValue = lockType === 'supervisor' ? !supervisorLocked : !proprietorLocked;
+    
+    const { error } = await supabase
+      .from('lock_settings')
+      .update({
+        [lockType === 'supervisor' ? 'supervisor_locked' : 'proprietor_locked']: newValue,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', '00000000-0000-0000-0000-000000000001');
+    
+    if (!error) {
+      if (lockType === 'supervisor') {
+        setSupervisorLocked(newValue);
+      } else {
+        setProprietorLocked(newValue);
+      }
+      toast({
+        title: newValue ? "Locked" : "Unlocked",
+        description: `${lockType === 'supervisor' ? 'Supervisor' : 'Proprietor'} editing has been ${newValue ? 'locked' : 'unlocked'}`,
+      });
+    }
+  };
+
+  // Check if editing should be disabled
   const isEditingDisabled = () => {
-    if (userRole !== 'Supervisor') return false;
-    const today = startOfDay(new Date());
-    const selected = startOfDay(selectedDate);
-    const daysDiff = differenceInDays(today, selected);
-    return daysDiff <= 2 && daysDiff >= 0;
+    // Check lock settings first
+    if (userRole === 'Supervisor' && supervisorLocked) return true;
+    if (userRole === 'Proprietor' && proprietorLocked) return true;
+    
+    // Supervisor can only edit entries from the last 2 days
+    if (userRole === 'Supervisor') {
+      const today = startOfDay(new Date());
+      const selected = startOfDay(selectedDate);
+      const daysDiff = differenceInDays(today, selected);
+      // Can edit if within last 2 days (0, 1, or 2 days ago)
+      return daysDiff > 2 || daysDiff < 0;
+    }
+    
+    return false;
   };
 
   const editDisabled = isEditingDisabled();
@@ -737,6 +790,26 @@ const Index = () => {
                   />
                 </PopoverContent>
               </Popover>
+              {userRole === 'Proprietor' && (
+                <>
+                  <Button 
+                    variant={supervisorLocked ? "destructive" : "outline"} 
+                    onClick={() => toggleLock('supervisor')}
+                    size="sm"
+                  >
+                    {supervisorLocked ? <Lock className="mr-2 h-4 w-4" /> : <Unlock className="mr-2 h-4 w-4" />}
+                    {supervisorLocked ? "Unlock Supervisor" : "Lock Supervisor"}
+                  </Button>
+                  <Button 
+                    variant={proprietorLocked ? "destructive" : "outline"} 
+                    onClick={() => toggleLock('proprietor')}
+                    size="sm"
+                  >
+                    {proprietorLocked ? <Lock className="mr-2 h-4 w-4" /> : <Unlock className="mr-2 h-4 w-4" />}
+                    {proprietorLocked ? "Unlock Proprietor" : "Lock Proprietor"}
+                  </Button>
+                </>
+              )}
               <Button variant="outline" onClick={handleGoToStat}>
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Stat

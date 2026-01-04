@@ -164,6 +164,30 @@ export type Database = {
           },
         ]
       }
+      lock_settings: {
+        Row: {
+          id: string
+          proprietor_locked: boolean | null
+          supervisor_locked: boolean | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          proprietor_locked?: boolean | null
+          supervisor_locked?: boolean | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          proprietor_locked?: boolean | null
+          supervisor_locked?: boolean | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       oil_sales: {
         Row: {
           created_at: string | null
