@@ -90,29 +90,22 @@ const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | 
           <CardTitle className="text-base">2T Oil</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
-            <Card className="p-4 border-2 border-primary/20 bg-primary/5">
-              <CardTitle className="text-sm font-semibold mb-3">2T Oil Readings</CardTitle>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Today</Label>
-                  <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
-                </div>
-                <div>
-                  <Label className="text-xs">Yesterday</Label>
-                  <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
-                </div>
-              </div>
-            </Card>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm">Total 2T Oil Liters</Label>
-                <Input type="number" step="0.001" value={data.total_litres.toFixed(3)} readOnly disabled className="h-9 bg-muted font-semibold" />
-              </div>
-              <div>
-                <Label className="text-sm">Total 2T Oil Amount (₹)</Label>
-                <Input type="number" step="0.01" value={data.total_amount.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
-              </div>
+          <div className="grid md:grid-cols-4 gap-4">
+            <div>
+              <Label className="text-xs">Today Reading</Label>
+              <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
+            </div>
+            <div>
+              <Label className="text-xs">Yesterday Reading</Label>
+              <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
+            </div>
+            <div>
+              <Label className="text-xs">Total 2T Oil Liters</Label>
+              <Input type="number" step="0.001" value={data.total_litres.toFixed(3)} readOnly disabled className="h-9 bg-muted font-semibold" />
+            </div>
+            <div>
+              <Label className="text-xs">Total 2T Oil Amount (₹)</Label>
+              <Input type="number" step="0.01" value={data.total_amount.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
             </div>
           </div>
         </CardContent>
