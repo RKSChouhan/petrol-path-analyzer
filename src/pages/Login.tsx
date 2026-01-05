@@ -39,44 +39,30 @@ const Login = () => {
   const [authUser, setAuthUser] = useState<{ id: string; email: string } | null>(null);
 
   useEffect(() => {
-    // Sign out on page close/refresh
-    const handleBeforeUnload = () => {
-      // Clear session storage
-      sessionStorage.removeItem("userRole");
-      // Sign out from Supabase (fire and forget)
-      supabase.auth.signOut();
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    // Check existing session - but always require role selection
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Always require role selection on each visit
-        setIsAuthenticated(true);
-        setAuthUser({ id: session.user.id, email: session.user.email || "" });
-      }
-    };
-    
-    checkSession();
-
-    // Listen for auth changes
+    // Set up auth state listener FIRST (critical for tablets/mobile)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
+      // Only synchronous state updates here
+      if (session?.user) {
         setIsAuthenticated(true);
         setAuthUser({ id: session.user.id, email: session.user.email || "" });
-      } else if (event === 'SIGNED_OUT') {
+      } else {
         setIsAuthenticated(false);
         setAuthUser(null);
       }
     });
 
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsAuthenticated(true);
+        setAuthUser({ id: session.user.id, email: session.user.email || "" });
+      }
+    });
+
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
