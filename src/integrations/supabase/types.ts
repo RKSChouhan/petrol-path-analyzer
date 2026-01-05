@@ -73,6 +73,7 @@ export type Database = {
           entry_number: number
           id: string
           sale_date: string
+          saved_by: string | null
           total_expenses: number | null
           total_income: number | null
           updated_at: string | null
@@ -83,6 +84,7 @@ export type Database = {
           entry_number?: number
           id?: string
           sale_date: string
+          saved_by?: string | null
           total_expenses?: number | null
           total_income?: number | null
           updated_at?: string | null
@@ -93,6 +95,7 @@ export type Database = {
           entry_number?: number
           id?: string
           sale_date?: string
+          saved_by?: string | null
           total_expenses?: number | null
           total_income?: number | null
           updated_at?: string | null
@@ -361,6 +364,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "pump_readings_daily_sales_id_fkey"
+            columns: ["daily_sales_id"]
+            isOneToOne: false
+            referencedRelation: "daily_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repaid_debtors: {
+        Row: {
+          amount: number
+          created_at: string | null
+          daily_sales_id: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          name?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          daily_sales_id?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repaid_debtors_daily_sales_id_fkey"
             columns: ["daily_sales_id"]
             isOneToOne: false
             referencedRelation: "daily_sales"

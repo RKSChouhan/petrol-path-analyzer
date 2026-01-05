@@ -109,6 +109,7 @@ const Stat = () => {
           date: sale.sale_date,
           entryNumber: sale.entry_number || 1,
           updatedAt: sale.updated_at,
+          savedBy: sale.saved_by || null,
           petrol: petrolSales,
           diesel: dieselSales,
           engineOil: oilTotal,
