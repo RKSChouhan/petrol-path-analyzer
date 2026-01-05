@@ -932,14 +932,14 @@ const Index = () => {
             )}
             <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} disabled={editDisabled} />
             <OilSalesForm data={oilSales} onChange={setOilSales} disabled={editDisabled} />
-            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} />
             
-            {/* Expense and Debtor Input Forms */}
+            {/* Expense and Debtor Input Forms - after Oil Sales, before Payment Methods */}
             <div className="grid md:grid-cols-2 gap-6">
               <ExpenseForm items={expenses} onChange={setExpenses} disabled={editDisabled} />
               <DebtorForm items={debtors} onChange={setDebtors} disabled={editDisabled} />
             </div>
             
+            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} />
             <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} disabled={editDisabled} />
             
             {/* Total Income Summary */}
@@ -1004,6 +1004,24 @@ const Index = () => {
                     <div className="p-4 bg-card rounded-lg">
                       <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
                       <div className="text-2xl font-bold mt-2 text-primary">₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                    </div>
+                  </div>
+                  
+                  {/* Total Expense and Final Cash Received by Manager */}
+                  <div className="grid md:grid-cols-2 gap-4 mt-4">
+                    <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <Label className="text-sm text-orange-600 dark:text-orange-400">Total Expense</Label>
+                      <div className="text-2xl font-bold mt-2 text-orange-600 dark:text-orange-400">
+                        ₹{(expenses.reduce((sum, e) => sum + e.amount, 0) + debtors.reduce((sum, d) => sum + d.amount, 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Expenses + Debtors</p>
+                    </div>
+                    <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <Label className="text-sm text-green-600 dark:text-green-400">Final Cash Received by Manager</Label>
+                      <div className="text-2xl font-bold mt-2 text-green-600 dark:text-green-400">
+                        ₹0.00
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Formula to be defined</p>
                     </div>
                   </div>
                 </CardContent>
