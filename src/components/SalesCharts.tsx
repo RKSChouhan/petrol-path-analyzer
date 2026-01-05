@@ -496,8 +496,9 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
+                  <TableHead>Date & Time</TableHead>
                   <TableHead className="text-center">Entry</TableHead>
+                  <TableHead className="text-center">Saved By</TableHead>
                   <TableHead className="text-right">Petrol</TableHead>
                   <TableHead className="text-right">Diesel</TableHead>
                   <TableHead className="text-right">Lubricant</TableHead>
@@ -508,11 +509,31 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
               <TableBody>
                 {sortedData.slice(-10).map((sale) => (
                   <TableRow key={`${sale.date}-${sale.entryNumber || 1}`}>
-                    <TableCell className="font-medium">{format(parseISO(sale.date), "dd MMM yyyy")}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{format(parseISO(sale.date), "dd MMM yyyy")}</div>
+                      {sale.updatedAt && (
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(sale.updatedAt), "hh:mm a")}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-center">
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
                         {sale.entryNumber || 1}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {sale.savedBy ? (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          sale.savedBy === 'Proprietor' 
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' 
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        }`}>
+                          {sale.savedBy === 'Proprietor' ? 'P' : 'S'}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">₹{sale.petrol.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-right">₹{sale.diesel.toLocaleString('en-IN')}</TableCell>
