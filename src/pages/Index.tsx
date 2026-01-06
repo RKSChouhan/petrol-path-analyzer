@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock } from "lucide-react";
+import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock, Eye, EyeOff } from "lucide-react";
 import { format, differenceInDays, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,9 +72,11 @@ const Index = () => {
   });
 
   const [showCashTotal, setShowCashTotal] = useState(false);
+  const [showSalesAmount, setShowSalesAmount] = useState(false);
   const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [debtors, setDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [repaidDebtors, setRepaidDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
+  const [comment, setComment] = useState("");
 
   useEffect(() => {
     // Sign out on page close/refresh
@@ -168,6 +171,7 @@ const Index = () => {
       .from("daily_sales")
       .select(`
         id,
+        comment,
         pump_readings (*),
         oil_sales (*),
         payment_methods (*),
@@ -187,6 +191,7 @@ const Index = () => {
       setExpenses([{ name: "", amount: 0 }]);
       setDebtors([{ name: "", amount: 0 }]);
       setRepaidDebtors([{ name: "", amount: 0 }]);
+      setComment("");
       return;
     }
     
@@ -317,6 +322,9 @@ const Index = () => {
     } else {
       setRepaidDebtors([{ name: "", amount: 0 }]);
     }
+    
+    // Populate comment
+    setComment(existingEntry.comment || "");
   };
 
   const handleLogout = async () => {
@@ -451,12 +459,25 @@ const Index = () => {
     return group1Total + group2Total;
   };
 
-  const calculateMustBe = () => {
-    return calculateTotalIncome() - calculateTotalDigitalPayments();
+  const calculateTotalExpenseAmount = () => {
+    return expenses.reduce((sum, e) => sum + e.amount, 0) + debtors.reduce((sum, d) => sum + d.amount, 0);
   };
 
-  const calculateShortage = () => {
-    return calculateMustBe() - calculateTotalCashInHand();
+  const calculateActualSalesAmount = () => {
+    return calculateTotalIncome() - calculateTotalExpenseAmount();
+  };
+
+  const calculateRoundedSalesAmount = () => {
+    const actual = calculateActualSalesAmount();
+    return Math.ceil(actual / 10) * 10;
+  };
+
+  const calculateTotalCashOnHandValue = () => {
+    return calculateRoundedSalesAmount() - calculateTotalDigitalPayments();
+  };
+
+  const calculateExtraOrShortage = () => {
+    return calculateTotalCashInHand() - calculateTotalCashOnHandValue();
   };
 
   const handleClearAll = () => {
@@ -533,6 +554,7 @@ const Index = () => {
             total_expenses: 0,
             updated_at: new Date().toISOString(),
             saved_by: userRole,
+            comment: comment || null,
           })
           .eq('id', existingRecord.id)
           .select()
@@ -554,6 +576,7 @@ const Index = () => {
             total_income: totalIncome,
             total_expenses: 0,
             saved_by: userRole,
+            comment: comment || null,
           })
           .select()
           .single();
@@ -989,16 +1012,14 @@ const Index = () => {
                     <div className="text-2xl font-bold mt-2 text-primary">
                       ₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Fuel Sales + Oil Sales + Repaid Debtor Money</p>
                   </div>
                   
                   {/* Row 2: Total Expense */}
                   <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800 mb-4">
                     <Label className="text-sm text-orange-600 dark:text-orange-400">Total Expense</Label>
                     <div className="text-2xl font-bold mt-2 text-orange-600 dark:text-orange-400">
-                      ₹{(expenses.reduce((sum, e) => sum + e.amount, 0) + debtors.reduce((sum, d) => sum + d.amount, 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      ₹{calculateTotalExpenseAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Expenses + Debtors</p>
                   </div>
                   
                   {/* Row 3: Total Digital Payment */}
@@ -1007,7 +1028,6 @@ const Index = () => {
                     <div className="text-2xl font-bold mt-2 text-blue-600 dark:text-blue-400">
                       ₹{calculateTotalDigitalPayments().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">UPI + Fleet Card + Fiserv + Debit + UBI + Evening Locker</p>
                   </div>
                   
                   {/* Row 4: Total Cash on Hand */}
@@ -1020,22 +1040,16 @@ const Index = () => {
                         onClick={() => setShowCashTotal(!showCashTotal)}
                         className="h-7 px-2"
                       >
-                        {showCashTotal ? "Hide" : "Show"}
+                        {showCashTotal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
                     <div className="text-2xl font-bold mt-2">
                       {showCashTotal ? (
-                        (() => {
-                          const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0) + debtors.reduce((sum, d) => sum + d.amount, 0);
-                          const salesAmount = calculateTotalIncome() - totalExpense;
-                          const totalCashOnHand = salesAmount - calculateTotalDigitalPayments();
-                          return `₹${totalCashOnHand.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-                        })()
+                        `₹${calculateTotalCashOnHandValue().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
                       ) : (
                         <span className="blur-sm select-none">₹1,234.56</span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Sales Amount - Total Digital Payment</p>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1055,12 +1069,12 @@ const Index = () => {
                             </div>
                           </div>
                           <div>
-                            <Label className="text-xs text-muted-foreground">Shortage</Label>
+                            <Label className="text-xs text-muted-foreground">Extra or Shortage</Label>
                             <div className={cn(
                               "text-lg font-semibold",
-                              calculateShortage() < 0 ? "text-green-600" : calculateShortage() > 0 ? "text-red-600" : ""
+                              calculateExtraOrShortage() < 0 ? "text-red-600" : ""
                             )}>
-                              ₹{calculateShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              ₹{calculateExtraOrShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             </div>
                           </div>
                         </div>
@@ -1069,18 +1083,59 @@ const Index = () => {
                   </div>
                   
                   {/* Row 5: Sales Amount */}
-                  <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                    <Label className="text-sm text-green-600 dark:text-green-400">Sales Amount</Label>
-                    <div className="text-2xl font-bold mt-2 text-green-600 dark:text-green-400">
-                      ₹{(() => {
-                        const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0) + debtors.reduce((sum, d) => sum + d.amount, 0);
-                        return (calculateTotalIncome() - totalExpense).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-                      })()}
+                  <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800 relative">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm text-green-600 dark:text-green-400">Sales Amount</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSalesAmount(!showSalesAmount)}
+                        className="h-7 px-2"
+                      >
+                        {showSalesAmount ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Total Income - Total Expense</p>
+                    <div className="text-2xl font-bold mt-2 text-green-600 dark:text-green-400">
+                      {showSalesAmount ? (
+                        `₹${calculateRoundedSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                      ) : (
+                        <span className="blur-sm select-none">₹1,234.56</span>
+                      )}
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute bottom-2 right-2 h-6 w-6 p-0"
+                        >
+                          <Info className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64" align="end">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Actual Sales Amount</Label>
+                          <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                            ₹{calculateActualSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Comment Box */}
+            <div className="space-y-4 pt-6 border-t">
+              <h3 className="text-lg font-semibold">Comments</h3>
+              <Textarea
+                placeholder="Add any notes or comments for this entry..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                disabled={editDisabled}
+                className="min-h-[100px]"
+              />
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t">
