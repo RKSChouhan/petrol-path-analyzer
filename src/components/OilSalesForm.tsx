@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Container, Plus, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -74,23 +75,38 @@ const OilSalesForm = ({
     if (field === 'oil_name') {
       // Find the selected oil variety
       const selectedOil = OIL_VARIETIES.find(oil => oil.name === value);
-      const unitPrice = selectedOil?.price || 0;
+      // For "OTHERS", price is 0 (manual entry needed)
+      const unitPrice = value === 'OTHERS' ? 0 : (selectedOil?.price || 0);
       const count = updatedItems[index].oil_count;
       
       updatedItems[index] = {
         ...updatedItems[index],
         oil_name: value as string,
-        oil_price: unitPrice * count,
+        oil_price: value === 'OTHERS' ? 0 : unitPrice * count,
       };
     } else if (field === 'oil_count') {
       const count = typeof value === 'string' ? parseFloat(value) || 0 : value;
       const selectedOil = OIL_VARIETIES.find(oil => oil.name === updatedItems[index].oil_name);
-      const unitPrice = selectedOil?.price || 0;
-      
+      // For "OTHERS", don't auto-calculate price
+      if (updatedItems[index].oil_name === 'OTHERS') {
+        updatedItems[index] = {
+          ...updatedItems[index],
+          oil_count: count,
+        };
+      } else {
+        const unitPrice = selectedOil?.price || 0;
+        updatedItems[index] = {
+          ...updatedItems[index],
+          oil_count: count,
+          oil_price: unitPrice * count,
+        };
+      }
+    } else if (field === 'oil_price') {
+      // Manual price entry for "OTHERS"
+      const price = typeof value === 'string' ? parseFloat(value) || 0 : value;
       updatedItems[index] = {
         ...updatedItems[index],
-        oil_count: count,
-        oil_price: unitPrice * count,
+        oil_price: price,
       };
     }
     
@@ -246,9 +262,11 @@ const OilSalesForm = ({
                     type="number" 
                     step="0.01" 
                     value={item.oil_price === 0 ? '' : item.oil_price.toFixed(2)} 
-                    readOnly
-                    disabled
-                    className="h-9 bg-muted font-semibold" 
+                    onChange={e => item.oil_name === 'OTHERS' && handleItemChange(index, 'oil_price', e.target.value)}
+                    onFocus={e => e.target.select()}
+                    readOnly={item.oil_name !== 'OTHERS'}
+                    disabled={disabled || item.oil_name !== 'OTHERS'}
+                    className={cn("h-9 font-semibold", item.oil_name === 'OTHERS' ? '' : 'bg-muted')} 
                   />
                 </div>
                 <div className="flex items-end">
