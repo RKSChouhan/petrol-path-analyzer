@@ -410,7 +410,7 @@ const Index = () => {
     });
     
     // Oil sales (removed distilled_water and waste)
-    const oilPricesTotal = oilSales.items.reduce((sum, item) => sum + (item.oil_count * item.oil_price), 0);
+    const oilPricesTotal = oilSales.items.reduce((sum, item) => sum + (item.oil_price), 0);
     total += oilSales.total_amount + oilPricesTotal;
     
     // Add repaid debtor money to total income
