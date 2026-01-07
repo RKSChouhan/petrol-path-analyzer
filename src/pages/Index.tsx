@@ -937,7 +937,7 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">{oilSales.total_litres.toFixed(3)}L sold</p>
                 {oilSales.items.filter(item => item.oil_name || item.oil_count > 0 || item.oil_price > 0).map((item, index) => (
                   <p key={index} className="text-xs text-muted-foreground">
-                    {item.oil_name || `Oil ${index + 1}`}: ₹{(item.oil_count * item.oil_price).toLocaleString('en-IN')}
+                    {item.oil_name || `Oil ${index + 1}`}: ₹{(item.oil_price).toLocaleString('en-IN')}
                   </p>
                 ))}
               </div>
