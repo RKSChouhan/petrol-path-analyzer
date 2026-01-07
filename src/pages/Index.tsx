@@ -931,7 +931,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
-                ₹{(oilSales.total_amount + oilSales.items.reduce((sum, item) => sum + (item.oil_count * item.oil_price), 0)).toLocaleString('en-IN')}
+                ₹{(oilSales.total_amount + oilSales.items.reduce((sum, item) => sum + item.oil_price, 0)).toLocaleString('en-IN')}
               </div>
               <div className="space-y-1 mt-2">
                 <p className="text-xs text-muted-foreground">{oilSales.total_litres.toFixed(3)}L sold</p>
