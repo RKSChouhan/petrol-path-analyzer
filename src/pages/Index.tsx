@@ -985,7 +985,7 @@ const Index = () => {
                 </p>
               </div>
             )}
-            <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} disabled={editDisabled} />
+            <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} disabled={editDisabled} isProprietor={userRole === 'Proprietor'} />
             <OilSalesForm data={oilSales} onChange={setOilSales} disabled={editDisabled} />
             
             {/* Expense, Debtor, and Repaid Debtor Input Forms - after Oil Sales, before Payment Methods */}
