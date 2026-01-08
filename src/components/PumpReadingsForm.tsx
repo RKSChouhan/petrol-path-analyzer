@@ -106,7 +106,7 @@ const PumpReadingsForm = ({ data, onChange, disabled = false, isProprietor = fal
               className="h-8 text-sm"
               placeholder="0"
               disabled={disabled}
-              readOnly={type === 'petrol' && !isProprietor}
+              readOnly={!isProprietor}
             />
           </div>
           <div className="bg-muted/50 p-2 rounded space-y-1">
