@@ -24,9 +24,10 @@ interface PumpReadingsFormProps {
   data: PumpReadingsData;
   onChange: (data: PumpReadingsData) => void;
   disabled?: boolean;
+  isProprietor?: boolean;
 }
 
-const PumpReadingsForm = ({ data, onChange, disabled = false }: PumpReadingsFormProps) => {
+const PumpReadingsForm = ({ data, onChange, disabled = false, isProprietor = false }: PumpReadingsFormProps) => {
   const handlePumpChange = (
     pumpKey: keyof PumpReadingsData,
     field: keyof PumpReading,
@@ -105,6 +106,7 @@ const PumpReadingsForm = ({ data, onChange, disabled = false }: PumpReadingsForm
               className="h-8 text-sm"
               placeholder="0"
               disabled={disabled}
+              readOnly={type === 'petrol' && !isProprietor}
             />
           </div>
           <div className="bg-muted/50 p-2 rounded space-y-1">
