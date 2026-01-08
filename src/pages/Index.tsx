@@ -1072,7 +1072,7 @@ const Index = () => {
                             <Label className="text-xs text-muted-foreground">Extra or Shortage</Label>
                             <div className={cn(
                               "text-lg font-semibold",
-                              calculateExtraOrShortage() < 0 ? "text-red-600" : ""
+                              calculateExtraOrShortage() < 0 ? "text-red-600" : calculateExtraOrShortage() > 0 ? "text-green-600" : ""
                             )}>
                               ₹{calculateExtraOrShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             </div>
