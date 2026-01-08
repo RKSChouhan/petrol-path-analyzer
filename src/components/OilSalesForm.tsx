@@ -261,7 +261,11 @@ const OilSalesForm = ({
                   <Input 
                     type="number" 
                     step="0.01" 
-                    value={item.oil_price === 0 ? '' : item.oil_price.toFixed(2)} 
+                    min="0"
+                    max="999.99"
+                    value={item.oil_name === 'OTHERS' 
+                      ? (item.oil_price === 0 ? '0' : item.oil_price.toFixed(2))
+                      : (item.oil_price === 0 ? '' : item.oil_price.toFixed(2))} 
                     onChange={e => item.oil_name === 'OTHERS' && handleItemChange(index, 'oil_price', e.target.value)}
                     onFocus={e => e.target.select()}
                     readOnly={item.oil_name !== 'OTHERS'}
