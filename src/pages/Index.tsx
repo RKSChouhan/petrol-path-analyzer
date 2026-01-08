@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock, Eye, EyeOff } from "lucide-react";
+import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock, Eye, EyeOff, RotateCcw } from "lucide-react";
 import { format, differenceInDays, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +73,7 @@ const Index = () => {
 
   const [showCashTotal, setShowCashTotal] = useState(false);
   const [showSalesAmount, setShowSalesAmount] = useState(false);
+  const [showCashierSplit, setShowCashierSplit] = useState(false);
   const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [debtors, setDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [repaidDebtors, setRepaidDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
@@ -478,6 +479,31 @@ const Index = () => {
 
   const calculateExtraOrShortage = () => {
     return calculateTotalCashInHand() - calculateTotalCashOnHandValue();
+  };
+
+  // Cashier-specific calculations
+  const calculateCashierDigitalPayments = (group: 'group1' | 'group2') => {
+    return (
+      paymentMethods[group].upi +
+      paymentMethods[group].bharat_fleet_card +
+      paymentMethods[group].fiserv +
+      paymentMethods[group].debit +
+      paymentMethods[group].ubi +
+      paymentMethods[group].evening_locker
+    );
+  };
+
+  const calculateCashierCashTotal = (group: 'group1' | 'group2') => {
+    const denom = cashDenominations[group];
+    return (
+      denom.rs_500 * 500 +
+      denom.rs_200 * 200 +
+      denom.rs_100 * 100 +
+      denom.rs_50 * 50 +
+      denom.rs_20 * 20 +
+      denom.rs_10 * 10 +
+      denom.coins
+    );
   };
 
   const handleClearAll = () => {
@@ -1000,128 +1026,181 @@ const Index = () => {
             
             {/* Summary */}
             <div className="space-y-4 pt-6 border-t">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <IndianRupee className="h-5 w-5 text-primary" />
-                Summary
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <IndianRupee className="h-5 w-5 text-primary" />
+                  Summary
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCashierSplit(!showCashierSplit)}
+                  className="h-8"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  {showCashierSplit ? "Combined View" : "Cashier Split"}
+                </Button>
+              </div>
               <Card className="shadow-sm bg-primary/5">
                 <CardContent className="pt-6">
-                  {/* Row 1: Total Income Produced */}
-                  <div className="p-4 bg-card rounded-lg mb-4">
-                    <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
-                    <div className="text-2xl font-bold mt-2 text-primary">
-                      ₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                  
-                  {/* Row 2: Total Expense */}
-                  <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800 mb-4">
-                    <Label className="text-sm text-orange-600 dark:text-orange-400">Total Expense</Label>
-                    <div className="text-2xl font-bold mt-2 text-orange-600 dark:text-orange-400">
-                      ₹{calculateTotalExpenseAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                  
-                  {/* Row 3: Total Digital Payment */}
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
-                    <Label className="text-sm text-blue-600 dark:text-blue-400">Total Digital Payment</Label>
-                    <div className="text-2xl font-bold mt-2 text-blue-600 dark:text-blue-400">
-                      ₹{calculateTotalDigitalPayments().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                  
-                  {/* Row 4: Total Cash on Hand */}
-                  <div className="p-4 bg-card rounded-lg relative mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm text-muted-foreground">Total Cash on Hand</Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowCashTotal(!showCashTotal)}
-                        className="h-7 px-2"
-                      >
-                        {showCashTotal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    <div className="text-2xl font-bold mt-2">
-                      {showCashTotal ? (
-                        `₹${calculateTotalCashOnHandValue().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
-                      ) : (
-                        <span className="blur-sm select-none">₹1,234.56</span>
-                      )}
-                    </div>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute bottom-2 right-2 h-6 w-6 p-0"
-                        >
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64" align="end">
-                        <div className="space-y-3">
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Actual Cash in Hand</Label>
-                            <div className="text-lg font-semibold">
-                              ₹{calculateTotalCashInHand().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Extra or Shortage</Label>
-                            <div className={cn(
-                              "text-lg font-semibold",
-                              calculateExtraOrShortage() < 0 ? "text-red-600" : calculateExtraOrShortage() > 0 ? "text-green-600" : ""
-                            )}>
-                              ₹{calculateExtraOrShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                            </div>
+                  {showCashierSplit ? (
+                    /* Cashier Split View */
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Cashier 1 Column */}
+                      <div className="space-y-4">
+                        <h4 className="text-lg font-semibold text-center border-b pb-2">Cashier 1</h4>
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <Label className="text-xs text-blue-600 dark:text-blue-400">Digital Payment</Label>
+                          <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
+                            ₹{calculateCashierDigitalPayments('group1').toLocaleString('en-IN')}
                           </div>
                         </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  {/* Row 5: Sales Amount */}
-                  <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800 relative">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm text-green-600 dark:text-green-400">Sales Amount</Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowSalesAmount(!showSalesAmount)}
-                        className="h-7 px-2"
-                      >
-                        {showSalesAmount ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    <div className="text-2xl font-bold mt-2 text-green-600 dark:text-green-400">
-                      {showSalesAmount ? (
-                        `₹${calculateRoundedSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
-                      ) : (
-                        <span className="blur-sm select-none">₹1,234.56</span>
-                      )}
-                    </div>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute bottom-2 right-2 h-6 w-6 p-0"
-                        >
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64" align="end">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Actual Sales Amount</Label>
-                          <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-                            ₹{calculateActualSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        <div className="p-3 bg-card rounded-lg">
+                          <Label className="text-xs text-muted-foreground">Cash Total</Label>
+                          <div className="text-xl font-bold mt-1">
+                            ₹{calculateCashierCashTotal('group1').toLocaleString('en-IN')}
                           </div>
                         </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                      </div>
+                      
+                      {/* Cashier 2 Column */}
+                      <div className="space-y-4">
+                        <h4 className="text-lg font-semibold text-center border-b pb-2">Cashier 2</h4>
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <Label className="text-xs text-blue-600 dark:text-blue-400">Digital Payment</Label>
+                          <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
+                            ₹{calculateCashierDigitalPayments('group2').toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                        <div className="p-3 bg-card rounded-lg">
+                          <Label className="text-xs text-muted-foreground">Cash Total</Label>
+                          <div className="text-xl font-bold mt-1">
+                            ₹{calculateCashierCashTotal('group2').toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Combined View (Original) */
+                    <>
+                      {/* Row 1: Total Income Produced */}
+                      <div className="p-4 bg-card rounded-lg mb-4">
+                        <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
+                        <div className="text-2xl font-bold mt-2 text-primary">
+                          ₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                      
+                      {/* Row 2: Total Expense */}
+                      <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800 mb-4">
+                        <Label className="text-sm text-orange-600 dark:text-orange-400">Total Expense</Label>
+                        <div className="text-2xl font-bold mt-2 text-orange-600 dark:text-orange-400">
+                          ₹{calculateTotalExpenseAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                      
+                      {/* Row 3: Total Digital Payment */}
+                      <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
+                        <Label className="text-sm text-blue-600 dark:text-blue-400">Total Digital Payment</Label>
+                        <div className="text-2xl font-bold mt-2 text-blue-600 dark:text-blue-400">
+                          ₹{calculateTotalDigitalPayments().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                      
+                      {/* Row 4: Total Cash on Hand */}
+                      <div className="p-4 bg-card rounded-lg relative mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-sm text-muted-foreground">Total Cash on Hand</Label>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowCashTotal(!showCashTotal)}
+                            className="h-7 px-2"
+                          >
+                            {showCashTotal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <div className="text-2xl font-bold mt-2">
+                          {showCashTotal ? (
+                            `₹${calculateTotalCashOnHandValue().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                          ) : (
+                            <span className="blur-sm select-none">₹1,234.56</span>
+                          )}
+                        </div>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute bottom-2 right-2 h-6 w-6 p-0"
+                            >
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64" align="end">
+                            <div className="space-y-3">
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Actual Cash in Hand</Label>
+                                <div className="text-lg font-semibold">
+                                  ₹{calculateTotalCashInHand().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                </div>
+                              </div>
+                              <div>
+                                <Label className="text-xs text-muted-foreground">Extra or Shortage</Label>
+                                <div className={cn(
+                                  "text-lg font-semibold",
+                                  calculateExtraOrShortage() < 0 ? "text-red-600" : calculateExtraOrShortage() > 0 ? "text-green-600" : ""
+                                )}>
+                                  ₹{calculateExtraOrShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                </div>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      
+                      {/* Row 5: Sales Amount */}
+                      <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800 relative">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-sm text-green-600 dark:text-green-400">Sales Amount</Label>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowSalesAmount(!showSalesAmount)}
+                            className="h-7 px-2"
+                          >
+                            {showSalesAmount ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <div className="text-2xl font-bold mt-2 text-green-600 dark:text-green-400">
+                          {showSalesAmount ? (
+                            `₹${calculateRoundedSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                          ) : (
+                            <span className="blur-sm select-none">₹1,234.56</span>
+                          )}
+                        </div>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute bottom-2 right-2 h-6 w-6 p-0"
+                            >
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64" align="end">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Actual Sales Amount</Label>
+                              <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                                ₹{calculateActualSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
