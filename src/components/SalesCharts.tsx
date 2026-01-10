@@ -275,6 +275,10 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
         ['SUMMARY'],
         ['Total Income', `₹${sale.total_income}`],
         ['Total Expenses', `₹${sale.total_expenses}`],
+        [],
+        ['SUBMISSION INFO'],
+        ['Saved By', sale.saved_by || '-'],
+        ['Saved on', sale.updated_at ? format(new Date(sale.updated_at), "dd MMM yyyy hh:mm a") : '-'],
       ];
 
       const ws = XLSX.utils.aoa_to_sheet(detailData);
@@ -390,6 +394,10 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
           ['SUMMARY'],
           ['Total Income', `₹${sale.total_income}`],
           ['Total Expenses', `₹${sale.total_expenses}`],
+          [],
+          ['SUBMISSION INFO'],
+          ['Saved By', sale.saved_by || '-'],
+          ['Saved on', sale.updated_at ? format(new Date(sale.updated_at), "dd MMM yyyy hh:mm a") : '-'],
         ];
 
         const ws = XLSX.utils.aoa_to_sheet(detailData);
@@ -496,13 +504,14 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date & Time</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead className="text-center">Entry</TableHead>
                   <TableHead className="text-center">Saved By</TableHead>
                   <TableHead className="text-right">Petrol</TableHead>
                   <TableHead className="text-right">Diesel</TableHead>
                   <TableHead className="text-right">Lubricant</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-center">Saved on</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -510,12 +519,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
                 {sortedData.slice(-10).map((sale) => (
                   <TableRow key={`${sale.date}-${sale.entryNumber || 1}`}>
                     <TableCell className="font-medium">
-                      <div>{format(parseISO(sale.date), "dd MMM yyyy")}</div>
-                      {sale.updatedAt && (
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(sale.updatedAt), "hh:mm a")}
-                        </div>
-                      )}
+                      {format(parseISO(sale.date), "dd MMM yyyy")}
                     </TableCell>
                     <TableCell className="text-center">
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
@@ -539,6 +543,18 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
                     <TableCell className="text-right">₹{sale.diesel.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-right">₹{sale.engineOil.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-right font-semibold">₹{sale.total.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-center">
+                      {sale.updatedAt ? (
+                        <div className="text-sm">
+                          <div>{format(new Date(sale.updatedAt), "dd MMM yyyy")}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(sale.updatedAt), "hh:mm a")}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
