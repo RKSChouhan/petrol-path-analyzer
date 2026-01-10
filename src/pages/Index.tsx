@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock, Eye, EyeOff, RotateCcw } from "lucide-react";
-import { format, differenceInDays, startOfDay } from "date-fns";
+import { format, differenceInDays, startOfDay, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +24,7 @@ import logo from "@/assets/logo-cropped.png";
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(subDays(new Date(), 1));
   const [selectedEntry, setSelectedEntry] = useState<1 | 2>(1);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
