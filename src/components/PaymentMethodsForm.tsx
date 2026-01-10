@@ -3,18 +3,25 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, Wallet } from "lucide-react";
 
-interface PaymentData {
+interface PaymentDataGroup1 {
   upi: number;
   bharat_fleet_card: number;
   fiserv: number;
-  debit: number;
-  ubi: number;
+  gpay: number;
+  evening_locker: number;
+}
+
+interface PaymentDataGroup2 {
+  upi: number;
+  bharat_fleet_card: number;
+  fiserv: number;
+  phonepay: number;
   evening_locker: number;
 }
 
 interface PaymentMethodsData {
-  group1: PaymentData;
-  group2: PaymentData;
+  group1: PaymentDataGroup1;
+  group2: PaymentDataGroup2;
 }
 
 interface PaymentMethodsFormProps {
@@ -24,126 +31,32 @@ interface PaymentMethodsFormProps {
 }
 
 const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethodsFormProps) => {
-  const handleChange = (
-    group: keyof PaymentMethodsData,
-    field: keyof PaymentData,
-    value: string
-  ) => {
+  const handleChangeGroup1 = (field: keyof PaymentDataGroup1, value: string) => {
     onChange({
       ...data,
-      [group]: {
-        ...data[group],
+      group1: {
+        ...data.group1,
         [field]: parseFloat(value) || 0
       }
     });
   };
 
-  const calculateTotal = (payments: PaymentData) => {
-    return Object.values(payments).reduce((sum, val) => sum + val, 0);
+  const handleChangeGroup2 = (field: keyof PaymentDataGroup2, value: string) => {
+    onChange({
+      ...data,
+      group2: {
+        ...data.group2,
+        [field]: parseFloat(value) || 0
+      }
+    });
   };
 
-  const renderPaymentInputs = (group: keyof PaymentMethodsData, title: string, icon: React.ReactNode) => {
-    const payments = data[group];
-    const total = calculateTotal(payments);
+  const calculateTotalGroup1 = () => {
+    return data.group1.upi + data.group1.bharat_fleet_card + data.group1.fiserv + data.group1.gpay + data.group1.evening_locker;
+  };
 
-    return (
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            {icon}
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">UPI (PhonePay/GPay)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={payments.upi === 0 ? '' : payments.upi}
-                onChange={(e) => handleChange(group, 'upi', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-8 text-sm"
-                placeholder="0"
-                disabled={disabled}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Bharat Fleet Card</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={payments.bharat_fleet_card === 0 ? '' : payments.bharat_fleet_card}
-                onChange={(e) => handleChange(group, 'bharat_fleet_card', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-8 text-sm"
-                placeholder="0"
-                disabled={disabled}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Fiserv</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={payments.fiserv === 0 ? '' : payments.fiserv}
-                onChange={(e) => handleChange(group, 'fiserv', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-8 text-sm"
-                placeholder="0"
-                disabled={disabled}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Debit</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={payments.debit === 0 ? '' : payments.debit}
-                onChange={(e) => handleChange(group, 'debit', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-8 text-sm"
-                placeholder="0"
-                disabled={disabled}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">UBI</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={payments.ubi === 0 ? '' : payments.ubi}
-                onChange={(e) => handleChange(group, 'ubi', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-8 text-sm"
-                placeholder="0"
-                disabled={disabled}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Evening Locker</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={payments.evening_locker === 0 ? '' : payments.evening_locker}
-                onChange={(e) => handleChange(group, 'evening_locker', e.target.value)}
-                onFocus={(e) => e.target.select()}
-                className="h-8 text-sm"
-                placeholder="0"
-                disabled={disabled}
-              />
-            </div>
-          </div>
-          <div className="bg-primary/10 p-2 rounded">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Total Online/Card</span>
-              <span className="text-lg font-bold">₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const calculateTotalGroup2 = () => {
+    return data.group2.upi + data.group2.bharat_fleet_card + data.group2.fiserv + data.group2.phonepay + data.group2.evening_locker;
   };
 
   return (
@@ -153,8 +66,175 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
         Payment Methods
       </h3>
       <div className="grid md:grid-cols-2 gap-4">
-        {renderPaymentInputs('group1', 'Cashier Group 1 (Pumps 1&2)', <Wallet className="h-4 w-4" />)}
-        {renderPaymentInputs('group2', 'Cashier Group 2 (Pumps 3&4)', <Wallet className="h-4 w-4" />)}
+        {/* Group 1 */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wallet className="h-4 w-4" />
+              Cashier Group 1 (Pumps 1&2)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">UPI (PhonePay/GPay)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group1.upi === 0 ? '' : data.group1.upi}
+                  onChange={(e) => handleChangeGroup1('upi', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Bharat Fleet Card</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group1.bharat_fleet_card === 0 ? '' : data.group1.bharat_fleet_card}
+                  onChange={(e) => handleChangeGroup1('bharat_fleet_card', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Fiserv</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group1.fiserv === 0 ? '' : data.group1.fiserv}
+                  onChange={(e) => handleChangeGroup1('fiserv', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">GPay</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group1.gpay === 0 ? '' : data.group1.gpay}
+                  onChange={(e) => handleChangeGroup1('gpay', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-xs">Evening Locker</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group1.evening_locker === 0 ? '' : data.group1.evening_locker}
+                  onChange={(e) => handleChangeGroup1('evening_locker', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+            </div>
+            <div className="bg-primary/10 p-2 rounded">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Total Online/Card</span>
+                <span className="text-lg font-bold">₹{calculateTotalGroup1().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Group 2 */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wallet className="h-4 w-4" />
+              Cashier Group 2 (Pumps 3&4)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">UPI (PhonePay/GPay)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group2.upi === 0 ? '' : data.group2.upi}
+                  onChange={(e) => handleChangeGroup2('upi', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Bharat Fleet Card</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group2.bharat_fleet_card === 0 ? '' : data.group2.bharat_fleet_card}
+                  onChange={(e) => handleChangeGroup2('bharat_fleet_card', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Fiserv</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group2.fiserv === 0 ? '' : data.group2.fiserv}
+                  onChange={(e) => handleChangeGroup2('fiserv', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">PhonePay</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group2.phonepay === 0 ? '' : data.group2.phonepay}
+                  onChange={(e) => handleChangeGroup2('phonepay', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-xs">Evening Locker</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group2.evening_locker === 0 ? '' : data.group2.evening_locker}
+                  onChange={(e) => handleChangeGroup2('evening_locker', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
+            </div>
+            <div className="bg-primary/10 p-2 rounded">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Total Online/Card</span>
+                <span className="text-lg font-bold">₹{calculateTotalGroup2().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

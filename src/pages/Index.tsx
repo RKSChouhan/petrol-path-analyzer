@@ -45,8 +45,8 @@ const Index = () => {
   });
 
   const [paymentMethods, setPaymentMethods] = useState({
-    group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
-    group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+    group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
+    group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
   });
 
   const [cashDenominations, setCashDenominations] = useState({
@@ -143,8 +143,8 @@ const Index = () => {
       diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
     });
     setPaymentMethods({
-      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
-      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
+      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
     });
     setCashDenominations({
       group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
@@ -255,20 +255,29 @@ const Index = () => {
     
     // Populate payment methods
     const newPaymentMethods = {
-      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
-      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
+      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
     };
     if (existingEntry.payment_methods) {
       existingEntry.payment_methods.forEach((payment: any) => {
         const group = payment.cashier_group === 'group1' ? 'group1' : 'group2';
-        newPaymentMethods[group] = {
-          upi: (payment.phone_pay || 0) + (payment.gpay || 0),
-          bharat_fleet_card: payment.bharat_fleet_card || 0,
-          fiserv: payment.fiserv || 0,
-          debit: payment.debit || 0,
-          ubi: payment.ubi || 0,
-          evening_locker: payment.evening_locker || 0,
-        };
+        if (group === 'group1') {
+          newPaymentMethods.group1 = {
+            upi: (payment.phone_pay || 0) + (payment.gpay || 0),
+            bharat_fleet_card: payment.bharat_fleet_card || 0,
+            fiserv: payment.fiserv || 0,
+            gpay: payment.debit || 0,
+            evening_locker: payment.evening_locker || 0,
+          };
+        } else {
+          newPaymentMethods.group2 = {
+            upi: (payment.phone_pay || 0) + (payment.gpay || 0),
+            bharat_fleet_card: payment.bharat_fleet_card || 0,
+            fiserv: payment.fiserv || 0,
+            phonepay: payment.debit || 0,
+            evening_locker: payment.evening_locker || 0,
+          };
+        }
       });
     }
     setPaymentMethods(newPaymentMethods);
@@ -445,16 +454,14 @@ const Index = () => {
       paymentMethods.group1.upi +
       paymentMethods.group1.bharat_fleet_card +
       paymentMethods.group1.fiserv +
-      paymentMethods.group1.debit +
-      paymentMethods.group1.ubi +
+      paymentMethods.group1.gpay +
       paymentMethods.group1.evening_locker;
     
     const group2Total = 
       paymentMethods.group2.upi +
       paymentMethods.group2.bharat_fleet_card +
       paymentMethods.group2.fiserv +
-      paymentMethods.group2.debit +
-      paymentMethods.group2.ubi +
+      paymentMethods.group2.phonepay +
       paymentMethods.group2.evening_locker;
     
     return group1Total + group2Total;
@@ -483,14 +490,23 @@ const Index = () => {
 
   // Cashier-specific calculations
   const calculateCashierDigitalPayments = (group: 'group1' | 'group2') => {
-    return (
-      paymentMethods[group].upi +
-      paymentMethods[group].bharat_fleet_card +
-      paymentMethods[group].fiserv +
-      paymentMethods[group].debit +
-      paymentMethods[group].ubi +
-      paymentMethods[group].evening_locker
-    );
+    if (group === 'group1') {
+      return (
+        paymentMethods.group1.upi +
+        paymentMethods.group1.bharat_fleet_card +
+        paymentMethods.group1.fiserv +
+        paymentMethods.group1.gpay +
+        paymentMethods.group1.evening_locker
+      );
+    } else {
+      return (
+        paymentMethods.group2.upi +
+        paymentMethods.group2.bharat_fleet_card +
+        paymentMethods.group2.fiserv +
+        paymentMethods.group2.phonepay +
+        paymentMethods.group2.evening_locker
+      );
+    }
   };
 
   const calculateCashierCashTotal = (group: 'group1' | 'group2') => {
@@ -518,8 +534,8 @@ const Index = () => {
       diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
     });
     setPaymentMethods({
-      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
-      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, debit: 0, ubi: 0, evening_locker: 0 },
+      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
+      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
     });
     setCashDenominations({
       group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
@@ -646,8 +662,8 @@ const Index = () => {
           gpay: 0, 
           bharat_fleet_card: paymentMethods.group1.bharat_fleet_card,
           fiserv: paymentMethods.group1.fiserv,
-          debit: paymentMethods.group1.debit,
-          ubi: paymentMethods.group1.ubi,
+          debit: paymentMethods.group1.gpay,
+          ubi: 0,
           evening_locker: paymentMethods.group1.evening_locker,
           cash_on_hand: 0
         },
@@ -658,8 +674,8 @@ const Index = () => {
           gpay: 0, 
           bharat_fleet_card: paymentMethods.group2.bharat_fleet_card,
           fiserv: paymentMethods.group2.fiserv,
-          debit: paymentMethods.group2.debit,
-          ubi: paymentMethods.group2.ubi,
+          debit: paymentMethods.group2.phonepay,
+          ubi: 0,
           evening_locker: paymentMethods.group2.evening_locker,
           cash_on_hand: 0
         },
@@ -1014,11 +1030,11 @@ const Index = () => {
             <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} disabled={editDisabled} isProprietor={userRole === 'Proprietor'} />
             <OilSalesForm data={oilSales} onChange={setOilSales} disabled={editDisabled} />
             
-            {/* Expense, Debtor, and Repaid Debtor Input Forms - after Oil Sales, before Payment Methods */}
+            {/* Repaid Debtor, Expense, and Debtor Input Forms - after Oil Sales, before Payment Methods */}
             <div className="grid md:grid-cols-3 gap-6">
+              <RepaidDebtorForm items={repaidDebtors} onChange={setRepaidDebtors} disabled={editDisabled} />
               <ExpenseForm items={expenses} onChange={setExpenses} disabled={editDisabled} />
               <DebtorForm items={debtors} onChange={setDebtors} disabled={editDisabled} />
-              <RepaidDebtorForm items={repaidDebtors} onChange={setRepaidDebtors} disabled={editDisabled} />
             </div>
             
             <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} />
