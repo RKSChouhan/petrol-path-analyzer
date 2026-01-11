@@ -1302,7 +1302,7 @@ const Index = () => {
             <div className="flex justify-end gap-3 pt-6 border-t">
               <Button variant="outline" size="lg" onClick={handleClearAll} disabled={editDisabled}>Clear All</Button>
               <Button size="lg" onClick={handleSaveButtonClick} disabled={loading || editDisabled}>
-                {loading ? "Saving..." : "Save Sales Data"}
+                {loading ? "Submitting..." : "Submit Sales Data"}
               </Button>
             </div>
           </CardContent>
