@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FuelIcon, LogOut, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import SalesCharts from "@/components/SalesCharts";
-import logo from "@/assets/logo-cropped.png";
+import DebtorLedger from "@/components/DebtorLedger";
+import logo from "@/assets/logo.png";
 
 const Stat = () => {
   const navigate = useNavigate();
@@ -185,17 +186,23 @@ const Stat = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Online Users Box */}
-        <Card className="shadow-[var(--shadow-card)] mb-6 max-w-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Users Online</CardTitle>
-            <Users className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary">{onlineUsers}</div>
-            <p className="text-xs text-muted-foreground mt-1">Currently active</p>
-          </CardContent>
-        </Card>
+        {/* Top Row: Online Users and Debtor Ledger */}
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          {/* Online Users Box */}
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Users Online</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-primary">{onlineUsers}</div>
+              <p className="text-xs text-muted-foreground mt-1">Currently active</p>
+            </CardContent>
+          </Card>
+
+          {/* Debtor Ledger */}
+          {userId && <DebtorLedger userId={userId} />}
+        </div>
 
         <SalesCharts salesData={salesData} onRefresh={fetchSalesData} userRole={userRole} />
       </main>
