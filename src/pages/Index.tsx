@@ -19,7 +19,7 @@ import EmptyFieldsDialog from "@/components/EmptyFieldsDialog";
 import ExpenseForm from "@/components/ExpenseForm";
 import DebtorForm from "@/components/DebtorForm";
 import RepaidDebtorForm from "@/components/RepaidDebtorForm";
-import logo from "@/assets/logo-cropped.png";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -481,7 +481,9 @@ const Index = () => {
   };
 
   const calculateTotalCashOnHandValue = () => {
-    return calculateRoundedSalesAmount() - calculateTotalDigitalPayments();
+    const cashOnHand = calculateRoundedSalesAmount() - calculateTotalDigitalPayments();
+    // Round up to the next ten
+    return Math.ceil(cashOnHand / 10) * 10;
   };
 
   const calculateExtraOrShortage = () => {
@@ -551,6 +553,10 @@ const Index = () => {
       distilled_water: 0,
       waste: 0,
     });
+    setExpenses([{ name: "", amount: 0 }]);
+    setDebtors([{ name: "", amount: 0 }]);
+    setRepaidDebtors([{ name: "", amount: 0 }]);
+    setComment("");
     toast({
       title: "Cleared",
       description: "All form fields have been reset",
@@ -742,6 +748,66 @@ const Index = () => {
       if (repaidDebtorsData.length > 0) {
         const { error: repaidDebtorError } = await supabase.from('repaid_debtors').insert(repaidDebtorsData);
         if (repaidDebtorError) throw repaidDebtorError;
+      }
+
+      // Update debtor ledger - add new debtors
+      for (const debtor of debtorsData) {
+        if (debtor.name && debtor.amount > 0) {
+          // Check if debtor exists in ledger
+          const { data: existingDebtor } = await supabase
+            .from('debtor_ledger')
+            .select('id, amount')
+            .eq('user_id', userId)
+            .eq('name', debtor.name)
+            .maybeSingle();
+
+          if (existingDebtor) {
+            // Add to existing amount
+            await supabase
+              .from('debtor_ledger')
+              .update({ 
+                amount: existingDebtor.amount + debtor.amount,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingDebtor.id);
+          } else {
+            // Create new debtor entry
+            await supabase.from('debtor_ledger').insert({
+              user_id: userId,
+              name: debtor.name,
+              amount: debtor.amount,
+            });
+          }
+        }
+      }
+
+      // Update debtor ledger - reduce for repaid debtors
+      for (const repaid of repaidDebtorsData) {
+        if (repaid.name && repaid.amount > 0) {
+          const { data: existingDebtor } = await supabase
+            .from('debtor_ledger')
+            .select('id, amount')
+            .eq('user_id', userId)
+            .eq('name', repaid.name)
+            .maybeSingle();
+
+          if (existingDebtor) {
+            const newAmount = existingDebtor.amount - repaid.amount;
+            if (newAmount <= 0) {
+              // Remove if fully paid
+              await supabase.from('debtor_ledger').delete().eq('id', existingDebtor.id);
+            } else {
+              // Reduce amount
+              await supabase
+                .from('debtor_ledger')
+                .update({ 
+                  amount: newAmount,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', existingDebtor.id);
+            }
+          }
+        }
       }
 
       toast({
@@ -1115,7 +1181,48 @@ const Index = () => {
                         </div>
                       </div>
                       
-                      {/* Row 3: Total Digital Payment */}
+                      {/* Row 3: Sales Amount */}
+                      <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800 relative mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-sm text-green-600 dark:text-green-400">Sales Amount</Label>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowSalesAmount(!showSalesAmount)}
+                            className="h-7 px-2"
+                          >
+                            {showSalesAmount ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <div className="text-2xl font-bold mt-2 text-green-600 dark:text-green-400">
+                          {showSalesAmount ? (
+                            `₹${calculateRoundedSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                          ) : (
+                            <span className="blur-sm select-none">₹1,234.56</span>
+                          )}
+                        </div>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute bottom-2 right-2 h-6 w-6 p-0"
+                            >
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64" align="end">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Actual Sales Amount</Label>
+                              <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                                ₹{calculateActualSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      
+                      {/* Row 4: Total Digital Payment */}
                       <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
                         <Label className="text-sm text-blue-600 dark:text-blue-400">Total Digital Payment</Label>
                         <div className="text-2xl font-bold mt-2 text-blue-600 dark:text-blue-400">
@@ -1123,8 +1230,8 @@ const Index = () => {
                         </div>
                       </div>
                       
-                      {/* Row 4: Total Cash on Hand */}
-                      <div className="p-4 bg-card rounded-lg relative mb-4">
+                      {/* Row 5: Total Cash on Hand */}
+                      <div className="p-4 bg-card rounded-lg relative">
                         <div className="flex items-center justify-between mb-2">
                           <Label className="text-sm text-muted-foreground">Total Cash on Hand</Label>
                           <Button
@@ -1169,47 +1276,6 @@ const Index = () => {
                                 )}>
                                   ₹{calculateExtraOrShortage().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                 </div>
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      
-                      {/* Row 5: Sales Amount */}
-                      <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800 relative">
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm text-green-600 dark:text-green-400">Sales Amount</Label>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowSalesAmount(!showSalesAmount)}
-                            className="h-7 px-2"
-                          >
-                            {showSalesAmount ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        <div className="text-2xl font-bold mt-2 text-green-600 dark:text-green-400">
-                          {showSalesAmount ? (
-                            `₹${calculateRoundedSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
-                          ) : (
-                            <span className="blur-sm select-none">₹1,234.56</span>
-                          )}
-                        </div>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="absolute bottom-2 right-2 h-6 w-6 p-0"
-                            >
-                              <Info className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-64" align="end">
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Actual Sales Amount</Label>
-                              <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-                                ₹{calculateActualSalesAmount().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                               </div>
                             </div>
                           </PopoverContent>
