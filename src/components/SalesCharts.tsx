@@ -183,7 +183,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
       // Fetch detailed data for specific date and entry
       const { data: sale, error } = await supabase
         .from('daily_sales')
-        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*)')
+        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*), expenses(*), debtors(*), repaid_debtors(*)')
         .eq('sale_date', date)
         .eq('entry_number', entryNumber)
         .maybeSingle();
@@ -202,31 +202,76 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
       const oilSalesArray = sale.oil_sales || [];
       const paymentMethods = sale.payment_methods || [];
       const cashDenom = sale.cash_denominations || [];
+      const expensesArray = sale.expenses || [];
+      const debtorsArray = sale.debtors || [];
+      const repaidDebtorsArray = sale.repaid_debtors || [];
 
-      // Calculate total oil sales values
+      // Calculate totals for summary
+      const petrolReadings = pumpReadings.filter((p: any) => p.pump_type === 'petrol');
+      const dieselReadings = pumpReadings.filter((p: any) => p.pump_type === 'diesel');
+      
+      const petrolSales = petrolReadings.reduce((sum: number, p: any) => 
+        sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
+      const dieselSales = dieselReadings.reduce((sum: number, p: any) => 
+        sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
+
+      // Calculate total oil/lubricant sales
       const totalOilAmount = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.total_amount || 0), 0);
-      const totalOilLitres = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.total_litres || 0), 0);
-      const totalDistilledWater = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.distilled_water || 0), 0);
-      const totalWaste = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.waste || 0), 0);
+      const totalOilPrices = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.oil_price || 0), 0);
+      const lubricantTotal = totalOilAmount + totalOilPrices;
 
-      // Create detailed rows similar to the Excel format
-      const detailData = [
-        [`DAILY SALES REPORT - ${format(parseISO(date), "dd MMM yyyy")} (Entry ${entryNumber})`],
+      // Calculate payment totals
+      const totalDigitalPayment = paymentMethods.reduce((sum: number, pm: any) => 
+        sum + (pm.phone_pay || 0) + (pm.gpay || 0) + (pm.bharat_fleet_card || 0) + 
+        (pm.fiserv || 0) + (pm.debit || 0) + (pm.ubi || 0) + (pm.evening_locker || 0), 0);
+
+      // Calculate cash totals
+      const totalCashInHand = cashDenom.reduce((sum: number, cd: any) => 
+        sum + ((cd.rs_500 || 0) * 500) + ((cd.rs_200 || 0) * 200) + ((cd.rs_100 || 0) * 100) + 
+        ((cd.rs_50 || 0) * 50) + ((cd.rs_20 || 0) * 20) + ((cd.rs_10 || 0) * 10) + (cd.coins || 0), 0);
+
+      // Calculate expense and debtor totals
+      const totalExpenses = expensesArray.reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
+      const totalDebtorAmount = debtorsArray.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+      const totalRepaidDebtorMoney = repaidDebtorsArray.reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
+
+      // Calculate summary values
+      const totalIncomeProduced = petrolSales + dieselSales + lubricantTotal + totalRepaidDebtorMoney;
+      const totalExpenseAmount = totalExpenses + totalDebtorAmount;
+      const salesAmount = Math.ceil((totalIncomeProduced - totalExpenseAmount) / 10) * 10;
+      const totalCashOnHand = Math.ceil((salesAmount - totalDigitalPayment) / 10) * 10;
+
+      // Build Excel data following the template format
+      const detailData: any[][] = [
+        ['DAILY SALES REPORT'],
         [],
-        ['PUMP READINGS'],
-        ['Pump', 'Type', 'Opening Reading (9:00 AM)', 'Closing Reading', 'Sales in Litres', 'Price per Litre', 'Sales Amount'],
-        ...pumpReadings.map((p: any) => [
-          `${p.pump_type.toUpperCase()} PUMP-${p.pump_number}`,
-          p.pump_type.toUpperCase(),
+        ['Date & Time of Entry', sale.updated_at ? format(new Date(sale.updated_at), "dd MMM yyyy hh:mm a") : '-'],
+        ['Saved By', sale.saved_by || '-'],
+        [],
+        ['PETROL PUMP READINGS'],
+        ['Pump', 'Opening Reading', 'Closing Reading', 'Sales in Litres', 'Price per Litre', 'Sales Amount'],
+        ...petrolReadings.map((p: any) => [
+          `PETROL PUMP-${p.pump_number}`,
           p.opening_reading,
           p.closing_reading,
-          p.sales_litres,
+          p.sales_litres || (p.closing_reading - p.opening_reading),
           `₹${p.price_per_litre}`,
-          `₹${p.sales_amount}`
+          `₹${((p.closing_reading - p.opening_reading) * p.price_per_litre).toFixed(2)}`
+        ]),
+        [],
+        ['DIESEL PUMP READINGS'],
+        ['Pump', 'Opening Reading', 'Closing Reading', 'Sales in Litres', 'Price per Litre', 'Sales Amount'],
+        ...dieselReadings.map((p: any) => [
+          `DIESEL PUMP-${p.pump_number}`,
+          p.opening_reading,
+          p.closing_reading,
+          p.sales_litres || (p.closing_reading - p.opening_reading),
+          `₹${p.price_per_litre}`,
+          `₹${((p.closing_reading - p.opening_reading) * p.price_per_litre).toFixed(2)}`
         ]),
         [],
         ['OIL SALES'],
-        ['Oil Name', 'Count', 'Price', '2T Oil Yesterday', '2T Oil Today', 'Total Oil Litres', 'Total Amount', 'Distilled Water', 'Waste'],
+        ['Oil Name', 'Count', 'Price', '2T Oil Yesterday', '2T Oil Today', 'Total Litres', 'Total Amount', 'Distilled Water', 'Waste'],
         ...(oilSalesArray.length > 0 
           ? oilSalesArray.map((oil: any) => [
               oil.oil_name || '-',
@@ -242,7 +287,29 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
           : [['-', 0, '₹0', 0, 0, 0, '₹0', 0, 0]]
         ),
         [],
-        ['TOTALS', '', '', '', '', totalOilLitres, `₹${totalOilAmount}`, totalDistilledWater, totalWaste],
+        ['REPAID DEBTOR MONEY'],
+        ['Name', 'Amount'],
+        ...(repaidDebtorsArray.length > 0 
+          ? repaidDebtorsArray.map((r: any) => [r.name || '-', `₹${r.amount || 0}`])
+          : [['-', '₹0']]
+        ),
+        ['Total Repaid', `₹${totalRepaidDebtorMoney}`],
+        [],
+        ['EXPENSES'],
+        ['Name', 'Amount'],
+        ...(expensesArray.length > 0 
+          ? expensesArray.map((e: any) => [e.name || '-', `₹${e.amount || 0}`])
+          : [['-', '₹0']]
+        ),
+        ['Total Expenses', `₹${totalExpenses}`],
+        [],
+        ['DEBTORS'],
+        ['Name', 'Amount'],
+        ...(debtorsArray.length > 0 
+          ? debtorsArray.map((d: any) => [d.name || '-', `₹${d.amount || 0}`])
+          : [['-', '₹0']]
+        ),
+        ['Total Debtors', `₹${totalDebtorAmount}`],
         [],
         ['PAYMENT METHODS'],
         ['Cashier Group', 'Phone Pay', 'GPay', 'Bharat Fleet Card', 'Fiserv', 'Debit', 'UBI', 'Evening Locker', 'Cash on Hand'],
@@ -269,19 +336,29 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
           cd.rs_200 || 0,
           cd.rs_500 || 0,
           `₹${cd.coins || 0}`,
-          `₹${cd.total_cash || 0}`
+          `₹${((cd.rs_500 || 0) * 500) + ((cd.rs_200 || 0) * 200) + ((cd.rs_100 || 0) * 100) + 
+            ((cd.rs_50 || 0) * 50) + ((cd.rs_20 || 0) * 20) + ((cd.rs_10 || 0) * 10) + (cd.coins || 0)}`
         ]),
         [],
         ['SUMMARY'],
-        ['Total Income', `₹${sale.total_income}`],
-        ['Total Expenses', `₹${sale.total_expenses}`],
+        ['Total Income Produced', `₹${totalIncomeProduced.toFixed(2)}`],
+        ['Total Expense', `₹${totalExpenseAmount}`],
+        ['Sales Amount', `₹${salesAmount}`],
+        ['Total Digital Payment', `₹${totalDigitalPayment}`],
+        ['Total Cash on Hand', `₹${totalCashOnHand}`],
+        ['Total Cash in Hand', `₹${totalCashInHand}`],
         [],
-        ['SUBMISSION INFO'],
-        ['Saved By', sale.saved_by || '-'],
-        ['Saved on', sale.updated_at ? format(new Date(sale.updated_at), "dd MMM yyyy hh:mm a") : '-'],
+        ['COMMENTS'],
+        [sale.comment || 'No comments'],
       ];
 
       const ws = XLSX.utils.aoa_to_sheet(detailData);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+      ];
+      
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, `${format(parseISO(date), "dd-MMM-yyyy")}_E${entryNumber}`);
 
@@ -307,7 +384,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
       // Fetch detailed data with all related information
       const { data: detailedSales, error } = await supabase
         .from('daily_sales')
-        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*)')
+        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*), expenses(*), debtors(*), repaid_debtors(*)')
         .order('sale_date', { ascending: false });
 
       if (error) throw error;
@@ -322,86 +399,77 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
         const oilSalesArray = sale.oil_sales || [];
         const paymentMethods = sale.payment_methods || [];
         const cashDenom = sale.cash_denominations || [];
+        const expensesArray = sale.expenses || [];
+        const debtorsArray = sale.debtors || [];
+        const repaidDebtorsArray = sale.repaid_debtors || [];
 
-        // Calculate total oil sales values
+        const petrolReadings = pumpReadings.filter((p: any) => p.pump_type === 'petrol');
+        const dieselReadings = pumpReadings.filter((p: any) => p.pump_type === 'diesel');
+        
+        const petrolSales = petrolReadings.reduce((sum: number, p: any) => 
+          sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
+        const dieselSales = dieselReadings.reduce((sum: number, p: any) => 
+          sum + ((p.closing_reading - p.opening_reading) * p.price_per_litre), 0);
+
         const totalOilAmount = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.total_amount || 0), 0);
-        const totalOilLitres = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.total_litres || 0), 0);
-        const totalDistilledWater = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.distilled_water || 0), 0);
-        const totalWaste = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.waste || 0), 0);
+        const totalOilPrices = oilSalesArray.reduce((sum: number, oil: any) => sum + (oil.oil_price || 0), 0);
+        const lubricantTotal = totalOilAmount + totalOilPrices;
 
-        const detailData = [
+        const totalDigitalPayment = paymentMethods.reduce((sum: number, pm: any) => 
+          sum + (pm.phone_pay || 0) + (pm.gpay || 0) + (pm.bharat_fleet_card || 0) + 
+          (pm.fiserv || 0) + (pm.debit || 0) + (pm.ubi || 0) + (pm.evening_locker || 0), 0);
+
+        const totalCashInHand = cashDenom.reduce((sum: number, cd: any) => 
+          sum + ((cd.rs_500 || 0) * 500) + ((cd.rs_200 || 0) * 200) + ((cd.rs_100 || 0) * 100) + 
+          ((cd.rs_50 || 0) * 50) + ((cd.rs_20 || 0) * 20) + ((cd.rs_10 || 0) * 10) + (cd.coins || 0), 0);
+
+        const totalExpenses = expensesArray.reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
+        const totalDebtorAmount = debtorsArray.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+        const totalRepaidDebtorMoney = repaidDebtorsArray.reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
+
+        const totalIncomeProduced = petrolSales + dieselSales + lubricantTotal + totalRepaidDebtorMoney;
+        const totalExpenseAmount = totalExpenses + totalDebtorAmount;
+        const salesAmount = Math.ceil((totalIncomeProduced - totalExpenseAmount) / 10) * 10;
+        const totalCashOnHand = Math.ceil((salesAmount - totalDigitalPayment) / 10) * 10;
+
+        const detailData: any[][] = [
           ['DAILY SALES REPORT - ' + date],
+          ['Date & Time of Entry', sale.updated_at ? format(new Date(sale.updated_at), "dd MMM yyyy hh:mm a") : '-'],
+          ['Saved By', sale.saved_by || '-'],
           [],
-          ['PUMP READINGS'],
-          ['Pump', 'Type', 'Opening Reading (9:00 AM)', 'Closing Reading', 'Sales in Litres', 'Price per Litre', 'Sales Amount'],
-          ...pumpReadings.map((p: any) => [
-            `${p.pump_type.toUpperCase()} PUMP-${p.pump_number}`,
-            p.pump_type.toUpperCase(),
-            p.opening_reading,
-            p.closing_reading,
-            p.sales_litres,
-            `₹${p.price_per_litre}`,
-            `₹${p.sales_amount}`
-          ]),
+          ['PETROL READINGS'],
+          ...petrolReadings.map((p: any) => [`PETROL PUMP-${p.pump_number}`, p.opening_reading, p.closing_reading, `₹${((p.closing_reading - p.opening_reading) * p.price_per_litre).toFixed(2)}`]),
+          ['DIESEL READINGS'],
+          ...dieselReadings.map((p: any) => [`DIESEL PUMP-${p.pump_number}`, p.opening_reading, p.closing_reading, `₹${((p.closing_reading - p.opening_reading) * p.price_per_litre).toFixed(2)}`]),
           [],
           ['OIL SALES'],
-          ['Oil Name', 'Count', 'Price', '2T Oil Yesterday', '2T Oil Today', 'Total Oil Litres', 'Total Amount', 'Distilled Water', 'Waste'],
-          ...(oilSalesArray.length > 0 
-            ? oilSalesArray.map((oil: any) => [
-                oil.oil_name || '-',
-                oil.oil_count || 0,
-                `₹${oil.oil_price || 0}`,
-                oil.yesterday_reading || 0,
-                oil.today_reading || 0,
-                oil.total_litres || 0,
-                `₹${oil.total_amount || 0}`,
-                oil.distilled_water || 0,
-                oil.waste || 0
-              ])
-            : [['-', 0, '₹0', 0, 0, 0, '₹0', 0, 0]]
-          ),
+          ...oilSalesArray.map((oil: any) => [oil.oil_name || '-', oil.oil_count || 0, `₹${oil.oil_price || 0}`, `₹${oil.total_amount || 0}`]),
           [],
-          ['TOTALS', '', '', '', '', totalOilLitres, `₹${totalOilAmount}`, totalDistilledWater, totalWaste],
+          ['REPAID DEBTORS'],
+          ...repaidDebtorsArray.map((r: any) => [r.name || '-', `₹${r.amount || 0}`]),
+          ['EXPENSES'],
+          ...expensesArray.map((e: any) => [e.name || '-', `₹${e.amount || 0}`]),
+          ['DEBTORS'],
+          ...debtorsArray.map((d: any) => [d.name || '-', `₹${d.amount || 0}`]),
           [],
           ['PAYMENT METHODS'],
-          ['Cashier Group', 'Phone Pay', 'GPay', 'Bharat Fleet Card', 'Fiserv', 'Debit', 'UBI', 'Evening Locker', 'Cash on Hand'],
-          ...paymentMethods.map((pm: any) => [
-            pm.cashier_group.toUpperCase(),
-            `₹${pm.phone_pay || 0}`,
-            `₹${pm.gpay || 0}`,
-            `₹${pm.bharat_fleet_card || 0}`,
-            `₹${pm.fiserv || 0}`,
-            `₹${pm.debit || 0}`,
-            `₹${pm.ubi || 0}`,
-            `₹${pm.evening_locker || 0}`,
-            `₹${pm.cash_on_hand || 0}`
-          ]),
+          ...paymentMethods.map((pm: any) => [pm.cashier_group.toUpperCase(), `UPI: ₹${(pm.phone_pay || 0) + (pm.gpay || 0)}`, `Fleet: ₹${pm.bharat_fleet_card || 0}`, `Fiserv: ₹${pm.fiserv || 0}`]),
           [],
           ['CASH DENOMINATIONS'],
-          ['Cashier Group', '₹10 Notes', '₹20 Notes', '₹50 Notes', '₹100 Notes', '₹200 Notes', '₹500 Notes', 'Coins (₹)', 'Total Cash'],
-          ...cashDenom.map((cd: any) => [
-            cd.cashier_group.toUpperCase(),
-            cd.rs_10 || 0,
-            cd.rs_20 || 0,
-            cd.rs_50 || 0,
-            cd.rs_100 || 0,
-            cd.rs_200 || 0,
-            cd.rs_500 || 0,
-            `₹${cd.coins || 0}`,
-            `₹${cd.total_cash || 0}`
-          ]),
+          ...cashDenom.map((cd: any) => [cd.cashier_group.toUpperCase(), `₹500x${cd.rs_500 || 0}`, `₹200x${cd.rs_200 || 0}`, `₹100x${cd.rs_100 || 0}`, `Coins: ₹${cd.coins || 0}`]),
           [],
           ['SUMMARY'],
-          ['Total Income', `₹${sale.total_income}`],
-          ['Total Expenses', `₹${sale.total_expenses}`],
+          ['Total Income Produced', `₹${totalIncomeProduced.toFixed(2)}`],
+          ['Total Expense', `₹${totalExpenseAmount}`],
+          ['Sales Amount', `₹${salesAmount}`],
+          ['Total Digital Payment', `₹${totalDigitalPayment}`],
+          ['Total Cash on Hand', `₹${totalCashOnHand}`],
           [],
-          ['SUBMISSION INFO'],
-          ['Saved By', sale.saved_by || '-'],
-          ['Saved on', sale.updated_at ? format(new Date(sale.updated_at), "dd MMM yyyy hh:mm a") : '-'],
+          ['COMMENTS', sale.comment || '-'],
         ];
 
         const ws = XLSX.utils.aoa_to_sheet(detailData);
-        XLSX.utils.book_append_sheet(wb, ws, date);
+        XLSX.utils.book_append_sheet(wb, ws, `${date}_E${sale.entry_number || 1}`);
       });
 
       XLSX.writeFile(wb, `All_Daily_Sales_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
