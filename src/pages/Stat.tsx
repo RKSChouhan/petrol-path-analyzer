@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import SalesCharts from "@/components/SalesCharts";
 import DebtorLedger from "@/components/DebtorLedger";
-import AttendanceBox from "@/components/AttendanceBox";
 import logo from "@/assets/logo.png";
 
 const Stat = () => {
@@ -187,8 +186,8 @@ const Stat = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Top Row: Online Users, Debtor Ledger, and Attendance */}
-        <div className="grid md:grid-cols-3 gap-6 mb-6">
+        {/* Top Row: Online Users and Debtor Ledger */}
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* Online Users Box */}
           <Card className="shadow-[var(--shadow-card)]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -203,9 +202,6 @@ const Stat = () => {
 
           {/* Debtor Ledger */}
           {userId && <DebtorLedger userId={userId} />}
-
-          {/* Attendance Box */}
-          {userId && <AttendanceBox userId={userId} />}
         </div>
 
         <SalesCharts salesData={salesData} onRefresh={fetchSalesData} userRole={userRole} />

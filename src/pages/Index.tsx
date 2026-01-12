@@ -19,6 +19,8 @@ import EmptyFieldsDialog from "@/components/EmptyFieldsDialog";
 import ExpenseForm from "@/components/ExpenseForm";
 import DebtorForm from "@/components/DebtorForm";
 import RepaidDebtorForm from "@/components/RepaidDebtorForm";
+import AttendanceBox from "@/components/AttendanceBox";
+import ImageOCRUpload from "@/components/ImageOCRUpload";
 import logo from "@/assets/logo.png";
 
 const Index = () => {
@@ -563,6 +565,62 @@ const Index = () => {
     });
   };
 
+  const handleOCRDataExtracted = (data: any) => {
+    // Apply extracted data to form fields
+    if (data.pumpReadings) {
+      setPumpReadings(prev => ({
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(data.pumpReadings).map(([key, value]: [string, any]) => [
+            key,
+            {
+              opening_reading: value.opening_reading ?? prev[key as keyof typeof prev]?.opening_reading ?? 0,
+              closing_reading: value.closing_reading ?? prev[key as keyof typeof prev]?.closing_reading ?? 0,
+              price_per_litre: prev[key as keyof typeof prev]?.price_per_litre ?? (key.startsWith('petrol') ? 101.88 : 93.48),
+            }
+          ])
+        )
+      }));
+    }
+
+    if (data.paymentMethods) {
+      setPaymentMethods(prev => ({
+        group1: { ...prev.group1, ...data.paymentMethods.group1 },
+        group2: { ...prev.group2, ...data.paymentMethods.group2 },
+      }));
+    }
+
+    if (data.cashDenominations) {
+      setCashDenominations(prev => ({
+        group1: { ...prev.group1, ...data.cashDenominations.group1 },
+        group2: { ...prev.group2, ...data.cashDenominations.group2 },
+      }));
+    }
+
+    if (data.oilSales) {
+      setOilSales(prev => ({
+        ...prev,
+        items: data.oilSales.items || prev.items,
+        yesterday_reading: data.oilSales.yesterday_reading ?? prev.yesterday_reading,
+        today_reading: data.oilSales.today_reading ?? prev.today_reading,
+        distilled_water_count: data.oilSales.distilled_water_count ?? prev.distilled_water_count,
+        waste: data.oilSales.waste ?? prev.waste,
+      }));
+    }
+
+    if (data.expenses && data.expenses.length > 0) {
+      setExpenses(data.expenses);
+    }
+
+    if (data.debtors && data.debtors.length > 0) {
+      setDebtors(data.debtors);
+    }
+
+    if (data.repaidDebtors && data.repaidDebtors.length > 0) {
+      setRepaidDebtors(data.repaidDebtors);
+    }
+  };
+
   const handleSaveData = async () => {
     if (!userId) return;
     
@@ -992,7 +1050,8 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-4 mb-6">
+        {/* Top Row: Today's stats + Attendance + Image OCR */}
+        <div className="grid gap-6 md:grid-cols-6 mb-6">
           <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Today's Income</CardTitle>
@@ -1051,6 +1110,15 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Attendance Box */}
+          {userId && <AttendanceBox userId={userId} />}
+
+          {/* Image OCR Upload */}
+          <ImageOCRUpload 
+            onDataExtracted={handleOCRDataExtracted}
+            disabled={editDisabled}
+          />
         </div>
 
         {/* Final Expense and Debtor Summary Row */}
