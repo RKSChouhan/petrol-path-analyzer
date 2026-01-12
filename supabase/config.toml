@@ -1,1 +1,4 @@
 project_id = "uxjvtpmnnvxlvanedzxk"
+
+[functions.ocr-image]
+verify_jwt = false
