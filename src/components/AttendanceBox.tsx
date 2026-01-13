@@ -2,15 +2,20 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface AttendanceBoxProps {
   userId: string;
+  dailySalesId?: string | null;
+  disabled?: boolean;
+  selectedAttendance: string[];
+  onAttendanceChange: (attendance: string[]) => void;
 }
 
-const AttendanceBox = ({ userId }: AttendanceBoxProps) => {
+const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onAttendanceChange }: AttendanceBoxProps) => {
   const { toast } = useToast();
   const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
   const [newEmployeeName, setNewEmployeeName] = useState("");
@@ -92,7 +97,29 @@ const AttendanceBox = ({ userId }: AttendanceBoxProps) => {
       description: `${name} removed from employees`,
     });
 
+    // Remove from selected attendance if present
+    onAttendanceChange(selectedAttendance.filter(n => n !== name));
     fetchEmployees();
+  };
+
+  const toggleEmployeeAttendance = (employeeName: string) => {
+    if (disabled) return;
+    
+    if (selectedAttendance.includes(employeeName)) {
+      onAttendanceChange(selectedAttendance.filter(n => n !== employeeName));
+    } else {
+      onAttendanceChange([...selectedAttendance, employeeName]);
+    }
+  };
+
+  const selectAll = () => {
+    if (disabled) return;
+    onAttendanceChange(employees.map(e => e.name));
+  };
+
+  const clearAll = () => {
+    if (disabled) return;
+    onAttendanceChange([]);
   };
 
   return (
@@ -105,11 +132,13 @@ const AttendanceBox = ({ userId }: AttendanceBoxProps) => {
         <div className="flex gap-2 mb-4">
           <Button
             size="sm"
+            variant="outline"
             onClick={() => setIsAdding(true)}
             className="flex-1"
+            disabled={disabled}
           >
             <Plus className="mr-1 h-4 w-4" />
-            Add New Employee
+            Add Employee
           </Button>
         </div>
 
@@ -127,7 +156,19 @@ const AttendanceBox = ({ userId }: AttendanceBoxProps) => {
           </div>
         )}
 
-        <div className="max-h-[300px] overflow-y-auto">
+        {/* Select All / Clear buttons */}
+        {employees.length > 0 && (
+          <div className="flex gap-2 mb-3">
+            <Button size="sm" variant="outline" onClick={selectAll} disabled={disabled} className="text-xs h-7">
+              Select All
+            </Button>
+            <Button size="sm" variant="outline" onClick={clearAll} disabled={disabled} className="text-xs h-7">
+              Clear All
+            </Button>
+          </div>
+        )}
+
+        <div className="max-h-[200px] overflow-y-auto">
           {employees.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">No employees added yet</p>
           ) : (
@@ -138,14 +179,25 @@ const AttendanceBox = ({ userId }: AttendanceBoxProps) => {
                   className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-muted-foreground w-6">{index + 1}.</span>
-                    <span className="text-sm font-medium">{employee.name}</span>
+                    <Checkbox
+                      id={`attendance-${employee.id}`}
+                      checked={selectedAttendance.includes(employee.name)}
+                      onCheckedChange={() => toggleEmployeeAttendance(employee.name)}
+                      disabled={disabled}
+                    />
+                    <label 
+                      htmlFor={`attendance-${employee.id}`}
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      {index + 1}. {employee.name}
+                    </label>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => handleDeleteEmployee(employee.id, employee.name)}
+                    disabled={disabled}
                   >
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>
@@ -155,7 +207,9 @@ const AttendanceBox = ({ userId }: AttendanceBoxProps) => {
           )}
         </div>
         <div className="mt-3 pt-3 border-t">
-          <p className="text-xs text-muted-foreground">Total: {employees.length} employees</p>
+          <p className="text-xs text-muted-foreground">
+            Present: {selectedAttendance.length} / {employees.length} employees
+          </p>
         </div>
       </CardContent>
     </Card>

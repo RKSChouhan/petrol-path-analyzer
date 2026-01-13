@@ -80,6 +80,7 @@ const Index = () => {
   const [debtors, setDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [repaidDebtors, setRepaidDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [comment, setComment] = useState("");
+  const [selectedAttendance, setSelectedAttendance] = useState<string[]>([]);
 
   useEffect(() => {
     // Sign out on page close/refresh
@@ -195,6 +196,7 @@ const Index = () => {
       setDebtors([{ name: "", amount: 0 }]);
       setRepaidDebtors([{ name: "", amount: 0 }]);
       setComment("");
+      setSelectedAttendance([]);
       return;
     }
     
@@ -337,6 +339,20 @@ const Index = () => {
     
     // Populate comment
     setComment(existingEntry.comment || "");
+    
+    // Load attendance for this entry
+    if (existingEntry.id) {
+      const { data: attendanceData } = await supabase
+        .from('daily_attendance')
+        .select('employee_name')
+        .eq('daily_sales_id', existingEntry.id);
+      
+      if (attendanceData && attendanceData.length > 0) {
+        setSelectedAttendance(attendanceData.map((a: any) => a.employee_name));
+      } else {
+        setSelectedAttendance([]);
+      }
+    }
   };
 
   const handleLogout = async () => {
@@ -808,6 +824,26 @@ const Index = () => {
         if (repaidDebtorError) throw repaidDebtorError;
       }
 
+      // Save daily attendance
+      await supabase.from('daily_attendance').delete().eq('daily_sales_id', dailySales.id);
+      if (selectedAttendance.length > 0) {
+        // Get employee IDs for selected names
+        const { data: employeesData } = await supabase
+          .from('employees')
+          .select('id, name')
+          .in('name', selectedAttendance);
+        
+        if (employeesData && employeesData.length > 0) {
+          const attendanceData = employeesData.map(emp => ({
+            daily_sales_id: dailySales.id,
+            employee_id: emp.id,
+            employee_name: emp.name,
+          }));
+          const { error: attendanceError } = await supabase.from('daily_attendance').insert(attendanceData);
+          if (attendanceError) throw attendanceError;
+        }
+      }
+
       // Update debtor ledger - add new debtors
       for (const debtor of debtorsData) {
         if (debtor.name && debtor.amount > 0) {
@@ -1110,19 +1146,10 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Attendance Box */}
-          {userId && <AttendanceBox userId={userId} />}
-
-          {/* Image OCR Upload */}
-          <ImageOCRUpload 
-            onDataExtracted={handleOCRDataExtracted}
-            disabled={editDisabled}
-          />
         </div>
 
-        {/* Final Expense and Debtor Summary Row */}
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
+        {/* Final Expense and Debtor Summary Row with Image OCR */}
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow border-2 border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-400">Final Expense</CardTitle>
@@ -1144,6 +1171,12 @@ const Index = () => {
               <p className="text-xs text-muted-foreground mt-1">Outstanding debt</p>
             </CardContent>
           </Card>
+
+          {/* Image OCR Upload - Next to Final Debtor */}
+          <ImageOCRUpload 
+            onDataExtracted={handleOCRDataExtracted}
+            disabled={editDisabled}
+          />
         </div>
 
         <Card className="shadow-[var(--shadow-card)]">
@@ -1163,6 +1196,16 @@ const Index = () => {
             )}
             <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} disabled={editDisabled} isProprietor={userRole === 'Proprietor'} />
             <OilSalesForm data={oilSales} onChange={setOilSales} disabled={editDisabled} />
+            
+            {/* Attendance Box - below Oil Sales */}
+            {userId && (
+              <AttendanceBox 
+                userId={userId} 
+                disabled={editDisabled}
+                selectedAttendance={selectedAttendance}
+                onAttendanceChange={setSelectedAttendance}
+              />
+            )}
             
             {/* Repaid Debtor, Expense, and Debtor Input Forms - after Oil Sales, before Payment Methods */}
             <div className="grid md:grid-cols-3 gap-6">

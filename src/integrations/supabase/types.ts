@@ -67,6 +67,45 @@ export type Database = {
           },
         ]
       }
+      daily_attendance: {
+        Row: {
+          created_at: string
+          daily_sales_id: string | null
+          employee_id: string | null
+          employee_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_sales_id?: string | null
+          employee_id?: string | null
+          employee_name: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          daily_sales_id?: string | null
+          employee_id?: string | null
+          employee_name?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_attendance_daily_sales_id_fkey"
+            columns: ["daily_sales_id"]
+            isOneToOne: false
+            referencedRelation: "daily_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_sales: {
         Row: {
           comment: string | null
