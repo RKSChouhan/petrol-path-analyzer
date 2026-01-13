@@ -1086,8 +1086,8 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Top Row: Today's stats + Attendance + Image OCR */}
-        <div className="grid gap-6 md:grid-cols-6 mb-6">
+        {/* Top Row: Today's stats */}
+        <div className="grid gap-6 grid-cols-2 md:grid-cols-4 mb-6">
           <Card className="shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Today's Income</CardTitle>
