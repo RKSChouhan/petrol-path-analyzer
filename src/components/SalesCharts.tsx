@@ -183,7 +183,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
       // Fetch detailed data for specific date and entry
       const { data: sale, error } = await supabase
         .from('daily_sales')
-        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*), expenses(*), debtors(*), repaid_debtors(*)')
+        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*), expenses(*), debtors(*), repaid_debtors(*), daily_attendance(employee_name)')
         .eq('sale_date', date)
         .eq('entry_number', entryNumber)
         .maybeSingle();
@@ -198,11 +198,8 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
         return;
       }
 
-      // Fetch employees for attendance
-      const { data: employees } = await supabase
-        .from('employees')
-        .select('name')
-        .order('name', { ascending: true });
+      // Get submitted attendance for this entry
+      const attendanceList = sale.daily_attendance || [];
 
       const pumpReadings = sale.pump_readings || [];
       const oilSalesArray = sale.oil_sales || [];
@@ -211,7 +208,6 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
       const expensesArray = sale.expenses || [];
       const debtorsArray = sale.debtors || [];
       const repaidDebtorsArray = sale.repaid_debtors || [];
-      const employeesList = employees || [];
 
       // Calculate totals for summary
       const petrolReadings = pumpReadings.filter((p: any) => p.pump_type === 'petrol');
@@ -255,13 +251,13 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
         ['Date & Time of Entry', sale.updated_at ? format(new Date(sale.updated_at), "dd MMM yyyy hh:mm a") : '-'],
         ['Saved By', sale.saved_by || '-'],
         [],
-        ['ATTENDANCE'],
+        ['ATTENDANCE (Present Employees)'],
         ['Employee Name'],
-        ...(employeesList.length > 0 
-          ? employeesList.map((emp: any, idx: number) => [`${idx + 1}. ${emp.name}`])
-          : [['No employees registered']]
+        ...(attendanceList.length > 0 
+          ? attendanceList.map((att: any, idx: number) => [`${idx + 1}. ${att.employee_name}`])
+          : [['No attendance recorded']]
         ),
-        ['Total Employees', employeesList.length],
+        ['Total Present', attendanceList.length],
         [],
         ['PETROL PUMP READINGS'],
         ['Pump', 'Opening Reading', 'Closing Reading', 'Sales in Litres', 'Price per Litre', 'Sales Amount'],
@@ -399,18 +395,10 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
       // Fetch detailed data with all related information
       const { data: detailedSales, error } = await supabase
         .from('daily_sales')
-        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*), expenses(*), debtors(*), repaid_debtors(*)')
+        .select('*, pump_readings(*), oil_sales(*), payment_methods(*), cash_denominations(*), expenses(*), debtors(*), repaid_debtors(*), daily_attendance(employee_name)')
         .order('sale_date', { ascending: false });
 
       if (error) throw error;
-
-      // Fetch employees for attendance
-      const { data: employees } = await supabase
-        .from('employees')
-        .select('name')
-        .order('name', { ascending: true });
-
-      const employeesList = employees || [];
 
       const wb = XLSX.utils.book_new();
 
@@ -425,6 +413,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
         const expensesArray = sale.expenses || [];
         const debtorsArray = sale.debtors || [];
         const repaidDebtorsArray = sale.repaid_debtors || [];
+        const attendanceList = sale.daily_attendance || [];
 
         const petrolReadings = pumpReadings.filter((p: any) => p.pump_type === 'petrol');
         const dieselReadings = pumpReadings.filter((p: any) => p.pump_type === 'diesel');
@@ -460,12 +449,12 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
           ['Date & Time of Entry', sale.updated_at ? format(new Date(sale.updated_at), "dd MMM yyyy hh:mm a") : '-'],
           ['Saved By', sale.saved_by || '-'],
           [],
-          ['ATTENDANCE'],
-          ...(employeesList.length > 0 
-            ? employeesList.map((emp: any, idx: number) => [`${idx + 1}. ${emp.name}`])
-            : [['No employees registered']]
+          ['ATTENDANCE (Present Employees)'],
+          ...(attendanceList.length > 0 
+            ? attendanceList.map((att: any, idx: number) => [`${idx + 1}. ${att.employee_name}`])
+            : [['No attendance recorded']]
           ),
-          ['Total Employees', employeesList.length],
+          ['Total Present', attendanceList.length],
           [],
           ['PETROL READINGS'],
           ...petrolReadings.map((p: any) => [`PETROL PUMP-${p.pump_number}`, p.opening_reading, p.closing_reading, `₹${((p.closing_reading - p.opening_reading) * p.price_per_litre).toFixed(2)}`]),
