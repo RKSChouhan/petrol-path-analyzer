@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FuelIcon, LogOut, Users } from "lucide-react";
+import { FuelIcon, LogOut, Users, Flower2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import SalesCharts from "@/components/SalesCharts";
@@ -159,6 +159,10 @@ const Stat = () => {
     navigate("/");
   };
 
+  const handleGoToLotus = () => {
+    navigate("/lotus");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
@@ -175,6 +179,10 @@ const Stat = () => {
               <Button variant="outline" onClick={handleGoToEntry}>
                 <FuelIcon className="mr-2 h-4 w-4" />
                 Daily tree
+              </Button>
+              <Button variant="outline" onClick={handleGoToLotus}>
+                <Flower2 className="mr-2 h-4 w-4" />
+                Lotus
               </Button>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
