@@ -512,8 +512,7 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
     Petrol: item.petrol,
     Diesel: item.diesel,
     "Lubricant": item.engineOil,
-    Lubricants: item.lubricants,
-    total: item.petrol + item.diesel + item.engineOil + item.lubricants,
+    total: item.petrol + item.diesel + item.engineOil,
   }));
 
   const productTotals = salesData.reduce(
@@ -530,7 +529,6 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
     { name: "Petrol", value: productTotals.petrol },
     { name: "Diesel", value: productTotals.diesel },
     { name: "Lubricant", value: productTotals.engineOil },
-    { name: "Lubricants", value: productTotals.lubricants },
   ].filter(item => item.value > 0);
 
   if (salesData.length === 0) {
@@ -694,7 +692,6 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
               <Bar dataKey="Petrol" fill={COLORS.petrol} radius={[4, 4, 0, 0]} />
               <Bar dataKey="Diesel" fill={COLORS.diesel} radius={[4, 4, 0, 0]} />
               <Bar dataKey="Lubricant" fill={COLORS.engineOil} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Lubricants" fill={COLORS.lubricants} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
