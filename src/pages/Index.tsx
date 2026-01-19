@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { usePresence } from "@/hooks/use-presence";
 import PumpReadingsForm from "@/components/PumpReadingsForm";
 import PaymentMethodsForm from "@/components/PaymentMethodsForm";
 import CashDenominationsForm from "@/components/CashDenominationsForm";
@@ -33,6 +34,9 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [emptyFieldsDialogOpen, setEmptyFieldsDialogOpen] = useState(false);
   const [emptyFields, setEmptyFields] = useState<string[]>([]);
+
+  // Track users across all pages (daily tree, stat, lotus)
+  usePresence(userRole, 'daily-tree');
 
   // Form states
   const [pumpReadings, setPumpReadings] = useState({
@@ -614,13 +618,20 @@ const Index = () => {
     }
 
     if (data.oilSales) {
+      // Ensure integer fields are properly converted (OCR may return decimals)
+      const sanitizedItems = (data.oilSales.items || []).map((item: any) => ({
+        oil_name: item.oil_name || '',
+        oil_count: Math.round(Number(item.oil_count) || 0),
+        oil_price: Number(item.oil_price) || 0,
+      }));
+      
       setOilSales(prev => ({
         ...prev,
-        items: data.oilSales.items || prev.items,
-        yesterday_reading: data.oilSales.yesterday_reading ?? prev.yesterday_reading,
-        today_reading: data.oilSales.today_reading ?? prev.today_reading,
-        distilled_water_count: data.oilSales.distilled_water_count ?? prev.distilled_water_count,
-        waste: data.oilSales.waste ?? prev.waste,
+        items: sanitizedItems.length > 0 ? sanitizedItems : prev.items,
+        yesterday_reading: Number(data.oilSales.yesterday_reading) || prev.yesterday_reading,
+        today_reading: Number(data.oilSales.today_reading) || prev.today_reading,
+        distilled_water_count: Math.round(Number(data.oilSales.distilled_water_count) || 0) || prev.distilled_water_count,
+        waste: Number(data.oilSales.waste) || prev.waste,
       }));
     }
 
@@ -770,20 +781,20 @@ const Index = () => {
       ]);
       if (cashError) throw cashError;
 
-      // Save oil sales
+      // Save oil sales - ensure integer fields are properly typed
       await supabase.from('oil_sales').delete().eq('daily_sales_id', dailySales.id);
       const oilSalesData = oilSales.items.map(item => ({
         daily_sales_id: dailySales.id,
         oil_name: item.oil_name,
-        oil_count: item.oil_count,
-        oil_price: item.oil_price,
-        yesterday_reading: oilSales.yesterday_reading,
-        today_reading: oilSales.today_reading,
-        total_litres: oilSales.total_litres,
-        total_amount: oilSales.total_amount,
-        distilled_water_count: oilSales.distilled_water_count,
-        distilled_water: oilSales.distilled_water,
-        waste: oilSales.waste,
+        oil_count: Math.round(Number(item.oil_count) || 0),
+        oil_price: Number(item.oil_price) || 0,
+        yesterday_reading: Number(oilSales.yesterday_reading) || 0,
+        today_reading: Number(oilSales.today_reading) || 0,
+        total_litres: Number(oilSales.total_litres) || 0,
+        total_amount: Number(oilSales.total_amount) || 0,
+        distilled_water_count: Math.round(Number(oilSales.distilled_water_count) || 0),
+        distilled_water: Number(oilSales.distilled_water) || 0,
+        waste: Number(oilSales.waste) || 0,
       }));
       const { error: oilError } = await supabase.from('oil_sales').insert(oilSalesData);
       if (oilError) throw oilError;

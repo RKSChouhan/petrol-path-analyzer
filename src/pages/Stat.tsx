@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import SalesCharts from "@/components/SalesCharts";
 import DebtorLedger from "@/components/DebtorLedger";
+import { usePresence } from "@/hooks/use-presence";
 import logo from "@/assets/logo.png";
 
 const Stat = () => {
@@ -13,7 +14,9 @@ const Stat = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [salesData, setSalesData] = useState<any[]>([]);
-  const [onlineUsers, setOnlineUsers] = useState<number>(0);
+  
+  // Track users across all pages (daily tree, stat, lotus)
+  const onlineUsers = usePresence(userRole, 'stat');
 
   useEffect(() => {
     // Sign out on page close/refresh
@@ -60,28 +63,6 @@ const Stat = () => {
     };
   }, [navigate]);
 
-  // Track online users with Supabase Presence
-  useEffect(() => {
-    const channel = supabase.channel('online-users', {
-      config: { presence: { key: userRole || 'anonymous' } }
-    });
-
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const count = Object.values(state).flat().length;
-        setOnlineUsers(count);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ user: userRole, online_at: new Date().toISOString() });
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userRole]);
 
   useEffect(() => {
     if (userId) {
