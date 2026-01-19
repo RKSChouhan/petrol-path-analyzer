@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { usePresence } from "@/hooks/use-presence";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,9 @@ const Login = () => {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [rolePassword, setRolePassword] = useState("");
   const [showForgetDialog, setShowForgetDialog] = useState(false);
+  
+  // Track all visitors on the website
+  const onlineUsers = usePresence(null, 'login');
   
   // Supabase auth states
   const [email, setEmail] = useState("");
@@ -314,6 +318,16 @@ const Login = () => {
             >
               Forget detail
             </button>
+          </div>
+        </div>
+        
+        {/* Users Online Badge */}
+        <div className="flex justify-center">
+          <div className="flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-full">
+            <Users className="h-4 w-4 text-primary" />
+            <span className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{onlineUsers}</span> users online
+            </span>
           </div>
         </div>
       </div>
