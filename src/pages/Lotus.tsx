@@ -8,6 +8,7 @@ import { format, parseISO } from "date-fns";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
+import { usePresence } from "@/hooks/use-presence";
 import logo from "@/assets/logo.png";
 
 interface DailyEntry {
@@ -35,6 +36,9 @@ const Lotus = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [entries, setEntries] = useState<DailyEntry[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Track users across all pages
+  usePresence(userRole, 'lotus');
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -203,16 +207,6 @@ const Lotus = () => {
     });
   };
 
-  // Group entries by date
-  const groupedEntries = entries.reduce((acc, entry) => {
-    const date = entry.sale_date;
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(entry);
-    return acc;
-  }, {} as Record<string, DailyEntry[]>);
-
   const calculateEntryTotals = (entry: DailyEntry) => {
     const pumpReadings = entry.pump_readings || [];
     const oilSales = entry.oil_sales || [];
@@ -302,12 +296,12 @@ const Lotus = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {/* Header Row */}
-            <Card className="shadow-[var(--shadow-card)]">
-              <CardContent className="py-3">
-                <ScrollArea className="w-full whitespace-nowrap">
-                  <div className="flex gap-4 min-w-max px-2">
+          <Card className="shadow-[var(--shadow-card)]">
+            <CardContent className="py-4">
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="min-w-max">
+                  {/* Header Row */}
+                  <div className="flex gap-4 px-2 py-3 border-b bg-muted/30 rounded-t-md">
                     <div className="w-28 font-semibold text-sm text-muted-foreground">Date</div>
                     <div className="w-16 font-semibold text-sm text-muted-foreground text-center">Entry</div>
                     <div className="w-24 font-semibold text-sm text-muted-foreground text-center">Saved By</div>
@@ -322,84 +316,79 @@ const Lotus = () => {
                     <div className="w-28 font-semibold text-sm text-muted-foreground text-right">Total</div>
                     <div className="w-20 font-semibold text-sm text-muted-foreground text-center">Staff</div>
                   </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
-              </CardContent>
-            </Card>
 
-            {/* Data Rows - One per entry, horizontally scrollable */}
-            {Object.keys(groupedEntries)
-              .sort((a, b) => b.localeCompare(a))
-              .map(date => (
-                <Card key={date} className="shadow-[var(--shadow-card)]">
-                  <CardContent className="py-2">
-                    {groupedEntries[date].map((entry, idx) => {
-                      const totals = calculateEntryTotals(entry);
-                      const isFirst = idx === 0;
-                      
-                      return (
-                        <ScrollArea key={entry.id} className={`w-full whitespace-nowrap ${idx > 0 ? 'mt-2 pt-2 border-t' : ''}`}>
-                          <div className="flex gap-4 min-w-max px-2 py-1 items-center hover:bg-muted/50 rounded">
-                            <div className="w-28 font-medium text-sm">
-                              {isFirst ? format(parseISO(date), "dd MMM yyyy") : ''}
-                            </div>
-                            <div className="w-16 text-center">
-                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                                {entry.entry_number}
-                              </span>
-                            </div>
-                            <div className="w-24 text-center">
-                              {entry.saved_by ? (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  entry.saved_by === 'Proprietor' 
-                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' 
-                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                                }`}>
-                                  {entry.saved_by === 'Proprietor' ? 'P' : 'S'}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">-</span>
-                              )}
-                            </div>
-                            <div className="w-28 text-right text-sm font-medium text-chart-1">
-                              ₹{totals.petrolSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                            </div>
-                            <div className="w-28 text-right text-sm font-medium text-chart-2">
-                              ₹{totals.dieselSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                            </div>
-                            <div className="w-28 text-right text-sm font-medium text-chart-3">
-                              ₹{totals.lubricantSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                            </div>
-                            <div className="w-28 text-right text-sm">
-                              ₹{totals.digitalPayment.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                            </div>
-                            <div className="w-28 text-right text-sm">
-                              ₹{totals.cashTotal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                            </div>
-                            <div className="w-24 text-right text-sm text-orange-600 dark:text-orange-400">
-                              ₹{totals.totalExpenses.toLocaleString('en-IN')}
-                            </div>
-                            <div className="w-24 text-right text-sm text-red-600 dark:text-red-400">
-                              ₹{totals.totalDebtors.toLocaleString('en-IN')}
-                            </div>
-                            <div className="w-24 text-right text-sm text-green-600 dark:text-green-400">
-                              ₹{totals.totalRepaid.toLocaleString('en-IN')}
-                            </div>
-                            <div className="w-28 text-right text-sm font-bold">
-                              ₹{totals.totalIncome.toLocaleString('en-IN')}
-                            </div>
-                            <div className="w-20 text-center text-sm">
-                              {(entry.daily_attendance || []).length}
-                            </div>
-                          </div>
-                          <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
+                  {/* Data Rows */}
+                  {entries.map((entry, idx) => {
+                    const totals = calculateEntryTotals(entry);
+                    const prevEntry = idx > 0 ? entries[idx - 1] : null;
+                    const isNewDate = !prevEntry || prevEntry.sale_date !== entry.sale_date;
+                    
+                    return (
+                      <div 
+                        key={entry.id} 
+                        className={`flex gap-4 px-2 py-2 items-center hover:bg-muted/50 ${
+                          isNewDate && idx > 0 ? 'border-t-2 border-primary/20' : 'border-t border-border/50'
+                        }`}
+                      >
+                        <div className="w-28 font-medium text-sm">
+                          {isNewDate ? format(parseISO(entry.sale_date), "dd MMM yyyy") : ''}
+                        </div>
+                        <div className="w-16 text-center">
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                            {entry.entry_number}
+                          </span>
+                        </div>
+                        <div className="w-24 text-center">
+                          {entry.saved_by ? (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              entry.saved_by === 'Proprietor' 
+                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' 
+                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                            }`}>
+                              {entry.saved_by === 'Proprietor' ? 'P' : 'S'}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </div>
+                        <div className="w-28 text-right text-sm font-medium text-chart-1">
+                          ₹{totals.petrolSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </div>
+                        <div className="w-28 text-right text-sm font-medium text-chart-2">
+                          ₹{totals.dieselSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </div>
+                        <div className="w-28 text-right text-sm font-medium text-chart-3">
+                          ₹{totals.lubricantSales.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </div>
+                        <div className="w-28 text-right text-sm">
+                          ₹{totals.digitalPayment.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </div>
+                        <div className="w-28 text-right text-sm">
+                          ₹{totals.cashTotal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </div>
+                        <div className="w-24 text-right text-sm text-orange-600 dark:text-orange-400">
+                          ₹{totals.totalExpenses.toLocaleString('en-IN')}
+                        </div>
+                        <div className="w-24 text-right text-sm text-red-600 dark:text-red-400">
+                          ₹{totals.totalDebtors.toLocaleString('en-IN')}
+                        </div>
+                        <div className="w-24 text-right text-sm text-green-600 dark:text-green-400">
+                          ₹{totals.totalRepaid.toLocaleString('en-IN')}
+                        </div>
+                        <div className="w-28 text-right text-sm font-bold">
+                          ₹{totals.totalIncome.toLocaleString('en-IN')}
+                        </div>
+                        <div className="w-20 text-center text-sm">
+                          {(entry.daily_attendance || []).length}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
