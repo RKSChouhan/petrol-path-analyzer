@@ -80,7 +80,10 @@ const Index = () => {
   const [showCashTotal, setShowCashTotal] = useState(false);
   const [showSalesAmount, setShowSalesAmount] = useState(false);
   const [showCashierSplit, setShowCashierSplit] = useState(false);
-  const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
+  const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([
+    { name: "Density test", amount: 0 },
+    { name: "Snack & Tea", amount: 0 },
+  ]);
   const [debtors, setDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [repaidDebtors, setRepaidDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [comment, setComment] = useState("");
@@ -196,7 +199,7 @@ const Index = () => {
     // If no data exists, clear the form
     if (!existingEntry) {
       clearFormFields();
-      setExpenses([{ name: "", amount: 0 }]);
+      setExpenses([{ name: "Density test", amount: 0 }, { name: "Snack & Tea", amount: 0 }]);
       setDebtors([{ name: "", amount: 0 }]);
       setRepaidDebtors([{ name: "", amount: 0 }]);
       setComment("");
@@ -311,14 +314,23 @@ const Index = () => {
     }
     setCashDenominations(newCashDenominations);
     
-    // Populate expenses
+    // Populate expenses - ensure fixed rows exist
+    const FIXED_EXPENSE_NAMES = ["Density test", "Snack & Tea"];
     if (existingEntry.expenses && existingEntry.expenses.length > 0) {
-      setExpenses(existingEntry.expenses.map((exp: any) => ({
+      const loadedExpenses = existingEntry.expenses.map((exp: any) => ({
         name: exp.name || '',
         amount: exp.amount || 0,
-      })));
+      }));
+      // Ensure fixed rows are at start with their saved amounts (or 0)
+      const fixedRows = FIXED_EXPENSE_NAMES.map(fixedName => {
+        const existing = loadedExpenses.find((e: { name: string }) => e.name === fixedName);
+        return existing || { name: fixedName, amount: 0 };
+      });
+      // Add remaining non-fixed rows
+      const otherRows = loadedExpenses.filter((e: { name: string }) => !FIXED_EXPENSE_NAMES.includes(e.name));
+      setExpenses([...fixedRows, ...otherRows]);
     } else {
-      setExpenses([{ name: "", amount: 0 }]);
+      setExpenses([{ name: "Density test", amount: 0 }, { name: "Snack & Tea", amount: 0 }]);
     }
     
     // Populate debtors
@@ -1287,15 +1299,7 @@ const Index = () => {
                   ) : (
                     /* Combined View (Original) */
                     <>
-                      {/* Row 1: Total Income Produced */}
-                      <div className="p-4 bg-card rounded-lg mb-4">
-                        <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
-                        <div className="text-2xl font-bold mt-2 text-primary">
-                          ₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                        </div>
-                      </div>
-                      
-                      {/* Row 1.5: Sales (Petrol + Diesel + Oil) */}
+                      {/* Row 1: Sales (Petrol + Diesel + Oil) - moved to first */}
                       <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800 mb-4">
                         <Label className="text-sm text-purple-600 dark:text-purple-400">Sales</Label>
                         <div className="text-2xl font-bold mt-2 text-purple-600 dark:text-purple-400">
@@ -1312,8 +1316,16 @@ const Index = () => {
                           })()}
                         </div>
                       </div>
+
+                      {/* Row 2: Total Income Produced */}
+                      <div className="p-4 bg-card rounded-lg mb-4">
+                        <Label className="text-sm text-muted-foreground">Total Income Produced</Label>
+                        <div className="text-2xl font-bold mt-2 text-primary">
+                          ₹{calculateTotalIncome().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
                       
-                      {/* Row 2: Total Expense */}
+                      {/* Row 3: Total Expense */}
                       <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800 mb-4">
                         <Label className="text-sm text-orange-600 dark:text-orange-400">Total Expense</Label>
                         <div className="text-2xl font-bold mt-2 text-orange-600 dark:text-orange-400">
