@@ -1295,6 +1295,24 @@ const Index = () => {
                         </div>
                       </div>
                       
+                      {/* Row 1.5: Sales (Petrol + Diesel + Oil) */}
+                      <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800 mb-4">
+                        <Label className="text-sm text-purple-600 dark:text-purple-400">Sales</Label>
+                        <div className="text-2xl font-bold mt-2 text-purple-600 dark:text-purple-400">
+                          ₹{(() => {
+                            // Petrol sales
+                            const petrolSales = (['petrol1', 'petrol2', 'petrol3', 'petrol4'] as const).reduce((sum, key) => 
+                              sum + ((pumpReadings[key].closing_reading - pumpReadings[key].opening_reading) * pumpReadings[key].price_per_litre), 0);
+                            // Diesel sales
+                            const dieselSales = (['diesel1', 'diesel2', 'diesel3', 'diesel4'] as const).reduce((sum, key) => 
+                              sum + ((pumpReadings[key].closing_reading - pumpReadings[key].opening_reading) * pumpReadings[key].price_per_litre), 0);
+                            // Oil sales
+                            const oilTotal = oilSales.total_amount + oilSales.items.reduce((sum, item) => sum + item.oil_price, 0);
+                            return (petrolSales + dieselSales + oilTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                          })()}
+                        </div>
+                      </div>
+                      
                       {/* Row 2: Total Expense */}
                       <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800 mb-4">
                         <Label className="text-sm text-orange-600 dark:text-orange-400">Total Expense</Label>
@@ -1303,10 +1321,10 @@ const Index = () => {
                         </div>
                       </div>
                       
-                      {/* Row 3: Sales Amount */}
+                      {/* Row 3: Net Sales Amount */}
                       <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800 relative mb-4">
                         <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm text-green-600 dark:text-green-400">Sales Amount</Label>
+                          <Label className="text-sm text-green-600 dark:text-green-400">Net Sales Amount</Label>
                           <Button
                             variant="outline"
                             size="sm"
