@@ -1,17 +1,28 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Shared channel name for tracking all users across the entire website
-const PRESENCE_CHANNEL = 'website-visitors';
+// Shared channel name for tracking all visitors across the entire website link
+const PRESENCE_CHANNEL = "website-visitors";
 
-// Generate a unique visitor ID that persists across pages but not sessions
+// Generate a stable visitor id for this browser.
+// Use localStorage so multiple tabs count as ONE visitor.
 const getVisitorId = () => {
-  let visitorId = sessionStorage.getItem('visitor_id');
-  if (!visitorId) {
-    visitorId = `visitor-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    sessionStorage.setItem('visitor_id', visitorId);
+  try {
+    let visitorId = localStorage.getItem("visitor_id");
+    if (!visitorId) {
+      visitorId = `visitor-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem("visitor_id", visitorId);
+    }
+    return visitorId;
+  } catch {
+    // Fallback (e.g. storage disabled)
+    let visitorId = sessionStorage.getItem("visitor_id");
+    if (!visitorId) {
+      visitorId = `visitor-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      sessionStorage.setItem("visitor_id", visitorId);
+    }
+    return visitorId;
   }
-  return visitorId;
 };
 
 export const usePresence = (userRole?: string | null, currentPage?: string) => {
@@ -19,30 +30,35 @@ export const usePresence = (userRole?: string | null, currentPage?: string) => {
 
   useEffect(() => {
     const visitorId = getVisitorId();
-    
+
     const channel = supabase.channel(PRESENCE_CHANNEL, {
-      config: { presence: { key: visitorId } }
+      config: { presence: { key: visitorId } },
     });
 
+    const updateCount = () => {
+      const state = channel.presenceState();
+      // Count unique visitors (each key is one visitor; multiple tabs become multiple metas under same key)
+      setOnlineUsers(Object.keys(state).length);
+    };
+
     channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        // Count unique visitors (each key is a unique visitor)
-        const count = Object.keys(state).length;
-        setOnlineUsers(count);
-      })
+      .on("presence", { event: "sync" }, updateCount)
+      .on("presence", { event: "join" }, updateCount)
+      .on("presence", { event: "leave" }, updateCount)
       .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ 
+        if (status === "SUBSCRIBED") {
+          await channel.track({
             visitor_id: visitorId,
-            user_role: userRole || 'anonymous',
-            page: currentPage || 'unknown',
-            online_at: new Date().toISOString() 
+            user_role: userRole || "anonymous",
+            page: currentPage || "unknown",
+            online_at: new Date().toISOString(),
           });
         }
       });
 
     return () => {
+      // Ensure the presence is removed promptly on navigation/unmount.
+      channel.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, [userRole, currentPage]);
