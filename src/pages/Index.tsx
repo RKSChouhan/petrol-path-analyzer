@@ -20,7 +20,7 @@ import EmptyFieldsDialog from "@/components/EmptyFieldsDialog";
 import ExpenseForm from "@/components/ExpenseForm";
 import DebtorForm from "@/components/DebtorForm";
 import RepaidDebtorForm from "@/components/RepaidDebtorForm";
-import AttendanceBox from "@/components/AttendanceBox";
+import AttendanceBox, { AttendanceEntry } from "@/components/AttendanceBox";
 import ImageOCRUpload from "@/components/ImageOCRUpload";
 import logo from "@/assets/logo.png";
 
@@ -87,7 +87,7 @@ const Index = () => {
   const [debtors, setDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [repaidDebtors, setRepaidDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [comment, setComment] = useState("");
-  const [selectedAttendance, setSelectedAttendance] = useState<string[]>([]);
+  const [selectedAttendance, setSelectedAttendance] = useState<AttendanceEntry[]>([]);
 
   useEffect(() => {
     // Sign out on page close/refresh
@@ -360,11 +360,15 @@ const Index = () => {
     if (existingEntry.id) {
       const { data: attendanceData } = await supabase
         .from('daily_attendance')
-        .select('employee_name')
+        .select('employee_name, shift, job')
         .eq('daily_sales_id', existingEntry.id);
       
       if (attendanceData && attendanceData.length > 0) {
-        setSelectedAttendance(attendanceData.map((a: any) => a.employee_name));
+        setSelectedAttendance(attendanceData.map((a: any) => ({
+          name: a.employee_name,
+          shift: a.shift || 'Full',
+          job: a.job || 'Pump boy',
+        })));
       } else {
         setSelectedAttendance([]);
       }
@@ -851,17 +855,23 @@ const Index = () => {
       await supabase.from('daily_attendance').delete().eq('daily_sales_id', dailySales.id);
       if (selectedAttendance.length > 0) {
         // Get employee IDs for selected names
+        const attendanceNames = selectedAttendance.map(a => a.name);
         const { data: employeesData } = await supabase
           .from('employees')
           .select('id, name')
-          .in('name', selectedAttendance);
+          .in('name', attendanceNames);
         
         if (employeesData && employeesData.length > 0) {
-          const attendanceData = employeesData.map(emp => ({
-            daily_sales_id: dailySales.id,
-            employee_id: emp.id,
-            employee_name: emp.name,
-          }));
+          const attendanceData = employeesData.map(emp => {
+            const attendanceEntry = selectedAttendance.find(a => a.name === emp.name);
+            return {
+              daily_sales_id: dailySales.id,
+              employee_id: emp.id,
+              employee_name: emp.name,
+              shift: attendanceEntry?.shift || 'Full',
+              job: attendanceEntry?.job || 'Pump boy',
+            };
+          });
           const { error: attendanceError } = await supabase.from('daily_attendance').insert(attendanceData);
           if (attendanceError) throw attendanceError;
         }

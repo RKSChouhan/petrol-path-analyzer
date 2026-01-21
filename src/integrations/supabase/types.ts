@@ -74,6 +74,8 @@ export type Database = {
           employee_id: string | null
           employee_name: string
           id: string
+          job: string | null
+          shift: string | null
         }
         Insert: {
           created_at?: string
@@ -81,6 +83,8 @@ export type Database = {
           employee_id?: string | null
           employee_name: string
           id?: string
+          job?: string | null
+          shift?: string | null
         }
         Update: {
           created_at?: string
@@ -88,6 +92,8 @@ export type Database = {
           employee_id?: string | null
           employee_name?: string
           id?: string
+          job?: string | null
+          shift?: string | null
         }
         Relationships: [
           {
@@ -207,6 +213,8 @@ export type Database = {
       employees: {
         Row: {
           created_at: string
+          default_job: string | null
+          default_shift: string | null
           id: string
           name: string
           updated_at: string
@@ -214,6 +222,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_job?: string | null
+          default_shift?: string | null
           id?: string
           name: string
           updated_at?: string
@@ -221,6 +231,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_job?: string | null
+          default_shift?: string | null
           id?: string
           name?: string
           updated_at?: string
