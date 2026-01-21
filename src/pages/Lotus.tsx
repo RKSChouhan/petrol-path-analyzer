@@ -103,7 +103,7 @@ const Lotus = () => {
           expenses(*),
           debtors(*),
           repaid_debtors(*),
-          daily_attendance(employee_name)
+          daily_attendance(employee_name, shift, job)
         `)
         .eq('user_id', userId)
         .order('sale_date', { ascending: false })

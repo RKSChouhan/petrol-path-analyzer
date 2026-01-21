@@ -6,18 +6,34 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export interface AttendanceEntry {
+  name: string;
+  shift: string;
+  job: string;
+}
 
 interface AttendanceBoxProps {
   userId: string;
   dailySalesId?: string | null;
   disabled?: boolean;
-  selectedAttendance: string[];
-  onAttendanceChange: (attendance: string[]) => void;
+  selectedAttendance: AttendanceEntry[];
+  onAttendanceChange: (attendance: AttendanceEntry[]) => void;
 }
+
+const SHIFT_OPTIONS = ["Full", "Day", "Night"];
+const JOB_OPTIONS = ["Supervisor", "Cashier", "Pump boy", "Cleaner", "Air boy"];
 
 const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onAttendanceChange }: AttendanceBoxProps) => {
   const { toast } = useToast();
-  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; name: string; default_shift: string; default_job: string }[]>([]);
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
@@ -28,7 +44,7 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
   const fetchEmployees = async () => {
     const { data, error } = await supabase
       .from('employees')
-      .select('id, name')
+      .select('id, name, default_shift, default_job')
       .order('name', { ascending: true });
 
     if (error) {
@@ -54,6 +70,8 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
       .insert({
         name: newEmployeeName.trim(),
         user_id: userId,
+        default_shift: 'Full',
+        default_job: 'Pump boy',
       });
 
     if (error) {
@@ -98,23 +116,53 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
     });
 
     // Remove from selected attendance if present
-    onAttendanceChange(selectedAttendance.filter(n => n !== name));
+    onAttendanceChange(selectedAttendance.filter(a => a.name !== name));
     fetchEmployees();
   };
 
-  const toggleEmployeeAttendance = (employeeName: string) => {
+  const isEmployeeSelected = (employeeName: string) => {
+    return selectedAttendance.some(a => a.name === employeeName);
+  };
+
+  const getEmployeeAttendance = (employeeName: string): AttendanceEntry | undefined => {
+    return selectedAttendance.find(a => a.name === employeeName);
+  };
+
+  const toggleEmployeeAttendance = (employee: { name: string; default_shift: string; default_job: string }) => {
     if (disabled) return;
     
-    if (selectedAttendance.includes(employeeName)) {
-      onAttendanceChange(selectedAttendance.filter(n => n !== employeeName));
+    if (isEmployeeSelected(employee.name)) {
+      onAttendanceChange(selectedAttendance.filter(a => a.name !== employee.name));
     } else {
-      onAttendanceChange([...selectedAttendance, employeeName]);
+      onAttendanceChange([...selectedAttendance, {
+        name: employee.name,
+        shift: employee.default_shift || 'Full',
+        job: employee.default_job || 'Pump boy',
+      }]);
     }
+  };
+
+  const updateEmployeeShift = (employeeName: string, shift: string) => {
+    if (disabled) return;
+    onAttendanceChange(selectedAttendance.map(a => 
+      a.name === employeeName ? { ...a, shift } : a
+    ));
+  };
+
+  const updateEmployeeJob = (employeeName: string, job: string) => {
+    if (disabled) return;
+    onAttendanceChange(selectedAttendance.map(a => 
+      a.name === employeeName ? { ...a, job } : a
+    ));
   };
 
   const selectAll = () => {
     if (disabled) return;
-    onAttendanceChange(employees.map(e => e.name));
+    onAttendanceChange(employees.map(e => ({
+      name: e.name,
+      shift: e.default_shift || 'Full',
+      job: e.default_job || 'Pump boy',
+    })));
   };
 
   const clearAll = () => {
@@ -168,41 +216,94 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
           </div>
         )}
 
-        <div className="max-h-[200px] overflow-y-auto">
+        {/* Table Header */}
+        {employees.length > 0 && (
+          <div className="flex items-center gap-2 p-2 bg-muted/80 rounded-t-md border-b text-xs font-semibold text-muted-foreground">
+            <div className="w-6"></div>
+            <div className="flex-1 min-w-[100px]">Employee Name</div>
+            <div className="w-24 text-center">Shift</div>
+            <div className="w-28 text-center">Job</div>
+            <div className="w-6"></div>
+          </div>
+        )}
+
+        <div className="max-h-[300px] overflow-y-auto">
           {employees.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">No employees added yet</p>
           ) : (
-            <div className="space-y-2">
-              {employees.map((employee, index) => (
-                <div
-                  key={employee.id}
-                  className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  <div className="flex items-center gap-2">
+            <div className="space-y-1">
+              {employees.map((employee, index) => {
+                const isSelected = isEmployeeSelected(employee.name);
+                const attendance = getEmployeeAttendance(employee.name);
+                
+                return (
+                  <div
+                    key={employee.id}
+                    className={`flex items-center gap-2 p-2 rounded-md transition-colors ${
+                      isSelected ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50 hover:bg-muted'
+                    }`}
+                  >
                     <Checkbox
                       id={`attendance-${employee.id}`}
-                      checked={selectedAttendance.includes(employee.name)}
-                      onCheckedChange={() => toggleEmployeeAttendance(employee.name)}
+                      checked={isSelected}
+                      onCheckedChange={() => toggleEmployeeAttendance(employee)}
                       disabled={disabled}
                     />
                     <label 
                       htmlFor={`attendance-${employee.id}`}
-                      className="text-sm font-medium cursor-pointer"
+                      className="flex-1 min-w-[100px] text-sm font-medium cursor-pointer truncate"
                     >
                       {index + 1}. {employee.name}
                     </label>
+                    
+                    {/* Shift Dropdown */}
+                    <Select
+                      value={attendance?.shift || employee.default_shift || 'Full'}
+                      onValueChange={(value) => updateEmployeeShift(employee.name, value)}
+                      disabled={disabled || !isSelected}
+                    >
+                      <SelectTrigger className="w-24 h-7 text-xs">
+                        <SelectValue placeholder="Shift" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        {SHIFT_OPTIONS.map(shift => (
+                          <SelectItem key={shift} value={shift} className="text-xs">
+                            {shift}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* Job Dropdown */}
+                    <Select
+                      value={attendance?.job || employee.default_job || 'Pump boy'}
+                      onValueChange={(value) => updateEmployeeJob(employee.name, value)}
+                      disabled={disabled || !isSelected}
+                    >
+                      <SelectTrigger className="w-28 h-7 text-xs">
+                        <SelectValue placeholder="Job" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        {JOB_OPTIONS.map(job => (
+                          <SelectItem key={job} value={job} className="text-xs">
+                            {job}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleDeleteEmployee(employee.id, employee.name)}
+                      disabled={disabled}
+                    >
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => handleDeleteEmployee(employee.id, employee.name)}
-                    disabled={disabled}
-                  >
-                    <Trash2 className="h-3 w-3 text-destructive" />
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
