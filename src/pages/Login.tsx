@@ -135,7 +135,7 @@ const Login = () => {
     }
 
     sessionStorage.setItem("userRole", selectedRole);
-    navigate("/");
+    navigate("/shortcut");
     setLoading(false);
   };
 
