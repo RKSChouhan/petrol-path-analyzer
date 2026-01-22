@@ -5,8 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Shortcut from "./pages/Shortcut";
 import Stat from "./pages/Stat";
 import Lotus from "./pages/Lotus";
+import FiservBills from "./pages/FiservBills";
+import Attendance from "./pages/Attendance";
+import Storage from "./pages/Storage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,9 +23,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/shortcut" element={<Shortcut />} />
           <Route path="/" element={<Index />} />
           <Route path="/stat" element={<Stat />} />
           <Route path="/lotus" element={<Lotus />} />
+          <Route path="/fiserv-bills" element={<FiservBills />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/storage" element={<Storage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
