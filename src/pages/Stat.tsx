@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FuelIcon, LogOut, Users, Flower2 } from "lucide-react";
+import { LayoutGrid, LogOut, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import SalesCharts from "@/components/SalesCharts";
@@ -136,12 +136,8 @@ const Stat = () => {
     navigate("/login");
   };
 
-  const handleGoToEntry = () => {
-    navigate("/");
-  };
-
-  const handleGoToLotus = () => {
-    navigate("/lotus");
+  const handleGoToShortcut = () => {
+    navigate("/shortcut");
   };
 
   return (
@@ -157,13 +153,9 @@ const Stat = () => {
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handleGoToEntry}>
-                <FuelIcon className="mr-2 h-4 w-4" />
-                Daily tree
-              </Button>
-              <Button variant="outline" onClick={handleGoToLotus}>
-                <Flower2 className="mr-2 h-4 w-4" />
-                Lotus
+              <Button variant="outline" onClick={handleGoToShortcut}>
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Shortcut
               </Button>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />

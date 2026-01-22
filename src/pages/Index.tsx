@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, BarChart3, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock, Eye, EyeOff, RotateCcw } from "lucide-react";
+import { CalendarIcon, LayoutGrid, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock, Eye, EyeOff, RotateCcw, BarChart3 } from "lucide-react";
 import { format, differenceInDays, startOfDay, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -381,8 +381,8 @@ const Index = () => {
     navigate("/login");
   };
 
-  const handleGoToStat = () => {
-    navigate("/stat");
+  const handleGoToShortcut = () => {
+    navigate("/shortcut");
   };
 
   const [supervisorLocked, setSupervisorLocked] = useState(false);
@@ -1082,9 +1082,9 @@ const Index = () => {
                     />
                   </PopoverContent>
                 </Popover>
-                <Button variant="outline" onClick={handleGoToStat}>
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Stat
+                <Button variant="outline" onClick={handleGoToShortcut}>
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Shortcut
                 </Button>
                 <Button variant="outline" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />

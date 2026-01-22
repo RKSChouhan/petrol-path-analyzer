@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogOut, Download } from "lucide-react";
+import { LayoutGrid, LogOut, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -129,8 +129,8 @@ const Lotus = () => {
     navigate("/login");
   };
 
-  const handleGoBack = () => {
-    navigate("/stat");
+  const handleGoToShortcut = () => {
+    navigate("/shortcut");
   };
 
   const handleExportAll = () => {
@@ -269,9 +269,9 @@ const Lotus = () => {
                 <Download className="mr-2 h-4 w-4" />
                 Export All
               </Button>
-              <Button variant="outline" onClick={handleGoBack}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Stat
+              <Button variant="outline" onClick={handleGoToShortcut}>
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Shortcut
               </Button>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
