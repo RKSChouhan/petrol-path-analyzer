@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      bharat_fleet_bills: {
+        Row: {
+          account_no: string
+          amount: number
+          bill_date: string
+          bill_time: string
+          card_id: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_no: string
+          amount?: number
+          bill_date: string
+          bill_time: string
+          card_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_no?: string
+          amount?: number
+          bill_date?: string
+          bill_time?: string
+          card_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cash_denominations: {
         Row: {
           cashier_group: Database["public"]["Enums"]["cashier_group"]
