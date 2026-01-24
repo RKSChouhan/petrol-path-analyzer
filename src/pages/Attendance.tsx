@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutGrid, LogOut, Users, Calendar } from "lucide-react";
-import { format } from "date-fns";
+import { LayoutGrid, LogOut, Users, Calendar, ChevronDown, ChevronRight } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import logo from "@/assets/logo.png";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface AttendanceRecord {
   id: string;
@@ -19,11 +19,25 @@ interface AttendanceRecord {
   entry_number?: number;
 }
 
+interface GroupedByDate {
+  date: string;
+  dayName: string;
+  records: AttendanceRecord[];
+}
+
+interface GroupedByMonth {
+  month: string;
+  monthLabel: string;
+  dates: GroupedByDate[];
+}
+
 const Attendance = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [groupedData, setGroupedData] = useState<GroupedByMonth[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -82,8 +96,7 @@ const Attendance = () => {
             entry_number
           )
         `)
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -98,12 +111,99 @@ const Attendance = () => {
         entry_number: record.daily_sales?.entry_number,
       }));
 
-      setAttendanceRecords(records);
+      // Group by month and date
+      const grouped = groupRecordsByMonthAndDate(records);
+      setGroupedData(grouped);
+
+      // Auto-expand the first month and its first date
+      if (grouped.length > 0) {
+        setExpandedMonths(new Set([grouped[0].month]));
+        if (grouped[0].dates.length > 0) {
+          setExpandedDates(new Set([`${grouped[0].month}-${grouped[0].dates[0].date}`]));
+        }
+      }
     } catch (error) {
       console.error('Error fetching attendance:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const groupRecordsByMonthAndDate = (records: AttendanceRecord[]): GroupedByMonth[] => {
+    const monthMap = new Map<string, Map<string, AttendanceRecord[]>>();
+
+    records.forEach(record => {
+      const dateStr = record.sale_date || record.created_at.split('T')[0];
+      const date = parseISO(dateStr);
+      const monthKey = format(date, 'yyyy-MM');
+      const dateKey = format(date, 'yyyy-MM-dd');
+
+      if (!monthMap.has(monthKey)) {
+        monthMap.set(monthKey, new Map());
+      }
+      const dateMap = monthMap.get(monthKey)!;
+      
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, []);
+      }
+      dateMap.get(dateKey)!.push(record);
+    });
+
+    const result: GroupedByMonth[] = [];
+    
+    // Sort months descending
+    const sortedMonths = Array.from(monthMap.keys()).sort((a, b) => b.localeCompare(a));
+    
+    sortedMonths.forEach(monthKey => {
+      const dateMap = monthMap.get(monthKey)!;
+      const dates: GroupedByDate[] = [];
+      
+      // Sort dates descending
+      const sortedDates = Array.from(dateMap.keys()).sort((a, b) => b.localeCompare(a));
+      
+      sortedDates.forEach(dateKey => {
+        const dateObj = parseISO(dateKey);
+        dates.push({
+          date: dateKey,
+          dayName: format(dateObj, 'EEEE'),
+          records: dateMap.get(dateKey)!,
+        });
+      });
+
+      const monthDate = parseISO(`${monthKey}-01`);
+      result.push({
+        month: monthKey,
+        monthLabel: format(monthDate, 'MMMM yyyy'),
+        dates,
+      });
+    });
+
+    return result;
+  };
+
+  const toggleMonth = (month: string) => {
+    setExpandedMonths(prev => {
+      const next = new Set(prev);
+      if (next.has(month)) {
+        next.delete(month);
+      } else {
+        next.add(month);
+      }
+      return next;
+    });
+  };
+
+  const toggleDate = (month: string, date: string) => {
+    const key = `${month}-${date}`;
+    setExpandedDates(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   };
 
   const handleLogout = async () => {
@@ -155,7 +255,7 @@ const Attendance = () => {
               <div className="flex justify-center py-8">
                 <p className="text-muted-foreground">Loading attendance records...</p>
               </div>
-            ) : attendanceRecords.length === 0 ? (
+            ) : groupedData.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Users className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No attendance records found.</p>
@@ -164,38 +264,94 @@ const Attendance = () => {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Entry</TableHead>
-                      <TableHead>Employee Name</TableHead>
-                      <TableHead>Shift</TableHead>
-                      <TableHead>Job</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {attendanceRecords.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {record.sale_date 
-                              ? format(new Date(record.sale_date), 'dd MMM yyyy')
-                              : format(new Date(record.created_at), 'dd MMM yyyy')}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {record.entry_number ? `Entry ${record.entry_number}` : '-'}
-                        </TableCell>
-                        <TableCell>{record.employee_name}</TableCell>
-                        <TableCell>{record.shift || '-'}</TableCell>
-                        <TableCell>{record.job || '-'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="space-y-4">
+                {groupedData.map((monthGroup) => (
+                  <Card key={monthGroup.month} className="border-2">
+                    <Collapsible
+                      open={expandedMonths.has(monthGroup.month)}
+                      onOpenChange={() => toggleMonth(monthGroup.month)}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-3">
+                          <CardTitle className="flex items-center gap-2 text-lg">
+                            {expandedMonths.has(monthGroup.month) ? (
+                              <ChevronDown className="h-5 w-5" />
+                            ) : (
+                              <ChevronRight className="h-5 w-5" />
+                            )}
+                            <Calendar className="h-5 w-5 text-primary" />
+                            {monthGroup.monthLabel}
+                            <span className="text-sm font-normal text-muted-foreground ml-2">
+                              ({monthGroup.dates.reduce((sum, d) => sum + d.records.length, 0)} records)
+                            </span>
+                          </CardTitle>
+                        </CardHeader>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <CardContent className="pt-0 space-y-3">
+                          {monthGroup.dates.map((dateGroup) => (
+                            <Card key={dateGroup.date} className="border">
+                              <Collapsible
+                                open={expandedDates.has(`${monthGroup.month}-${dateGroup.date}`)}
+                                onOpenChange={() => toggleDate(monthGroup.month, dateGroup.date)}
+                              >
+                                <CollapsibleTrigger asChild>
+                                  <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors py-2 px-4">
+                                    <div className="flex items-center gap-2 text-base">
+                                      {expandedDates.has(`${monthGroup.month}-${dateGroup.date}`) ? (
+                                        <ChevronDown className="h-4 w-4" />
+                                      ) : (
+                                        <ChevronRight className="h-4 w-4" />
+                                      )}
+                                      <span className="font-semibold">
+                                        {format(parseISO(dateGroup.date), 'dd MMM yyyy')}
+                                      </span>
+                                      <span className="text-muted-foreground">
+                                        ({dateGroup.dayName})
+                                      </span>
+                                      <span className="text-sm text-muted-foreground ml-auto">
+                                        {dateGroup.records.length} employee{dateGroup.records.length !== 1 ? 's' : ''}
+                                      </span>
+                                    </div>
+                                  </CardHeader>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                  <CardContent className="pt-0 pb-3 px-4">
+                                    <div className="grid gap-2">
+                                      {dateGroup.records.map((record) => (
+                                        <div
+                                          key={record.id}
+                                          className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                                        >
+                                          <div className="flex items-center gap-4">
+                                            <div className="font-medium">{record.employee_name}</div>
+                                            {record.entry_number && (
+                                              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                                Entry {record.entry_number}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                            <span className="bg-background px-2 py-1 rounded">
+                                              {record.shift || 'Full'}
+                                            </span>
+                                            <span className="bg-background px-2 py-1 rounded">
+                                              {record.job || 'Pump boy'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </CardContent>
+                                </CollapsibleContent>
+                              </Collapsible>
+                            </Card>
+                          ))}
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </Card>
+                ))}
               </div>
             )}
           </CardContent>
