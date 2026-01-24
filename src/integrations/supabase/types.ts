@@ -272,6 +272,42 @@ export type Database = {
           },
         ]
       }
+      fiserv_bills: {
+        Row: {
+          amount: number
+          bill_date: string
+          bill_time: string
+          card_last_four: string
+          created_at: string
+          id: string
+          invoice_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          bill_date: string
+          bill_time: string
+          card_last_four: string
+          created_at?: string
+          id?: string
+          invoice_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bill_date?: string
+          bill_time?: string
+          card_last_four?: string
+          created_at?: string
+          id?: string
+          invoice_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lock_settings: {
         Row: {
           id: string
