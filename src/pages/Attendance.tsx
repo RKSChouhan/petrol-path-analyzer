@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutGrid, LogOut, Users, Calendar, ChevronDown, ChevronRight } from "lucide-react";
+import { LayoutGrid, LogOut, Users, Calendar, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -206,6 +207,27 @@ const Attendance = () => {
     });
   };
 
+  const handleDeleteAttendance = async (id: string) => {
+    if (userRole !== 'Proprietor') {
+      toast.error("Only Proprietor can delete attendance records");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('daily_attendance')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success("Attendance record deleted");
+      fetchAttendanceRecords();
+    } catch (error: any) {
+      console.error('Error deleting attendance:', error);
+      toast.error(error.message || "Failed to delete attendance record");
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     sessionStorage.removeItem("userRole");
@@ -215,6 +237,8 @@ const Attendance = () => {
   const handleGoToShortcut = () => {
     navigate("/shortcut");
   };
+
+  const isProprietor = userRole === 'Proprietor';
 
   return (
     <div className="min-h-screen bg-background">
@@ -338,6 +362,19 @@ const Attendance = () => {
                                             <span className="bg-background px-2 py-1 rounded">
                                               {record.job || 'Pump boy'}
                                             </span>
+                                            {isProprietor && (
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDeleteAttendance(record.id);
+                                                }}
+                                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            )}
                                           </div>
                                         </div>
                                       ))}
