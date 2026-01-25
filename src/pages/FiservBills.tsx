@@ -524,6 +524,14 @@ const FiservBills = () => {
                             )}
                           </TableRow>
                         ))}
+                        {/* Total Row */}
+                        <TableRow className="bg-muted/50 font-bold">
+                          <TableCell colSpan={4} className="text-right">Total Amount:</TableCell>
+                          <TableCell className="text-right text-lg">
+                            ₹{savedFiservBills.reduce((sum, bill) => sum + Number(bill.amount), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          {isProprietor && <TableCell></TableCell>}
+                        </TableRow>
                       </TableBody>
                     </Table>
                   </div>
@@ -691,6 +699,14 @@ const FiservBills = () => {
                             )}
                           </TableRow>
                         ))}
+                        {/* Total Row */}
+                        <TableRow className="bg-muted/50 font-bold">
+                          <TableCell colSpan={4} className="text-right">Total Amount:</TableCell>
+                          <TableCell className="text-right text-lg">
+                            ₹{savedBharatBills.reduce((sum, bill) => sum + Number(bill.amount), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          {isProprietor && <TableCell></TableCell>}
+                        </TableRow>
                       </TableBody>
                     </Table>
                   </div>

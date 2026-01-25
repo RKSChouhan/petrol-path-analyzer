@@ -228,6 +228,35 @@ const Attendance = () => {
     }
   };
 
+  const handleDeleteMonth = async (month: string) => {
+    if (userRole !== 'Proprietor') {
+      toast.error("Only Proprietor can delete attendance records");
+      return;
+    }
+    
+    // Get all record IDs for this month
+    const monthGroup = groupedData.find(g => g.month === month);
+    if (!monthGroup) return;
+    
+    const recordIds = monthGroup.dates.flatMap(d => d.records.map(r => r.id));
+    
+    if (recordIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from('daily_attendance')
+        .delete()
+        .in('id', recordIds);
+
+      if (error) throw error;
+      toast.success(`Deleted ${recordIds.length} attendance records for ${monthGroup.monthLabel}`);
+      fetchAttendanceRecords();
+    } catch (error: any) {
+      console.error('Error deleting month attendance:', error);
+      toast.error(error.message || "Failed to delete attendance records");
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     sessionStorage.removeItem("userRole");
@@ -297,18 +326,33 @@ const Attendance = () => {
                     >
                       <CollapsibleTrigger asChild>
                         <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-3">
-                          <CardTitle className="flex items-center gap-2 text-lg">
-                            {expandedMonths.has(monthGroup.month) ? (
-                              <ChevronDown className="h-5 w-5" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5" />
+                          <div className="flex items-center justify-between w-full">
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                              {expandedMonths.has(monthGroup.month) ? (
+                                <ChevronDown className="h-5 w-5" />
+                              ) : (
+                                <ChevronRight className="h-5 w-5" />
+                              )}
+                              <Calendar className="h-5 w-5 text-primary" />
+                              {monthGroup.monthLabel}
+                              <span className="text-sm font-normal text-muted-foreground ml-2">
+                                ({monthGroup.dates.reduce((sum, d) => sum + d.records.length, 0)} records)
+                              </span>
+                            </CardTitle>
+                            {isProprietor && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteMonth(monthGroup.month);
+                                }}
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             )}
-                            <Calendar className="h-5 w-5 text-primary" />
-                            {monthGroup.monthLabel}
-                            <span className="text-sm font-normal text-muted-foreground ml-2">
-                              ({monthGroup.dates.reduce((sum, d) => sum + d.records.length, 0)} records)
-                            </span>
-                          </CardTitle>
+                          </div>
                         </CardHeader>
                       </CollapsibleTrigger>
                       <CollapsibleContent>

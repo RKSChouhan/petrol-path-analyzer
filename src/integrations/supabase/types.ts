@@ -190,6 +190,7 @@ export type Database = {
       debtor_ledger: {
         Row: {
           amount: number
+          bill_number: string | null
           created_at: string
           id: string
           name: string
@@ -198,6 +199,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          bill_number?: string | null
           created_at?: string
           id?: string
           name: string
@@ -206,6 +208,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bill_number?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -217,6 +220,7 @@ export type Database = {
       debtors: {
         Row: {
           amount: number
+          bill_number: string | null
           created_at: string | null
           daily_sales_id: string | null
           id: string
@@ -224,6 +228,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          bill_number?: string | null
           created_at?: string | null
           daily_sales_id?: string | null
           id?: string
@@ -231,6 +236,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bill_number?: string | null
           created_at?: string | null
           daily_sales_id?: string | null
           id?: string

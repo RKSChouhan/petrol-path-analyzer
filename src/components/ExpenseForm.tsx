@@ -15,7 +15,7 @@ interface ExpenseFormProps {
   disabled?: boolean;
 }
 
-const FIXED_EXPENSE_NAMES = ["Density test", "Snack & Tea"] as const;
+const FIXED_EXPENSE_NAMES = ["Density test", "food & tea", "Drinking water"] as const;
 const isFixedExpense = (name: string) => FIXED_EXPENSE_NAMES.includes(name as any);
 
 const ExpenseForm = ({ items, onChange, disabled = false }: ExpenseFormProps) => {
