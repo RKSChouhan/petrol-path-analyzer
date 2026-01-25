@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, LayoutGrid, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock, Eye, EyeOff, RotateCcw, BarChart3 } from "lucide-react";
+import { CalendarIcon, LayoutGrid, TrendingUp, IndianRupee, LogOut, Info, Lock, Unlock, Eye, EyeOff, RotateCcw, BarChart3, Calculator as CalcIcon } from "lucide-react";
 import { format, differenceInDays, startOfDay, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ import DebtorForm from "@/components/DebtorForm";
 import RepaidDebtorForm from "@/components/RepaidDebtorForm";
 import AttendanceBox, { AttendanceEntry } from "@/components/AttendanceBox";
 import ImageOCRUpload from "@/components/ImageOCRUpload";
+import Calculator from "@/components/Calculator";
 import logo from "@/assets/logo.png";
 
 const Index = () => {
@@ -82,10 +83,13 @@ const Index = () => {
   const [showCashierSplit, setShowCashierSplit] = useState(false);
   const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([
     { name: "Density test", amount: 0 },
-    { name: "Snack & Tea", amount: 0 },
+    { name: "food & tea", amount: 0 },
+    { name: "Drinking water", amount: 0 },
   ]);
-  const [debtors, setDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
+  const [debtors, setDebtors] = useState<{ name: string; bill_number: string; amount: number }[]>([{ name: "Pandian", bill_number: "", amount: 0 }]);
   const [repaidDebtors, setRepaidDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [calculatorPosition, setCalculatorPosition] = useState({ x: window.innerWidth - 240, y: 100 });
   const [comment, setComment] = useState("");
   const [selectedAttendance, setSelectedAttendance] = useState<AttendanceEntry[]>([]);
 
@@ -199,8 +203,8 @@ const Index = () => {
     // If no data exists, clear the form
     if (!existingEntry) {
       clearFormFields();
-      setExpenses([{ name: "Density test", amount: 0 }, { name: "Snack & Tea", amount: 0 }]);
-      setDebtors([{ name: "", amount: 0 }]);
+      setExpenses([{ name: "Density test", amount: 0 }, { name: "food & tea", amount: 0 }, { name: "Drinking water", amount: 0 }]);
+      setDebtors([{ name: "Pandian", bill_number: "", amount: 0 }]);
       setRepaidDebtors([{ name: "", amount: 0 }]);
       setComment("");
       setSelectedAttendance([]);
@@ -315,7 +319,7 @@ const Index = () => {
     setCashDenominations(newCashDenominations);
     
     // Populate expenses - ensure fixed rows exist
-    const FIXED_EXPENSE_NAMES = ["Density test", "Snack & Tea"];
+    const FIXED_EXPENSE_NAMES = ["Density test", "food & tea", "Drinking water"];
     if (existingEntry.expenses && existingEntry.expenses.length > 0) {
       const loadedExpenses = existingEntry.expenses.map((exp: any) => ({
         name: exp.name || '',
@@ -330,17 +334,27 @@ const Index = () => {
       const otherRows = loadedExpenses.filter((e: { name: string }) => !FIXED_EXPENSE_NAMES.includes(e.name));
       setExpenses([...fixedRows, ...otherRows]);
     } else {
-      setExpenses([{ name: "Density test", amount: 0 }, { name: "Snack & Tea", amount: 0 }]);
+      setExpenses([{ name: "Density test", amount: 0 }, { name: "food & tea", amount: 0 }, { name: "Drinking water", amount: 0 }]);
     }
     
-    // Populate debtors
+    // Populate debtors - ensure fixed rows exist
+    const FIXED_DEBTOR_NAMES = ["Pandian"];
     if (existingEntry.debtors && existingEntry.debtors.length > 0) {
-      setDebtors(existingEntry.debtors.map((deb: any) => ({
+      const loadedDebtors = existingEntry.debtors.map((deb: any) => ({
         name: deb.name || '',
+        bill_number: deb.bill_number || '',
         amount: deb.amount || 0,
-      })));
+      }));
+      // Ensure fixed rows are at start with their saved amounts (or 0)
+      const fixedDebtorRows = FIXED_DEBTOR_NAMES.map(fixedName => {
+        const existing = loadedDebtors.find((d: { name: string }) => d.name === fixedName);
+        return existing || { name: fixedName, bill_number: '', amount: 0 };
+      });
+      // Add remaining non-fixed rows
+      const otherDebtorRows = loadedDebtors.filter((d: { name: string }) => !FIXED_DEBTOR_NAMES.includes(d.name));
+      setDebtors([...fixedDebtorRows, ...otherDebtorRows]);
     } else {
-      setDebtors([{ name: "", amount: 0 }]);
+      setDebtors([{ name: "Pandian", bill_number: "", amount: 0 }]);
     }
     
     // Populate repaid debtors
@@ -591,8 +605,8 @@ const Index = () => {
       distilled_water: 0,
       waste: 0,
     });
-    setExpenses([{ name: "", amount: 0 }]);
-    setDebtors([{ name: "", amount: 0 }]);
+    setExpenses([{ name: "Density test", amount: 0 }, { name: "food & tea", amount: 0 }, { name: "Drinking water", amount: 0 }]);
+    setDebtors([{ name: "Pandian", bill_number: "", amount: 0 }]);
     setRepaidDebtors([{ name: "", amount: 0 }]);
     setComment("");
     toast({
@@ -832,6 +846,7 @@ const Index = () => {
       const debtorsData = debtors.filter(d => d.name || d.amount > 0).map(deb => ({
         daily_sales_id: dailySales.id,
         name: deb.name,
+        bill_number: deb.bill_number || '',
         amount: deb.amount,
       }));
       if (debtorsData.length > 0) {
@@ -1053,14 +1068,14 @@ const Index = () => {
                     size="sm"
                     onClick={() => setSelectedEntry(1)}
                   >
-                    Entry 1
+                    Final Entry
                   </Button>
                   <Button 
                     variant={selectedEntry === 2 ? 'default' : 'ghost'} 
                     size="sm"
                     onClick={() => setSelectedEntry(2)}
                   >
-                    Entry 2
+                    Evening Entry
                   </Button>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1 border-2 border-primary rounded-md bg-primary/10">
@@ -1470,6 +1485,24 @@ const Index = () => {
           </CardContent>
         </Card>
       </main>
+      
+      {/* Calculator Button */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-40 bg-primary text-primary-foreground hover:bg-primary/90"
+        onClick={() => setCalculatorOpen(!calculatorOpen)}
+      >
+        <CalcIcon className="h-6 w-6" />
+      </Button>
+      
+      {/* Calculator Component */}
+      <Calculator
+        isOpen={calculatorOpen}
+        onClose={() => setCalculatorOpen(false)}
+        position={calculatorPosition}
+        onPositionChange={setCalculatorPosition}
+      />
     </div>
   );
 };
