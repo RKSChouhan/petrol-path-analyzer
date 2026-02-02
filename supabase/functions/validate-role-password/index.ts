@@ -55,22 +55,26 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Get hashed passwords from environment variables
-    const validPasswords: Record<string, string> = {
-      'Supervisor': Deno.env.get('SUPERVISOR_PASSWORD_HASH')!,
-      'Proprietor': Deno.env.get('PROPRIETOR_PASSWORD_HASH')!
+    // Get passwords from environment variables (stored securely in Supabase vault)
+    const validPasswords: Record<string, string | undefined> = {
+      'Supervisor': Deno.env.get('SUPERVISOR_PASSWORD_HASH'),
+      'Proprietor': Deno.env.get('PROPRIETOR_PASSWORD_HASH')
     }
 
-    // Hash the provided password using SHA-256
-    const encoder = new TextEncoder()
-    const data = encoder.encode(password)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    const storedPassword = validPasswords[role]
+    
+    if (!storedPassword) {
+      console.log('No password configured for role:', role)
+      return new Response(
+        JSON.stringify({ success: false, error: 'Role not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     console.log('Validating password for role:', role)
 
-    if (hashHex !== validPasswords[role]) {
+    // Compare the provided password directly with the stored secret
+    if (password !== storedPassword) {
       console.log('Password mismatch for role:', role)
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid password' }),
