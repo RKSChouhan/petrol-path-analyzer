@@ -11,6 +11,7 @@ interface DebtorLedgerItem {
   id: string;
   name: string;
   amount: number;
+  bill_number?: string;
 }
 
 interface DebtorLedgerProps {
@@ -21,6 +22,7 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
   const { toast } = useToast();
   const [debtors, setDebtors] = useState<DebtorLedgerItem[]>([]);
   const [newDebtorName, setNewDebtorName] = useState("");
+  const [newDebtorBillNumber, setNewDebtorBillNumber] = useState("");
   const [newDebtorAmount, setNewDebtorAmount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
 
@@ -61,6 +63,7 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
       {
         user_id: userId,
         name: newDebtorName.trim(),
+        bill_number: newDebtorBillNumber.trim(),
         amount: newDebtorAmount,
       },
       { onConflict: "user_id,name" }
@@ -78,6 +81,7 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
         description: "Debtor added successfully",
       });
       setNewDebtorName("");
+      setNewDebtorBillNumber("");
       setNewDebtorAmount(0);
       fetchDebtors();
     }
@@ -129,8 +133,8 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Add New Debtor */}
-        <div className="flex items-end gap-2 pb-3 border-b border-red-200 dark:border-red-800">
-          <div className="flex-1 space-y-1">
+        <div className="flex flex-wrap items-end gap-2 pb-3 border-b border-red-200 dark:border-red-800">
+          <div className="flex-1 min-w-[120px] space-y-1">
             <Label className="text-xs text-muted-foreground">Name</Label>
             <Input
               type="text"
@@ -140,7 +144,17 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
               className="h-9"
             />
           </div>
-          <div className="w-28 space-y-1">
+          <div className="w-24 space-y-1">
+            <Label className="text-xs text-muted-foreground">Bill No.</Label>
+            <Input
+              type="text"
+              value={newDebtorBillNumber}
+              onChange={(e) => setNewDebtorBillNumber(e.target.value)}
+              placeholder="Bill #"
+              className="h-9"
+            />
+          </div>
+          <div className="w-24 space-y-1">
             <Label className="text-xs text-muted-foreground">Amount</Label>
             <Input
               type="number"
@@ -176,6 +190,9 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
               >
                 <div className="flex-1">
                   <p className="font-medium text-sm">{debtor.name}</p>
+                  {debtor.bill_number && (
+                    <p className="text-xs text-muted-foreground">Bill: {debtor.bill_number}</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-red-600 dark:text-red-400">

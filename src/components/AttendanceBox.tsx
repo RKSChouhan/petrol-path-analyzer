@@ -29,7 +29,7 @@ interface AttendanceBoxProps {
 }
 
 const SHIFT_OPTIONS = ["Full", "Day", "Night"];
-const JOB_OPTIONS = ["Supervisor", "Cashier", "Pump boy", "Cleaner", "Air boy"];
+const JOB_OPTIONS = ["Supervisor", "Cashier", "Pump Operator", "Scavenger", "Air boy"];
 
 const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onAttendanceChange }: AttendanceBoxProps) => {
   const { toast } = useToast();
@@ -71,7 +71,7 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
         name: newEmployeeName.trim(),
         user_id: userId,
         default_shift: 'Full',
-        default_job: 'Pump boy',
+        default_job: 'Pump Operator',
       });
 
     if (error) {
@@ -137,7 +137,7 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
       onAttendanceChange([...selectedAttendance, {
         name: employee.name,
         shift: employee.default_shift || 'Full',
-        job: employee.default_job || 'Pump boy',
+        job: employee.default_job || 'Pump Operator',
       }]);
     }
   };
@@ -161,7 +161,7 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
     onAttendanceChange(employees.map(e => ({
       name: e.name,
       shift: e.default_shift || 'Full',
-      job: e.default_job || 'Pump boy',
+      job: e.default_job || 'Pump Operator',
     })));
   };
 
@@ -276,7 +276,7 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
                     
                     {/* Job Dropdown */}
                     <Select
-                      value={attendance?.job || employee.default_job || 'Pump boy'}
+                      value={attendance?.job || employee.default_job || 'Pump Operator'}
                       onValueChange={(value) => updateEmployeeJob(employee.name, value)}
                       disabled={disabled || !isSelected}
                     >
