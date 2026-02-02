@@ -6,14 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutGrid, LogOut, Receipt, Save, Plus, Trash2, Calendar, CreditCard } from "lucide-react";
-import { format } from "date-fns";
+import { LayoutGrid, LogOut, Receipt, Save, Plus, Trash2, Calendar, CreditCard, ChevronDown, ChevronRight } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface FiservBillEntry {
   id?: string;
@@ -53,18 +54,22 @@ interface SavedBharatFleetBill {
   created_at: string;
 }
 
+interface GroupedBills<T> {
+  [month: string]: {
+    [date: string]: T[];
+  };
+}
+
 const FiservBills = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   
-  // Fiserv entries
   const [fiservEntries, setFiservEntries] = useState<FiservBillEntry[]>([
     { bill_date: new Date(), bill_time: '', invoice_number: '', card_last_four: '', amount: 0 }
   ]);
   const [savedFiservBills, setSavedFiservBills] = useState<SavedFiservBill[]>([]);
   
-  // Bharat Fleet entries
   const [bharatEntries, setBharatEntries] = useState<BharatFleetEntry[]>([
     { bill_date: new Date(), bill_time: '', account_no: '', card_id: '', amount: 0 }
   ]);
@@ -73,6 +78,11 @@ const FiservBills = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("fiserv");
+  
+  const [expandedFiservMonths, setExpandedFiservMonths] = useState<Set<string>>(new Set());
+  const [expandedFiservDates, setExpandedFiservDates] = useState<Set<string>>(new Set());
+  const [expandedBharatMonths, setExpandedBharatMonths] = useState<Set<string>>(new Set());
+  const [expandedBharatDates, setExpandedBharatDates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -123,14 +133,12 @@ const FiservBills = () => {
           .from('fiserv_bills')
           .select('*')
           .order('bill_date', { ascending: false })
-          .order('bill_time', { ascending: false })
-          .limit(50),
+          .order('bill_time', { ascending: false }),
         supabase
           .from('bharat_fleet_bills')
           .select('*')
           .order('bill_date', { ascending: false })
           .order('bill_time', { ascending: false })
-          .limit(50)
       ]);
 
       if (fiservResult.error) throw fiservResult.error;
@@ -138,11 +146,88 @@ const FiservBills = () => {
       
       setSavedFiservBills(fiservResult.data || []);
       setSavedBharatBills(bharatResult.data || []);
+      
+      // Auto-expand the first month
+      if (fiservResult.data && fiservResult.data.length > 0) {
+        const firstMonth = format(parseISO(fiservResult.data[0].bill_date), 'yyyy-MM');
+        setExpandedFiservMonths(new Set([firstMonth]));
+      }
+      if (bharatResult.data && bharatResult.data.length > 0) {
+        const firstMonth = format(parseISO(bharatResult.data[0].bill_date), 'yyyy-MM');
+        setExpandedBharatMonths(new Set([firstMonth]));
+      }
     } catch (error) {
       console.error('Error fetching bills:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const groupBillsByMonthAndDate = <T extends { bill_date: string }>(bills: T[]): GroupedBills<T> => {
+    const grouped: GroupedBills<T> = {};
+    
+    bills.forEach(bill => {
+      const month = format(parseISO(bill.bill_date), 'yyyy-MM');
+      const date = bill.bill_date;
+      
+      if (!grouped[month]) {
+        grouped[month] = {};
+      }
+      if (!grouped[month][date]) {
+        grouped[month][date] = [];
+      }
+      grouped[month][date].push(bill);
+    });
+    
+    return grouped;
+  };
+
+  const toggleFiservMonth = (month: string) => {
+    setExpandedFiservMonths(prev => {
+      const next = new Set(prev);
+      if (next.has(month)) {
+        next.delete(month);
+      } else {
+        next.add(month);
+      }
+      return next;
+    });
+  };
+
+  const toggleFiservDate = (date: string) => {
+    setExpandedFiservDates(prev => {
+      const next = new Set(prev);
+      if (next.has(date)) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+      return next;
+    });
+  };
+
+  const toggleBharatMonth = (month: string) => {
+    setExpandedBharatMonths(prev => {
+      const next = new Set(prev);
+      if (next.has(month)) {
+        next.delete(month);
+      } else {
+        next.add(month);
+      }
+      return next;
+    });
+  };
+
+  const toggleBharatDate = (date: string) => {
+    setExpandedBharatDates(prev => {
+      const next = new Set(prev);
+      if (next.has(date)) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+      return next;
+    });
   };
 
   const handleLogout = async () => {
@@ -324,6 +409,16 @@ const FiservBills = () => {
   };
 
   const isProprietor = userRole === 'Proprietor';
+  const groupedFiservBills = groupBillsByMonthAndDate(savedFiservBills);
+  const groupedBharatBills = groupBillsByMonthAndDate(savedBharatBills);
+
+  const getMonthTotal = <T extends { amount: number }>(monthData: { [date: string]: T[] }): number => {
+    return Object.values(monthData).flat().reduce((sum, bill) => sum + Number(bill.amount), 0);
+  };
+
+  const getDateTotal = <T extends { amount: number }>(bills: T[]): number => {
+    return bills.reduce((sum, bill) => sum + Number(bill.amount), 0);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -490,50 +585,96 @@ const FiservBills = () => {
                     <p className="text-muted-foreground">No Fiserv bills saved yet.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead>Invoice</TableHead>
-                          <TableHead>Card (Last 4)</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                          {isProprietor && <TableHead className="w-12"></TableHead>}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {savedFiservBills.map((bill) => (
-                          <TableRow key={bill.id}>
-                            <TableCell>{format(new Date(bill.bill_date), 'dd MMM yyyy')}</TableCell>
-                            <TableCell>{bill.bill_time.slice(0, 5)}</TableCell>
-                            <TableCell className="font-mono">{bill.invoice_number}</TableCell>
-                            <TableCell className="font-mono">****{bill.card_last_four}</TableCell>
-                            <TableCell className="text-right font-medium">₹{Number(bill.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
-                            {isProprietor && (
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteFiservBill(bill.id)}
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
+                  <div className="space-y-2">
+                    {Object.entries(groupedFiservBills).map(([month, dateData]) => (
+                      <Collapsible key={month} open={expandedFiservMonths.has(month)}>
+                        <CollapsibleTrigger
+                          onClick={() => toggleFiservMonth(month)}
+                          className="flex items-center justify-between w-full p-3 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            {expandedFiservMonths.has(month) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
                             )}
-                          </TableRow>
-                        ))}
-                        {/* Total Row */}
-                        <TableRow className="bg-muted/50 font-bold">
-                          <TableCell colSpan={4} className="text-right">Total Amount:</TableCell>
-                          <TableCell className="text-right text-lg">
-                            ₹{savedFiservBills.reduce((sum, bill) => sum + Number(bill.amount), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </TableCell>
-                          {isProprietor && <TableCell></TableCell>}
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+                            <span className="font-semibold">{format(parseISO(`${month}-01`), 'MMMM yyyy')}</span>
+                          </div>
+                          <span className="font-bold text-primary">
+                            ₹{getMonthTotal(dateData).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pl-4 pt-2 space-y-2">
+                          {Object.entries(dateData).map(([date, bills]) => (
+                            <Collapsible key={date} open={expandedFiservDates.has(date)}>
+                              <CollapsibleTrigger
+                                onClick={() => toggleFiservDate(date)}
+                                className="flex items-center justify-between w-full p-2 bg-muted/50 rounded-md hover:bg-muted transition-colors"
+                              >
+                                <div className="flex items-center gap-2">
+                                  {expandedFiservDates.has(date) ? (
+                                    <ChevronDown className="h-3 w-3" />
+                                  ) : (
+                                    <ChevronRight className="h-3 w-3" />
+                                  )}
+                                  <span className="text-sm font-medium">
+                                    {format(parseISO(date), 'dd MMM yyyy')} ({format(parseISO(date), 'EEEE')})
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({bills.length} bills)
+                                  </span>
+                                </div>
+                                <span className="font-semibold">
+                                  ₹{getDateTotal(bills).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                </span>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent className="pl-4 pt-1">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="text-xs">Time</TableHead>
+                                      <TableHead className="text-xs">Invoice</TableHead>
+                                      <TableHead className="text-xs">Card</TableHead>
+                                      <TableHead className="text-xs text-right">Amount</TableHead>
+                                      {isProprietor && <TableHead className="w-8"></TableHead>}
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {bills.map((bill) => (
+                                      <TableRow key={bill.id}>
+                                        <TableCell className="text-xs">{bill.bill_time.slice(0, 5)}</TableCell>
+                                        <TableCell className="text-xs font-mono">{bill.invoice_number}</TableCell>
+                                        <TableCell className="text-xs font-mono">****{bill.card_last_four}</TableCell>
+                                        <TableCell className="text-xs text-right font-medium">₹{Number(bill.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
+                                        {isProprietor && (
+                                          <TableCell>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              onClick={() => handleDeleteFiservBill(bill.id)}
+                                              className="h-6 w-6 text-destructive hover:text-destructive"
+                                            >
+                                              <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                          </TableCell>
+                                        )}
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                    {/* Grand Total */}
+                    <div className="mt-4 p-3 bg-primary/20 rounded-lg flex justify-between items-center">
+                      <span className="font-bold">Grand Total:</span>
+                      <span className="text-xl font-bold text-primary">
+                        ₹{savedFiservBills.reduce((sum, bill) => sum + Number(bill.amount), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -665,50 +806,96 @@ const FiservBills = () => {
                     <p className="text-muted-foreground">No Bharat Fleet bills saved yet.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead>Account No.</TableHead>
-                          <TableHead>Card ID</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                          {isProprietor && <TableHead className="w-12"></TableHead>}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {savedBharatBills.map((bill) => (
-                          <TableRow key={bill.id}>
-                            <TableCell>{format(new Date(bill.bill_date), 'dd MMM yyyy')}</TableCell>
-                            <TableCell>{bill.bill_time.slice(0, 5)}</TableCell>
-                            <TableCell className="font-mono">{bill.account_no}</TableCell>
-                            <TableCell className="font-mono">{bill.card_id}</TableCell>
-                            <TableCell className="text-right font-medium">₹{Number(bill.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
-                            {isProprietor && (
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteBharatBill(bill.id)}
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
+                  <div className="space-y-2">
+                    {Object.entries(groupedBharatBills).map(([month, dateData]) => (
+                      <Collapsible key={month} open={expandedBharatMonths.has(month)}>
+                        <CollapsibleTrigger
+                          onClick={() => toggleBharatMonth(month)}
+                          className="flex items-center justify-between w-full p-3 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            {expandedBharatMonths.has(month) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
                             )}
-                          </TableRow>
-                        ))}
-                        {/* Total Row */}
-                        <TableRow className="bg-muted/50 font-bold">
-                          <TableCell colSpan={4} className="text-right">Total Amount:</TableCell>
-                          <TableCell className="text-right text-lg">
-                            ₹{savedBharatBills.reduce((sum, bill) => sum + Number(bill.amount), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          </TableCell>
-                          {isProprietor && <TableCell></TableCell>}
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+                            <span className="font-semibold">{format(parseISO(`${month}-01`), 'MMMM yyyy')}</span>
+                          </div>
+                          <span className="font-bold text-primary">
+                            ₹{getMonthTotal(dateData).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pl-4 pt-2 space-y-2">
+                          {Object.entries(dateData).map(([date, bills]) => (
+                            <Collapsible key={date} open={expandedBharatDates.has(date)}>
+                              <CollapsibleTrigger
+                                onClick={() => toggleBharatDate(date)}
+                                className="flex items-center justify-between w-full p-2 bg-muted/50 rounded-md hover:bg-muted transition-colors"
+                              >
+                                <div className="flex items-center gap-2">
+                                  {expandedBharatDates.has(date) ? (
+                                    <ChevronDown className="h-3 w-3" />
+                                  ) : (
+                                    <ChevronRight className="h-3 w-3" />
+                                  )}
+                                  <span className="text-sm font-medium">
+                                    {format(parseISO(date), 'dd MMM yyyy')} ({format(parseISO(date), 'EEEE')})
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({bills.length} bills)
+                                  </span>
+                                </div>
+                                <span className="font-semibold">
+                                  ₹{getDateTotal(bills).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                </span>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent className="pl-4 pt-1">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="text-xs">Time</TableHead>
+                                      <TableHead className="text-xs">Account No.</TableHead>
+                                      <TableHead className="text-xs">Card ID</TableHead>
+                                      <TableHead className="text-xs text-right">Amount</TableHead>
+                                      {isProprietor && <TableHead className="w-8"></TableHead>}
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {bills.map((bill) => (
+                                      <TableRow key={bill.id}>
+                                        <TableCell className="text-xs">{bill.bill_time.slice(0, 5)}</TableCell>
+                                        <TableCell className="text-xs font-mono">{bill.account_no}</TableCell>
+                                        <TableCell className="text-xs font-mono">{bill.card_id}</TableCell>
+                                        <TableCell className="text-xs text-right font-medium">₹{Number(bill.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
+                                        {isProprietor && (
+                                          <TableCell>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              onClick={() => handleDeleteBharatBill(bill.id)}
+                                              className="h-6 w-6 text-destructive hover:text-destructive"
+                                            >
+                                              <Trash2 className="h-3 w-3" />
+                                            </Button>
+                                          </TableCell>
+                                        )}
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                    {/* Grand Total */}
+                    <div className="mt-4 p-3 bg-primary/20 rounded-lg flex justify-between items-center">
+                      <span className="font-bold">Grand Total:</span>
+                      <span className="text-xl font-bold text-primary">
+                        ₹{savedBharatBills.reduce((sum, bill) => sum + Number(bill.amount), 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
                   </div>
                 )}
               </CardContent>

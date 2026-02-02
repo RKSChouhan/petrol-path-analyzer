@@ -586,6 +586,93 @@ export type Database = {
           },
         ]
       }
+      storage_readings: {
+        Row: {
+          created_at: string | null
+          density_checker: number | null
+          diesel_density_at_15c: number | null
+          diesel_density_value: number | null
+          diesel_kl: number | null
+          diesel_temperature: number | null
+          duration: string | null
+          eb_meter: number | null
+          eb_unit: number | null
+          empty_barrel: number | null
+          generator_diesel_capacity: number | null
+          generator_dip: number | null
+          id: string
+          load_capacity: number | null
+          lorry_entry_time: string | null
+          lorry_exit_time: string | null
+          oil_reading: number | null
+          petrol_density_at_15c: number | null
+          petrol_density_value: number | null
+          petrol_kl: number | null
+          petrol_temperature: number | null
+          reading_date: string
+          tvs_xl_meter: number | null
+          two_t_oil_barrel_stock: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          density_checker?: number | null
+          diesel_density_at_15c?: number | null
+          diesel_density_value?: number | null
+          diesel_kl?: number | null
+          diesel_temperature?: number | null
+          duration?: string | null
+          eb_meter?: number | null
+          eb_unit?: number | null
+          empty_barrel?: number | null
+          generator_diesel_capacity?: number | null
+          generator_dip?: number | null
+          id?: string
+          load_capacity?: number | null
+          lorry_entry_time?: string | null
+          lorry_exit_time?: string | null
+          oil_reading?: number | null
+          petrol_density_at_15c?: number | null
+          petrol_density_value?: number | null
+          petrol_kl?: number | null
+          petrol_temperature?: number | null
+          reading_date: string
+          tvs_xl_meter?: number | null
+          two_t_oil_barrel_stock?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string | null
+          density_checker?: number | null
+          diesel_density_at_15c?: number | null
+          diesel_density_value?: number | null
+          diesel_kl?: number | null
+          diesel_temperature?: number | null
+          duration?: string | null
+          eb_meter?: number | null
+          eb_unit?: number | null
+          empty_barrel?: number | null
+          generator_diesel_capacity?: number | null
+          generator_dip?: number | null
+          id?: string
+          load_capacity?: number | null
+          lorry_entry_time?: string | null
+          lorry_exit_time?: string | null
+          oil_reading?: number | null
+          petrol_density_at_15c?: number | null
+          petrol_density_value?: number | null
+          petrol_kl?: number | null
+          petrol_temperature?: number | null
+          reading_date?: string
+          tvs_xl_meter?: number | null
+          two_t_oil_barrel_stock?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
