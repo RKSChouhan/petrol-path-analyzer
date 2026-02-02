@@ -18,11 +18,6 @@ import logo from "@/assets/logo.png";
 
 type Role = "Proprietor" | "Supervisor";
 
-const ROLE_PASSWORDS: Record<Role, string> = {
-  Supervisor: "MahaBunk",
-  Proprietor: "KRish",
-};
-
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -103,39 +98,35 @@ const Login = () => {
       return;
     }
 
-    if (rolePassword !== ROLE_PASSWORDS[selectedRole]) {
-      toast({
-        title: "Error",
-        description: "Incorrect password for the selected role",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
-    if (authUser) {
-      // Save role to database
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: authUser.id,
-          role: selectedRole,
-        }, { onConflict: 'user_id,role' });
+    try {
+      // Call Edge Function for server-side password validation
+      const { data, error } = await supabase.functions.invoke('validate-role-password', {
+        body: { role: selectedRole, password: rolePassword }
+      });
 
-      if (error) {
+      if (error || !data?.success) {
         toast({
           title: "Error",
-          description: "Failed to save role. Please try again.",
+          description: data?.error || "Incorrect password for the selected role",
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
-    }
 
-    sessionStorage.setItem("userRole", selectedRole);
-    navigate("/shortcut");
+      sessionStorage.setItem("userRole", selectedRole);
+      navigate("/shortcut");
+    } catch (error) {
+      console.error('Role validation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to validate role. Please try again.",
+        variant: "destructive",
+      });
+    }
+    
     setLoading(false);
   };
 
