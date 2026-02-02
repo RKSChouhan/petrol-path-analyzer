@@ -623,6 +623,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_has_elevated_role: { Args: never; Returns: boolean }
+      user_is_proprietor: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "Proprietor" | "Supervisor"
