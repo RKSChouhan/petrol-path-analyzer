@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { FuelIcon, BarChart3, Flower2, Receipt, Users, Archive, LogOut } from "lucide-react";
+import { FuelIcon, BarChart3, Flower2, Receipt, Users, Archive, LogOut, TrendingUp, Wallet } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Shortcut = () => {
@@ -62,6 +62,8 @@ const Shortcut = () => {
     { name: "Lotus", icon: Flower2, path: "/lotus", color: "text-pink-600 dark:text-pink-400", bgColor: "bg-pink-100 dark:bg-pink-900/30" },
     { name: "Attendance", icon: Users, path: "/attendance", color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-100 dark:bg-orange-900/30" },
     { name: "Storage", icon: Archive, path: "/storage", color: "text-cyan-600 dark:text-cyan-400", bgColor: "bg-cyan-100 dark:bg-cyan-900/30" },
+    { name: "Trends", icon: TrendingUp, path: "/trends", color: "text-indigo-600 dark:text-indigo-400", bgColor: "bg-indigo-100 dark:bg-indigo-900/30" },
+    { name: "Salary", icon: Wallet, path: "/salary", color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/30" },
   ];
 
   return (

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutGrid, LogOut, Archive, Save, Fuel, Gauge, Zap, Truck } from "lucide-react";
+import { LayoutGrid, LogOut, Archive, Save, Fuel, Gauge, Zap, Truck, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
@@ -30,7 +30,7 @@ interface StorageData {
   diesel_temperature: number;
   diesel_density_at_15c: number;
   load_capacity: number;
-  density_checker: number;
+  density_checker: string;
   lorry_entry_time: string;
   lorry_exit_time: string;
   duration: string;
@@ -54,7 +54,7 @@ const initialData: StorageData = {
   diesel_temperature: 0,
   diesel_density_at_15c: 0,
   load_capacity: 0,
-  density_checker: 0,
+  density_checker: '',
   lorry_entry_time: '',
   lorry_exit_time: '',
   duration: '',
@@ -68,6 +68,7 @@ const Storage = () => {
   const [data, setData] = useState<StorageData>(initialData);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savedDates, setSavedDates] = useState<string[]>([]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -116,6 +117,30 @@ const Storage = () => {
     }
   }, [userId, selectedDate]);
 
+  useEffect(() => {
+    if (userId) {
+      fetchSavedDates();
+    }
+  }, [userId]);
+
+  const fetchSavedDates = async () => {
+    if (!userId) return;
+    
+    try {
+      const { data: readings, error } = await supabase
+        .from('storage_readings')
+        .select('reading_date')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      const dates = readings?.map(r => r.reading_date) || [];
+      setSavedDates(dates);
+    } catch (error) {
+      console.error('Error fetching saved dates:', error);
+    }
+  };
+
   const fetchData = async () => {
     if (!userId) return;
     setLoading(true);
@@ -149,7 +174,7 @@ const Storage = () => {
           diesel_temperature: reading.diesel_temperature || 0,
           diesel_density_at_15c: reading.diesel_density_at_15c || 0,
           load_capacity: reading.load_capacity || 0,
-          density_checker: reading.density_checker || 0,
+          density_checker: reading.density_checker || '',
           lorry_entry_time: reading.lorry_entry_time || '',
           lorry_exit_time: reading.lorry_exit_time || '',
           duration: reading.duration || '',
@@ -169,23 +194,39 @@ const Storage = () => {
     setSaving(true);
 
     try {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      
+      // Prepare data, converting empty time strings to null
+      const saveData = {
+        user_id: userId,
+        reading_date: dateStr,
+        ...data,
+        lorry_entry_time: data.lorry_entry_time || null,
+        lorry_exit_time: data.lorry_exit_time || null,
+      };
+      
       const { error } = await supabase
         .from('storage_readings')
-        .upsert({
-          user_id: userId,
-          reading_date: format(selectedDate, 'yyyy-MM-dd'),
-          ...data,
-        }, { onConflict: 'user_id,reading_date' });
+        .upsert(saveData, { onConflict: 'user_id,reading_date' });
 
       if (error) throw error;
 
       toast.success("Storage data saved successfully");
+      // Refresh saved dates list
+      if (!savedDates.includes(dateStr)) {
+        setSavedDates([...savedDates, dateStr]);
+      }
     } catch (error: any) {
       console.error('Error saving storage data:', error);
       toast.error(error.message || "Failed to save data");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleClear = () => {
+    setData(initialData);
+    toast.success("Form cleared");
   };
 
   const updateField = (field: keyof StorageData, value: any) => {
@@ -240,6 +281,12 @@ const Storage = () => {
               selected={selectedDate}
               onSelect={(date) => date && setSelectedDate(date)}
               className={cn("rounded-md border")}
+              modifiers={{
+                saved: (date) => savedDates.includes(format(date, 'yyyy-MM-dd'))
+              }}
+              modifiersClassNames={{
+                saved: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+              }}
             />
           </CardContent>
         </Card>
@@ -513,12 +560,10 @@ const Storage = () => {
                   <div className="space-y-2">
                     <Label>Density Checker</Label>
                     <Input
-                      type="number"
-                      step="0.0001"
+                      type="text"
                       value={data.density_checker || ''}
-                      onChange={(e) => updateField('density_checker', parseFloat(e.target.value) || 0)}
-                      onFocus={(e) => e.target.select()}
-                      placeholder="0.0000"
+                      onChange={(e) => updateField('density_checker', e.target.value)}
+                      placeholder="Checker name"
                     />
                   </div>
                 </div>
@@ -552,8 +597,12 @@ const Storage = () => {
               </CardContent>
             </Card>
 
-            {/* Save Button */}
-            <div className="flex justify-center pt-4">
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-4 pt-4">
+              <Button onClick={handleClear} variant="outline" size="lg" className="px-8">
+                <RotateCcw className="mr-2 h-5 w-5" />
+                Clear
+              </Button>
               <Button onClick={handleSave} disabled={saving} size="lg" className="px-12">
                 <Save className="mr-2 h-5 w-5" />
                 {saving ? 'Saving...' : 'Save Storage Data'}

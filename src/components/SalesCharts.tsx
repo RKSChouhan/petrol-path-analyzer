@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Trash2, Download, ArrowUpDown, Undo2 } from "lucide-react";
+import { Trash2, Download, ArrowUpDown, Undo2, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Table,
   TableBody,
@@ -27,6 +28,7 @@ const COLORS = {
   diesel: "hsl(var(--chart-2))",
   engineOil: "hsl(var(--chart-3))",
   lubricants: "hsl(var(--chart-4))",
+  expense: "hsl(var(--chart-5))",
 };
 
 const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
@@ -515,6 +517,43 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
     total: item.petrol + item.diesel + item.engineOil,
   }));
 
+  // Expense data for expense trend chart
+  const [expenseData, setExpenseData] = useState<{ date: string; Expense: number }[]>([]);
+
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        const { data: sales, error } = await supabase
+          .from('daily_sales')
+          .select('sale_date, expenses(*)')
+          .order('sale_date', { ascending: true })
+          .limit(30);
+
+        if (error) throw error;
+
+        const expenseByDate: { [key: string]: number } = {};
+        sales?.forEach(sale => {
+          const expenses = Array.isArray(sale.expenses) ? sale.expenses : [];
+          const totalExpense = expenses.reduce((sum: number, e: any) => sum + (e.amount || 0), 0);
+          const dateKey = format(parseISO(sale.sale_date), "dd MMM");
+          expenseByDate[dateKey] = (expenseByDate[dateKey] || 0) + totalExpense;
+        });
+
+        const data = Object.entries(expenseByDate).map(([date, amount]) => ({
+          date,
+          Expense: amount,
+        }));
+        setExpenseData(data);
+      } catch (error) {
+        console.error('Error fetching expense data:', error);
+      }
+    };
+
+    if (salesData.length > 0) {
+      fetchExpenses();
+    }
+  }, [salesData]);
+
   const productTotals = salesData.reduce(
     (acc, day) => ({
       petrol: acc.petrol + day.petrol,
@@ -530,6 +569,40 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
     { name: "Diesel", value: productTotals.diesel },
     { name: "Lubricant", value: productTotals.engineOil },
   ].filter(item => item.value > 0);
+
+  // Group sales records by month and date
+  const groupedSalesData = useMemo(() => {
+    const grouped: { [month: string]: { [date: string]: any[] } } = {};
+    
+    sortedData.forEach(sale => {
+      const monthKey = format(parseISO(sale.date), "MMMM yyyy");
+      const dateKey = sale.date;
+      
+      if (!grouped[monthKey]) {
+        grouped[monthKey] = {};
+      }
+      if (!grouped[monthKey][dateKey]) {
+        grouped[monthKey][dateKey] = [];
+      }
+      grouped[monthKey][dateKey].push(sale);
+    });
+    
+    return grouped;
+  }, [sortedData]);
+
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+
+  const toggleMonth = (month: string) => {
+    setExpandedMonths(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(month)) {
+        newSet.delete(month);
+      } else {
+        newSet.add(month);
+      }
+      return newSet;
+    });
+  };
 
   if (salesData.length === 0) {
     return (
@@ -585,88 +658,142 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-center">Entry</TableHead>
-                  <TableHead className="text-center">Saved By</TableHead>
-                  <TableHead className="text-right">Petrol</TableHead>
-                  <TableHead className="text-right">Diesel</TableHead>
-                  <TableHead className="text-right">Lubricant</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-center">Saved on</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedData.slice(-10).map((sale) => (
-                  <TableRow key={`${sale.date}-${sale.entryNumber || 1}`}>
-                    <TableCell className="font-medium">
-                      {format(parseISO(sale.date), "dd MMM yyyy")}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                        {sale.entryNumber || 1}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {sale.savedBy ? (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          sale.savedBy === 'Proprietor' 
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' 
-                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                        }`}>
-                          {sale.savedBy === 'Proprietor' ? 'P' : 'S'}
+          <div className="space-y-4">
+            {Object.entries(groupedSalesData).map(([month, dateGroups]) => {
+              const isExpanded = expandedMonths.has(month);
+              const monthTotal = Object.values(dateGroups).flat().reduce((sum, sale) => sum + sale.total, 0);
+              
+              return (
+                <Collapsible key={month} open={isExpanded} onOpenChange={() => toggleMonth(month)}>
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors">
+                      <div className="flex items-center gap-2">
+                        {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        <span className="font-semibold">{month}</span>
+                        <span className="text-sm text-muted-foreground">
+                          ({Object.values(dateGroups).flat().length} entries)
                         </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">₹{sale.petrol.toLocaleString('en-IN')}</TableCell>
-                    <TableCell className="text-right">₹{sale.diesel.toLocaleString('en-IN')}</TableCell>
-                    <TableCell className="text-right">₹{sale.engineOil.toLocaleString('en-IN')}</TableCell>
-                    <TableCell className="text-right font-semibold">₹{sale.total.toLocaleString('en-IN')}</TableCell>
-                    <TableCell className="text-center">
-                      {sale.updatedAt ? (
-                        <div className="text-sm">
-                          <div>{format(new Date(sale.updatedAt), "dd MMM yyyy")}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {format(new Date(sale.updatedAt), "hh:mm a")}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleExportSingleDate(sale.date, sale.entryNumber || 1)}
-                          title="Export to Excel"
-                        >
-                          <Download className="h-4 w-4 text-primary" />
-                        </Button>
-                        {userRole !== 'Supervisor' && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(sale.date, sale.entryNumber || 1)}
-                            title="Delete record"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <span className="font-bold">₹{monthTotal.toLocaleString('en-IN')}</span>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-2 rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-center">Entry</TableHead>
+                            <TableHead className="text-center">Saved By</TableHead>
+                            <TableHead className="text-right">Petrol</TableHead>
+                            <TableHead className="text-right">Diesel</TableHead>
+                            <TableHead className="text-right">Lubricant</TableHead>
+                            <TableHead className="text-right">Total</TableHead>
+                            <TableHead className="text-center">Saved on</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(dateGroups).map(([dateKey, sales]) => (
+                            sales.map((sale, idx) => (
+                              <TableRow key={`${sale.date}-${sale.entryNumber || 1}`}>
+                                <TableCell className="font-medium">
+                                  {idx === 0 ? format(parseISO(sale.date), "dd MMM yyyy (EEE)") : ''}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                                    {sale.entryNumber || 1}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {sale.savedBy ? (
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      sale.savedBy === 'Proprietor' 
+                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' 
+                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                    }`}>
+                                      {sale.savedBy === 'Proprietor' ? 'P' : 'S'}
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">₹{sale.petrol.toLocaleString('en-IN')}</TableCell>
+                                <TableCell className="text-right">₹{sale.diesel.toLocaleString('en-IN')}</TableCell>
+                                <TableCell className="text-right">₹{sale.engineOil.toLocaleString('en-IN')}</TableCell>
+                                <TableCell className="text-right font-semibold">₹{sale.total.toLocaleString('en-IN')}</TableCell>
+                                <TableCell className="text-center">
+                                  {sale.updatedAt ? (
+                                    <div className="text-sm">
+                                      <div>{format(new Date(sale.updatedAt), "dd MMM yyyy")}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {format(new Date(sale.updatedAt), "hh:mm a")}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleExportSingleDate(sale.date, sale.entryNumber || 1)}
+                                      title="Export to Excel"
+                                    >
+                                      <Download className="h-4 w-4 text-primary" />
+                                    </Button>
+                                    {userRole !== 'Supervisor' && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDelete(sale.date, sale.entryNumber || 1)}
+                                        title="Delete record"
+                                      >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Expense Trend Chart */}
+      <Card className="shadow-[var(--shadow-card)]">
+        <CardHeader>
+          <CardTitle>Expense Trend</CardTitle>
+          <CardDescription>Daily expenses over time</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={expenseData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "var(--radius)",
+                }}
+                formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`}
+              />
+              <Legend />
+              <Bar dataKey="Expense" fill={COLORS.expense} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
 

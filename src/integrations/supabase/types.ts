@@ -589,7 +589,7 @@ export type Database = {
       storage_readings: {
         Row: {
           created_at: string | null
-          density_checker: number | null
+          density_checker: string | null
           diesel_density_at_15c: number | null
           diesel_density_value: number | null
           diesel_kl: number | null
@@ -617,7 +617,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          density_checker?: number | null
+          density_checker?: string | null
           diesel_density_at_15c?: number | null
           diesel_density_value?: number | null
           diesel_kl?: number | null
@@ -645,7 +645,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          density_checker?: number | null
+          density_checker?: string | null
           diesel_density_at_15c?: number | null
           diesel_density_value?: number | null
           diesel_kl?: number | null

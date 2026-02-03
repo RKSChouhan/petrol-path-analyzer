@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, LogOut, Download } from "lucide-react";
+import { LayoutGrid, LogOut, Download, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -207,6 +207,31 @@ const Lotus = () => {
     });
   };
 
+  const handleDeleteEntry = async (entryId: string, saleDate: string, entryNumber: number) => {
+    try {
+      const { error } = await supabase
+        .from('daily_sales')
+        .delete()
+        .eq('id', entryId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deleted",
+        description: `Entry ${entryNumber} for ${format(parseISO(saleDate), "dd MMM yyyy")} deleted`,
+      });
+      
+      fetchEntries();
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete entry",
+        variant: "destructive",
+      });
+    }
+  };
+
   const calculateEntryTotals = (entry: DailyEntry) => {
     const pumpReadings = entry.pump_readings || [];
     const oilSales = entry.oil_sales || [];
@@ -298,7 +323,7 @@ const Lotus = () => {
         ) : (
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="py-4">
-              <ScrollArea className="w-full whitespace-nowrap">
+              <ScrollArea className="w-full">
                 <div className="min-w-max">
                   {/* Header Row */}
                   <div className="flex gap-4 px-2 py-3 border-b bg-muted/30 rounded-t-md">
@@ -315,6 +340,9 @@ const Lotus = () => {
                     <div className="w-24 font-semibold text-sm text-muted-foreground text-right">Repaid</div>
                     <div className="w-28 font-semibold text-sm text-muted-foreground text-right">Total</div>
                     <div className="w-20 font-semibold text-sm text-muted-foreground text-center">Staff</div>
+                    {userRole === 'Proprietor' && (
+                      <div className="w-16 font-semibold text-sm text-muted-foreground text-center">Action</div>
+                    )}
                   </div>
 
                   {/* Data Rows */}
@@ -381,6 +409,19 @@ const Lotus = () => {
                         <div className="w-20 text-center text-sm">
                           {(entry.daily_attendance || []).length}
                         </div>
+                        {userRole === 'Proprietor' && (
+                          <div className="w-16 text-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteEntry(entry.id, entry.sale_date, entry.entry_number)}
+                              title="Delete entry"
+                              className="h-7 w-7"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

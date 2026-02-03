@@ -77,7 +77,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">UPI (PhonePay/GPay)</Label>
+                <Label className="text-xs">1. PhonePay</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -90,12 +90,12 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">Bharat Fleet Card</Label>
+                <Label className="text-xs">2. GPay</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={data.group1.bharat_fleet_card === 0 ? '' : data.group1.bharat_fleet_card}
-                  onChange={(e) => handleChangeGroup1('bharat_fleet_card', e.target.value)}
+                  value={data.group1.gpay === 0 ? '' : data.group1.gpay}
+                  onChange={(e) => handleChangeGroup1('gpay', e.target.value)}
                   onFocus={(e) => e.target.select()}
                   className="h-8 text-sm"
                   placeholder="0"
@@ -103,7 +103,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">Fiserv</Label>
+                <Label className="text-xs">3. Fiserv</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -116,12 +116,12 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">GPay</Label>
+                <Label className="text-xs">4. Bharat Fleet Card</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={data.group1.gpay === 0 ? '' : data.group1.gpay}
-                  onChange={(e) => handleChangeGroup1('gpay', e.target.value)}
+                  value={data.group1.bharat_fleet_card === 0 ? '' : data.group1.bharat_fleet_card}
+                  onChange={(e) => handleChangeGroup1('bharat_fleet_card', e.target.value)}
                   onFocus={(e) => e.target.select()}
                   className="h-8 text-sm"
                   placeholder="0"
@@ -129,7 +129,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">Evening Locker</Label>
+                <Label className="text-xs">5. Evening Locker</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -162,7 +162,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">UPI (PhonePay/GPay)</Label>
+                <Label className="text-xs">1. PhonePay</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -175,12 +175,12 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">Bharat Fleet Card</Label>
+                <Label className="text-xs">2. GPay</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={data.group2.bharat_fleet_card === 0 ? '' : data.group2.bharat_fleet_card}
-                  onChange={(e) => handleChangeGroup2('bharat_fleet_card', e.target.value)}
+                  value={data.group2.phonepay === 0 ? '' : data.group2.phonepay}
+                  onChange={(e) => handleChangeGroup2('phonepay', e.target.value)}
                   onFocus={(e) => e.target.select()}
                   className="h-8 text-sm"
                   placeholder="0"
@@ -188,7 +188,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">Fiserv</Label>
+                <Label className="text-xs">3. Fiserv</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -201,12 +201,12 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">PhonePay</Label>
+                <Label className="text-xs">4. Bharat Fleet Card</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={data.group2.phonepay === 0 ? '' : data.group2.phonepay}
-                  onChange={(e) => handleChangeGroup2('phonepay', e.target.value)}
+                  value={data.group2.bharat_fleet_card === 0 ? '' : data.group2.bharat_fleet_card}
+                  onChange={(e) => handleChangeGroup2('bharat_fleet_card', e.target.value)}
                   onFocus={(e) => e.target.select()}
                   className="h-8 text-sm"
                   placeholder="0"
@@ -214,7 +214,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div className="col-span-2">
-                <Label className="text-xs">Evening Locker</Label>
+                <Label className="text-xs">5. Evening Locker</Label>
                 <Input
                   type="number"
                   step="0.01"
