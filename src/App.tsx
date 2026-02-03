@@ -11,6 +11,8 @@ import Lotus from "./pages/Lotus";
 import FiservBills from "./pages/FiservBills";
 import Attendance from "./pages/Attendance";
 import Storage from "./pages/Storage";
+import Trends from "./pages/Trends";
+import Salary from "./pages/Salary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/fiserv-bills" element={<FiservBills />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/storage" element={<Storage />} />
+          <Route path="/trends" element={<Trends />} />
+          <Route path="/salary" element={<Salary />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

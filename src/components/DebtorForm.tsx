@@ -32,12 +32,18 @@ const DebtorForm = ({ items, onChange, disabled = false }: DebtorFormProps) => {
     onChange(newItems.length > 0 ? newItems : [{ name: "", bill_number: "", amount: 0 }]);
   };
 
+  // Helper to capitalize first letter and lowercase rest
+  const formatName = (name: string) => {
+    if (!name) return '';
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  };
+
   const handleChange = (index: number, field: keyof DebtorItem, value: string | number) => {
     const newItems = [...items];
     if (field === "name") {
       // Fixed names should remain unchanged
       if (isFixedDebtor(newItems[index].name)) return;
-      newItems[index].name = value as string;
+      newItems[index].name = formatName(value as string);
     } else if (field === "bill_number") {
       newItems[index].bill_number = value as string;
     } else {

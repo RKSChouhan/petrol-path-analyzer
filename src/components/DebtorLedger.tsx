@@ -183,21 +183,27 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
               No debtors in ledger
             </p>
           ) : (
-            debtors.map((debtor) => (
-              <div
-                key={debtor.id}
-                className="flex items-center justify-between p-2 bg-card rounded-lg"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{debtor.name}</p>
-                  {debtor.bill_number && (
-                    <p className="text-xs text-muted-foreground">Bill: {debtor.bill_number}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-red-600 dark:text-red-400">
-                    ₹{debtor.amount.toLocaleString("en-IN")}
-                  </span>
+            debtors.map((debtor) => {
+              // Capitalize first letter, lowercase rest
+              const formattedName = debtor.name
+                ? debtor.name.charAt(0).toUpperCase() + debtor.name.slice(1).toLowerCase()
+                : '';
+              
+              return (
+                <div
+                  key={debtor.id}
+                  className="flex items-center justify-between p-2 bg-card rounded-lg"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{formattedName}</p>
+                    {debtor.bill_number && (
+                      <p className="text-xs text-muted-foreground">Bill: {debtor.bill_number}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-red-600 dark:text-red-400">
+                      ₹{debtor.amount.toLocaleString("en-IN")}
+                    </span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -207,9 +213,10 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

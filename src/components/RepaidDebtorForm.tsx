@@ -25,10 +25,16 @@ const RepaidDebtorForm = ({ items, onChange, disabled = false }: RepaidDebtorFor
     onChange(newItems.length > 0 ? newItems : [{ name: "", amount: 0 }]);
   };
 
+  // Helper to capitalize first letter and lowercase rest
+  const formatName = (name: string) => {
+    if (!name) return '';
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  };
+
   const handleChange = (index: number, field: keyof RepaidDebtorItem, value: string | number) => {
     const newItems = [...items];
     if (field === "name") {
-      newItems[index].name = value as string;
+      newItems[index].name = formatName(value as string);
     } else {
       newItems[index].amount = parseFloat(value as string) || 0;
     }
