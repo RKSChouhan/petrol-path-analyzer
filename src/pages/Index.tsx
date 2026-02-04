@@ -92,6 +92,22 @@ const Index = () => {
   const [calculatorPosition, setCalculatorPosition] = useState({ x: window.innerWidth - 240, y: 100 });
   const [comment, setComment] = useState("");
   const [selectedAttendance, setSelectedAttendance] = useState<AttendanceEntry[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
+
+  // Fetch employees for debtor dropdown
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('id, name')
+        .order('name', { ascending: true });
+
+      if (!error && data) {
+        setEmployees(data);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   useEffect(() => {
     // Sign out on page close/refresh
@@ -1259,7 +1275,7 @@ const Index = () => {
             <div className="grid md:grid-cols-3 gap-6">
               <RepaidDebtorForm items={repaidDebtors} onChange={setRepaidDebtors} disabled={editDisabled} />
               <ExpenseForm items={expenses} onChange={setExpenses} disabled={editDisabled} />
-              <DebtorForm items={debtors} onChange={setDebtors} disabled={editDisabled} />
+              <DebtorForm items={debtors} onChange={setDebtors} disabled={editDisabled} employees={employees} />
             </div>
             
             <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} />

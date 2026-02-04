@@ -270,32 +270,39 @@ const Storage = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-6">
-        {/* Calendar */}
+        {/* Calendar - Inline single line at top */}
         <Card className="shadow-[var(--shadow-card)]">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Select Date</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              className={cn("rounded-md border")}
-              modifiers={{
-                saved: (date) => savedDates.includes(format(date, 'yyyy-MM-dd'))
-              }}
-              modifiersClassNames={{
-                saved: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
-              }}
-            />
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center gap-4 justify-between">
+              <div className="flex items-center gap-3">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className={cn("rounded-md border")}
+                  modifiers={{
+                    saved: (date) => savedDates.includes(format(date, 'yyyy-MM-dd'))
+                  }}
+                  modifiersClassNames={{
+                    saved: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                  }}
+                />
+              </div>
+              <div className="text-right flex-1">
+                <p className="text-xl font-bold text-primary">
+                  {format(selectedDate, "EEEE, dd MMMM yyyy")}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {savedDates.includes(format(selectedDate, 'yyyy-MM-dd')) ? (
+                    <span className="text-green-600 dark:text-green-400">✓ Data saved for this date</span>
+                  ) : (
+                    <span>No data saved for this date</span>
+                  )}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-
-        <div className="text-center">
-          <p className="text-lg font-semibold text-primary">
-            {format(selectedDate, "EEEE, dd MMMM yyyy")}
-          </p>
-        </div>
 
         {loading ? (
           <div className="flex justify-center py-8">

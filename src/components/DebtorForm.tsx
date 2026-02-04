@@ -2,7 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { IndianRupee, Plus, Trash2 } from "lucide-react";
+import { IndianRupee, Plus, Trash2, ChevronDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DebtorItem {
   name: string;
@@ -10,16 +17,22 @@ interface DebtorItem {
   amount: number;
 }
 
+interface Employee {
+  id: string;
+  name: string;
+}
+
 interface DebtorFormProps {
   items: DebtorItem[];
   onChange: (items: DebtorItem[]) => void;
   disabled?: boolean;
+  employees?: Employee[];
 }
 
 const FIXED_DEBTOR_NAMES = ["Pandian"] as const;
 const isFixedDebtor = (name: string) => FIXED_DEBTOR_NAMES.includes(name as any);
 
-const DebtorForm = ({ items, onChange, disabled = false }: DebtorFormProps) => {
+const DebtorForm = ({ items, onChange, disabled = false, employees = [] }: DebtorFormProps) => {
   const handleAdd = () => {
     onChange([...items, { name: "", bill_number: "", amount: 0 }]);
   };
@@ -49,6 +62,13 @@ const DebtorForm = ({ items, onChange, disabled = false }: DebtorFormProps) => {
     } else {
       newItems[index].amount = parseFloat(value as string) || 0;
     }
+    onChange(newItems);
+  };
+
+  const handleSelectEmployee = (index: number, employeeName: string) => {
+    if (isFixedDebtor(items[index].name)) return;
+    const newItems = [...items];
+    newItems[index].name = formatName(employeeName);
     onChange(newItems);
   };
 
@@ -85,14 +105,40 @@ const DebtorForm = ({ items, onChange, disabled = false }: DebtorFormProps) => {
             <div key={index} className="flex items-end gap-2">
               <div className="flex-1 space-y-1">
                 <Label className="text-xs text-muted-foreground">Name</Label>
-                <Input
-                  type="text"
-                  value={item.name}
-                  onChange={(e) => handleChange(index, "name", e.target.value)}
-                  placeholder="Debtor name"
-                  className="h-9"
-                  disabled={disabled || fixed}
-                />
+                {fixed ? (
+                  <Input
+                    type="text"
+                    value={item.name}
+                    className="h-9"
+                    disabled
+                  />
+                ) : employees.length > 0 ? (
+                  <Select
+                    value={item.name}
+                    onValueChange={(value) => handleSelectEmployee(index, value)}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Select or type name" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      {employees.map((emp) => (
+                        <SelectItem key={emp.id} value={emp.name}>
+                          {formatName(emp.name)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    type="text"
+                    value={item.name}
+                    onChange={(e) => handleChange(index, "name", e.target.value)}
+                    placeholder="Debtor name"
+                    className="h-9"
+                    disabled={disabled}
+                  />
+                )}
               </div>
               <div className="w-24 space-y-1">
                 <Label className="text-xs text-muted-foreground">Bill No.</Label>
