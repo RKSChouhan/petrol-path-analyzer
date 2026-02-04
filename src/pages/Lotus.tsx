@@ -426,7 +426,7 @@ const Lotus = () => {
                     );
                   })}
                 </div>
-                <ScrollBar orientation="horizontal" />
+                <ScrollBar orientation="horizontal" className="mt-2" />
               </ScrollArea>
             </CardContent>
           </Card>

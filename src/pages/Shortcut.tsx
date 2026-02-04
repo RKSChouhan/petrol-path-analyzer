@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { FuelIcon, BarChart3, Flower2, Receipt, Users, Archive, LogOut, TrendingUp, Wallet } from "lucide-react";
+import { FuelIcon, BarChart3, Flower2, Receipt, Users, Archive, LogOut, TrendingUp, Wallet, AlertTriangle } from "lucide-react";
+import { format } from "date-fns";
 import logo from "@/assets/logo.png";
 
 const Shortcut = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [alerts, setAlerts] = useState<{ dailyTree: boolean; storage: boolean }>({ dailyTree: false, storage: false });
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -49,6 +51,41 @@ const Shortcut = () => {
     };
   }, [navigate]);
 
+  // Check for incomplete daily entries
+  useEffect(() => {
+    const checkIncompleteWork = async () => {
+      const STATION_ID = "00000000-0000-0000-0000-000000000001";
+      const today = format(new Date(), 'yyyy-MM-dd');
+
+      try {
+        // Check if today's daily sales entry exists
+        const { data: dailySales } = await supabase
+          .from('daily_sales')
+          .select('id')
+          .eq('user_id', STATION_ID)
+          .eq('sale_date', today)
+          .limit(1);
+
+        // Check if today's storage data exists
+        const { data: storageData } = await supabase
+          .from('storage_readings')
+          .select('id')
+          .eq('user_id', STATION_ID)
+          .eq('reading_date', today)
+          .limit(1);
+
+        setAlerts({
+          dailyTree: !dailySales || dailySales.length === 0,
+          storage: !storageData || storageData.length === 0,
+        });
+      } catch (error) {
+        console.error('Error checking incomplete work:', error);
+      }
+    };
+
+    checkIncompleteWork();
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     sessionStorage.removeItem("userRole");
@@ -56,15 +93,17 @@ const Shortcut = () => {
   };
 
   const shortcuts = [
-    { name: "Daily Tree", icon: FuelIcon, path: "/", color: "text-green-600 dark:text-green-400", bgColor: "bg-green-100 dark:bg-green-900/30" },
-    { name: "Fiserv Bills", icon: Receipt, path: "/fiserv-bills", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
-    { name: "Stat", icon: BarChart3, path: "/stat", color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/30" },
-    { name: "Lotus", icon: Flower2, path: "/lotus", color: "text-pink-600 dark:text-pink-400", bgColor: "bg-pink-100 dark:bg-pink-900/30" },
-    { name: "Attendance", icon: Users, path: "/attendance", color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-100 dark:bg-orange-900/30" },
-    { name: "Storage", icon: Archive, path: "/storage", color: "text-cyan-600 dark:text-cyan-400", bgColor: "bg-cyan-100 dark:bg-cyan-900/30" },
-    { name: "Trends", icon: TrendingUp, path: "/trends", color: "text-indigo-600 dark:text-indigo-400", bgColor: "bg-indigo-100 dark:bg-indigo-900/30" },
-    { name: "Salary", icon: Wallet, path: "/salary", color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/30" },
+    { name: "Daily Tree", icon: FuelIcon, path: "/", color: "text-green-600 dark:text-green-400", bgColor: "bg-green-100 dark:bg-green-900/30", alert: alerts.dailyTree },
+    { name: "Fiserv Bills", icon: Receipt, path: "/fiserv-bills", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-100 dark:bg-blue-900/30", alert: false },
+    { name: "Stat", icon: BarChart3, path: "/stat", color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/30", alert: false },
+    { name: "Lotus", icon: Flower2, path: "/lotus", color: "text-pink-600 dark:text-pink-400", bgColor: "bg-pink-100 dark:bg-pink-900/30", alert: false },
+    { name: "Attendance", icon: Users, path: "/attendance", color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-100 dark:bg-orange-900/30", alert: false },
+    { name: "Storage", icon: Archive, path: "/storage", color: "text-cyan-600 dark:text-cyan-400", bgColor: "bg-cyan-100 dark:bg-cyan-900/30", alert: alerts.storage },
+    { name: "Trends", icon: TrendingUp, path: "/trends", color: "text-indigo-600 dark:text-indigo-400", bgColor: "bg-indigo-100 dark:bg-indigo-900/30", alert: false },
+    { name: "Salary", icon: Wallet, path: "/salary", color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/30", alert: false },
   ];
+
+  const hasAlerts = alerts.dailyTree || alerts.storage;
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,13 +128,42 @@ const Shortcut = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Alert Section */}
+        {hasAlerts && (
+          <Card className="mb-6 border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700">
+            <CardContent className="py-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-amber-800 dark:text-amber-300">Today's Incomplete Tasks</h3>
+                  <ul className="mt-2 space-y-1 text-sm text-amber-700 dark:text-amber-400">
+                    {alerts.dailyTree && (
+                      <li>• Daily Tree entry not saved for today</li>
+                    )}
+                    {alerts.storage && (
+                      <li>• Storage data not saved for today</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-3 max-w-4xl mx-auto">
           {shortcuts.map((shortcut) => (
             <Card 
               key={shortcut.name}
-              className="shadow-[var(--shadow-card)] hover:shadow-lg transition-all cursor-pointer hover:scale-105"
+              className={`shadow-[var(--shadow-card)] hover:shadow-lg transition-all cursor-pointer hover:scale-105 relative ${
+                shortcut.alert ? 'ring-2 ring-amber-400 ring-offset-2' : ''
+              }`}
               onClick={() => navigate(shortcut.path)}
             >
+              {shortcut.alert && (
+                <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-1">
+                  <AlertTriangle className="h-4 w-4" />
+                </div>
+              )}
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <div className={`p-4 rounded-full ${shortcut.bgColor} mb-4`}>
                   <shortcut.icon className={`h-8 w-8 ${shortcut.color}`} />

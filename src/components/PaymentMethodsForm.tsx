@@ -77,7 +77,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">1. PhonePay</Label>
+                <Label className="text-xs">PhonePay</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -90,7 +90,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">2. GPay</Label>
+                <Label className="text-xs">GPay</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -103,20 +103,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">3. Fiserv</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={data.group1.fiserv === 0 ? '' : data.group1.fiserv}
-                  onChange={(e) => handleChangeGroup1('fiserv', e.target.value)}
-                  onFocus={(e) => e.target.select()}
-                  className="h-8 text-sm"
-                  placeholder="0"
-                  disabled={disabled}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">4. Bharat Fleet Card</Label>
+                <Label className="text-xs">Bharat Fleet Card</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -128,8 +115,21 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                   disabled={disabled}
                 />
               </div>
+              <div>
+                <Label className="text-xs">Fiserv</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group1.fiserv === 0 ? '' : data.group1.fiserv}
+                  onChange={(e) => handleChangeGroup1('fiserv', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
               <div className="col-span-2">
-                <Label className="text-xs">5. Evening Locker</Label>
+                <Label className="text-xs">Evening Locker</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -162,7 +162,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">1. PhonePay</Label>
+                <Label className="text-xs">PhonePay</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -175,7 +175,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">2. GPay</Label>
+                <Label className="text-xs">GPay</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -188,20 +188,7 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                 />
               </div>
               <div>
-                <Label className="text-xs">3. Fiserv</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={data.group2.fiserv === 0 ? '' : data.group2.fiserv}
-                  onChange={(e) => handleChangeGroup2('fiserv', e.target.value)}
-                  onFocus={(e) => e.target.select()}
-                  className="h-8 text-sm"
-                  placeholder="0"
-                  disabled={disabled}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">4. Bharat Fleet Card</Label>
+                <Label className="text-xs">Bharat Fleet Card</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -213,8 +200,21 @@ const PaymentMethodsForm = ({ data, onChange, disabled = false }: PaymentMethods
                   disabled={disabled}
                 />
               </div>
+              <div>
+                <Label className="text-xs">Fiserv</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={data.group2.fiserv === 0 ? '' : data.group2.fiserv}
+                  onChange={(e) => handleChangeGroup2('fiserv', e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  disabled={disabled}
+                />
+              </div>
               <div className="col-span-2">
-                <Label className="text-xs">5. Evening Locker</Label>
+                <Label className="text-xs">Evening Locker</Label>
                 <Input
                   type="number"
                   step="0.01"
