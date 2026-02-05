@@ -324,6 +324,7 @@ const Lotus = () => {
           <Card className="shadow-[var(--shadow-card)]">
             <CardContent className="py-4">
               <ScrollArea className="w-full">
+                <ScrollBar orientation="horizontal" className="mb-2" />
                 <div className="min-w-max">
                   {/* Header Row */}
                   <div className="flex gap-4 px-2 py-3 border-b bg-muted/30 rounded-t-md">

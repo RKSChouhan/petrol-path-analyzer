@@ -29,52 +29,45 @@ serve(async (req) => {
       );
     }
 
-    console.log("Processing image for OCR extraction...");
+    console.log("Processing storage image for OCR extraction...");
 
-    const systemPrompt = `You are a data extraction assistant for a petrol station sales tracking system.
-Analyze the provided image and extract any sales data you can find.
-Return the data in a structured JSON format with the following possible fields:
+    const systemPrompt = `You are a data extraction assistant for a petrol station storage tracking system.
+Analyze the provided image and extract storage/infrastructure data.
+Return the data in a structured JSON format with the following fields:
 
 {
-  "pumpReadings": {
-    "petrol1": { "opening_reading": number, "closing_reading": number },
-    "petrol2": { "opening_reading": number, "closing_reading": number },
-    "petrol3": { "opening_reading": number, "closing_reading": number },
-    "petrol4": { "opening_reading": number, "closing_reading": number },
-    "diesel1": { "opening_reading": number, "closing_reading": number },
-    "diesel2": { "opening_reading": number, "closing_reading": number },
-    "diesel3": { "opening_reading": number, "closing_reading": number },
-    "diesel4": { "opening_reading": number, "closing_reading": number }
-  },
-  "paymentMethods": {
-    "group1": { "upi": number, "bharat_fleet_card": number, "fiserv": number, "gpay": number, "evening_locker": number },
-    "group2": { "upi": number, "bharat_fleet_card": number, "fiserv": number, "phonepay": number, "evening_locker": number }
-  },
-  "cashDenominations": {
-    "group1": { "rs_500": number, "rs_200": number, "rs_100": number, "rs_50": number, "rs_20": number, "rs_10": number, "coins": number },
-    "group2": { "rs_500": number, "rs_200": number, "rs_100": number, "rs_50": number, "rs_20": number, "rs_10": number, "coins": number }
-  },
-  "oilSales": {
-    "items": [{ "oil_name": string, "oil_count": number, "oil_price": number }],
-    "yesterday_reading": number,
-    "today_reading": number,
-    "distilled_water_count": number,
-    "waste": number
-  },
-  "expenses": [{ "name": string, "amount": number }],
-  "debtors": [{ "name": string, "bill_number": string, "amount": number }],
-  "repaidDebtors": [{ "name": string, "amount": number }]
+  "generator_diesel_capacity": number,
+  "generator_dip": number,
+  "eb_meter": number,
+  "eb_unit": number,
+  "petrol_kl": number,
+  "diesel_kl": number,
+  "oil_reading": number,
+  "two_t_oil_barrel_stock": number,
+  "empty_barrel": number,
+  "tvs_xl_meter": number,
+  "petrol_density_value": number,
+  "petrol_temperature": number,
+  "petrol_density_at_15c": number,
+  "diesel_density_value": number,
+  "diesel_temperature": number,
+  "diesel_density_at_15c": number,
+  "load_capacity": number,
+  "density_checker": string,
+  "lorry_entry_time": "HH:MM",
+  "lorry_exit_time": "HH:MM",
+  "duration": string
 }
 
 IMPORTANT NOTES:
-- Payment methods Group 1 has: PhonePay (mapped as "upi"), Bharat Fleet Card, Fiserv, GPay, Evening Locker
-- Payment methods Group 2 has: PhonePay (mapped as "upi"), Bharat Fleet Card, Fiserv, PhonePay (mapped as "phonepay"), Evening Locker
-- Cash denominations represent NOTE COUNTS not totals (e.g., rs_500: 3 means three 500-rupee notes)
-- For debtors, extract the bill_number if visible
-- Oil count and distilled_water_count must be integers
-- Only include fields that you can clearly identify from the image
-- Set values to 0 or empty arrays if not found
-- If you cannot extract any data, return an empty object {}
+- KL values (petrol_kl, diesel_kl) can have up to 3 decimal places
+- Density values can have up to 4 decimal places
+- Temperature values can have 1 decimal place
+- Times should be in 24-hour HH:MM format
+- Duration is a text string like "2h 30m"
+- density_checker is a person's name
+- Only include fields you can clearly identify from the image
+- Set numeric values to 0 and strings to empty "" if not found
 - Return ONLY the JSON object, no markdown formatting or explanation.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -92,7 +85,7 @@ IMPORTANT NOTES:
             content: [
               {
                 type: "text",
-                text: "Please analyze this image and extract all sales data you can find. Return the data as JSON."
+                text: "Please analyze this image and extract all storage/fuel reading data you can find. Return the data as JSON."
               },
               {
                 type: "image_url",
@@ -164,7 +157,7 @@ IMPORTANT NOTES:
     );
 
   } catch (error) {
-    console.error("OCR processing error:", error);
+    console.error("Storage OCR processing error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
