@@ -12,6 +12,7 @@ interface CalculatorProps {
 
 const Calculator = ({ isOpen, onClose, position, onPositionChange }: CalculatorProps) => {
   const [display, setDisplay] = useState("0");
+  const [expression, setExpression] = useState("");
   const [previousValue, setPreviousValue] = useState<number | null>(null);
   const [operation, setOperation] = useState<string | null>(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
@@ -61,6 +62,7 @@ const Calculator = ({ isOpen, onClose, position, onPositionChange }: CalculatorP
 
   const clear = () => {
     setDisplay("0");
+    setExpression("");
     setPreviousValue(null);
     setOperation(null);
     setWaitingForOperand(false);
@@ -71,6 +73,7 @@ const Calculator = ({ isOpen, onClose, position, onPositionChange }: CalculatorP
 
     if (previousValue === null) {
       setPreviousValue(inputValue);
+      setExpression(display + " " + nextOperation);
     } else if (operation) {
       const currentValue = previousValue || 0;
       let result = 0;
@@ -94,6 +97,7 @@ const Calculator = ({ isOpen, onClose, position, onPositionChange }: CalculatorP
 
       setDisplay(String(result));
       setPreviousValue(result);
+      setExpression(String(result) + " " + nextOperation);
     }
 
     setWaitingForOperand(true);
@@ -122,6 +126,7 @@ const Calculator = ({ isOpen, onClose, position, onPositionChange }: CalculatorP
     }
 
     setDisplay(String(result));
+    setExpression("");
     setPreviousValue(null);
     setOperation(null);
     setWaitingForOperand(true);
@@ -161,6 +166,11 @@ const Calculator = ({ isOpen, onClose, position, onPositionChange }: CalculatorP
         </CardHeader>
         <CardContent className="p-2">
           <div className="bg-muted rounded-md p-2 mb-2 text-right">
+            {expression && (
+              <div className="text-xs text-muted-foreground truncate">
+                {expression}
+              </div>
+            )}
             <div className="text-2xl font-mono font-bold truncate">
               {display}
             </div>
