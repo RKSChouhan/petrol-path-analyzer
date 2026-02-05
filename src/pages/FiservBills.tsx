@@ -15,6 +15,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import BillOCRUpload from "@/components/BillOCRUpload";
 
 interface FiservBillEntry {
   id?: string;
@@ -420,6 +421,30 @@ const FiservBills = () => {
     return bills.reduce((sum, bill) => sum + Number(bill.amount), 0);
   };
 
+  const handleFiservOCRData = (data: any) => {
+    const newEntry: FiservBillEntry = {
+      bill_date: data.bill_date ? new Date(data.bill_date) : new Date(),
+      bill_time: data.bill_time || '',
+      invoice_number: data.invoice_number || '',
+      card_last_four: data.card_last_four || '',
+      amount: data.amount || 0,
+    };
+    setFiservEntries(prev => [...prev, newEntry]);
+    toast.success("Bill data extracted and added");
+  };
+
+  const handleBharatOCRData = (data: any) => {
+    const newEntry: BharatFleetEntry = {
+      bill_date: data.bill_date ? new Date(data.bill_date) : new Date(),
+      bill_time: data.bill_time || '',
+      account_no: data.account_no || '',
+      card_id: data.card_id || '',
+      amount: data.amount || 0,
+    };
+    setBharatEntries(prev => [...prev, newEntry]);
+    toast.success("Bill data extracted and added");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
@@ -468,6 +493,11 @@ const FiservBills = () => {
                   New Fiserv Bill Entry
                 </CardTitle>
                 <div className="flex gap-2">
+                  <BillOCRUpload 
+                    billType="fiserv" 
+                    onDataExtracted={handleFiservOCRData}
+                    disabled={saving}
+                  />
                   <Button variant="outline" size="sm" onClick={addFiservEntry}>
                     <Plus className="mr-2 h-4 w-4" />
                     Fiserv Bill
@@ -690,6 +720,11 @@ const FiservBills = () => {
                   New Bharat Fleet Card Entry
                 </CardTitle>
                 <div className="flex gap-2">
+                  <BillOCRUpload 
+                    billType="bharat" 
+                    onDataExtracted={handleBharatOCRData}
+                    disabled={saving}
+                  />
                   <Button variant="outline" size="sm" onClick={addBharatEntry}>
                     <Plus className="mr-2 h-4 w-4" />
                     Bharat Fleet Card
