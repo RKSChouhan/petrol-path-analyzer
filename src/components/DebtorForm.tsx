@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { IndianRupee, Plus, Trash2, ChevronDown } from "lucide-react";
+import { IndianRupee, Plus, Trash2, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -113,22 +113,60 @@ const DebtorForm = ({ items, onChange, disabled = false, employees = [] }: Debto
                     disabled
                   />
                 ) : employees.length > 0 ? (
-                  <Select
-                    value={item.name}
-                    onValueChange={(value) => handleSelectEmployee(index, value)}
-                    disabled={disabled}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Select or type name" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-50">
-                      {employees.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.name}>
-                          {formatName(emp.name)}
+                  item.name === 'OTHER_MANUAL' || (item.name && !employees.find(emp => formatName(emp.name) === item.name) && item.name !== '') ? (
+                    <div className="flex gap-1">
+                      <Input
+                        type="text"
+                        value={item.name === 'OTHER_MANUAL' ? '' : item.name}
+                        onChange={(e) => handleChange(index, "name", e.target.value)}
+                        placeholder="Enter debtor name"
+                        className="h-9 flex-1"
+                        disabled={disabled}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => {
+                          const newItems = [...items];
+                          newItems[index].name = '';
+                          onChange(newItems);
+                        }}
+                        disabled={disabled}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select
+                      value={item.name}
+                      onValueChange={(value) => {
+                        if (value === 'OTHER_MANUAL') {
+                          const newItems = [...items];
+                          newItems[index].name = 'OTHER_MANUAL';
+                          onChange(newItems);
+                        } else {
+                          handleSelectEmployee(index, value);
+                        }
+                      }}
+                      disabled={disabled}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Select or type name" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        {employees.map((emp) => (
+                          <SelectItem key={emp.id} value={emp.name}>
+                            {formatName(emp.name)}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="OTHER_MANUAL" className="border-t mt-1 pt-1">
+                          Other (Manual Entry)
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      </SelectContent>
+                    </Select>
+                  )
                 ) : (
                   <Input
                     type="text"
