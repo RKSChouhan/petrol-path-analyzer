@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Container, Plus, Trash2 } from "lucide-react";
+import { Container, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -227,22 +227,80 @@ const OilSalesForm = ({
               <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
                 <div>
                   <Label className="text-sm">Oil Type</Label>
-                  <Select
-                    value={item.oil_name}
-                    onValueChange={(value) => handleItemChange(index, 'oil_name', value)}
-                    disabled={disabled}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Select oil type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-50 max-h-[300px]">
-                      {OIL_VARIETIES.map((oil) => (
-                        <SelectItem key={oil.name} value={oil.name}>
-                          {oil.name} - ₹{oil.price.toFixed(2)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {item.oil_name === 'OTHERS' ? (
+                    <div className="flex gap-1">
+                      <Input
+                        type="text"
+                        value={item.oil_name === 'OTHERS' ? '' : item.oil_name}
+                        onChange={(e) => {
+                          const updatedItems = [...data.items];
+                          updatedItems[index] = {
+                            ...updatedItems[index],
+                            oil_name: e.target.value || 'OTHERS',
+                          };
+                          onChange({ ...data, items: updatedItems });
+                        }}
+                        placeholder="Enter oil name"
+                        className="h-9 flex-1"
+                        disabled={disabled}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => handleItemChange(index, 'oil_name', '')}
+                        disabled={disabled}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : item.oil_name && !OIL_VARIETIES.find(oil => oil.name === item.oil_name) ? (
+                    <div className="flex gap-1">
+                      <Input
+                        type="text"
+                        value={item.oil_name}
+                        onChange={(e) => {
+                          const updatedItems = [...data.items];
+                          updatedItems[index] = {
+                            ...updatedItems[index],
+                            oil_name: e.target.value || 'OTHERS',
+                          };
+                          onChange({ ...data, items: updatedItems });
+                        }}
+                        placeholder="Enter oil name"
+                        className="h-9 flex-1"
+                        disabled={disabled}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => handleItemChange(index, 'oil_name', '')}
+                        disabled={disabled}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select
+                      value={item.oil_name}
+                      onValueChange={(value) => handleItemChange(index, 'oil_name', value)}
+                      disabled={disabled}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Select oil type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50 max-h-[300px]">
+                        {OIL_VARIETIES.map((oil) => (
+                          <SelectItem key={oil.name} value={oil.name}>
+                            {oil.name} - ₹{oil.price.toFixed(2)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div>
                   <Label className="text-sm">Count</Label>
