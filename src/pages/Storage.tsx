@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { LayoutGrid, LogOut, Archive, Save, Fuel, Gauge, Zap, Truck, RotateCcw } from "lucide-react";
+import StorageOCRUpload from "@/components/StorageOCRUpload";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
@@ -288,17 +289,46 @@ const Storage = () => {
                   }}
                 />
               </div>
-              <div className="text-right flex-1">
+              <div className="text-right flex-1 space-y-2">
                 <p className="text-xl font-bold text-primary">
                   {format(selectedDate, "EEEE, dd MMMM yyyy")}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground">
                   {savedDates.includes(format(selectedDate, 'yyyy-MM-dd')) ? (
                     <span className="text-green-600 dark:text-green-400">✓ Data saved for this date</span>
                   ) : (
                     <span>No data saved for this date</span>
                   )}
                 </p>
+                <StorageOCRUpload
+                  onDataExtracted={(extracted) => {
+                    setData(prev => ({
+                      ...prev,
+                      generator_diesel_capacity: extracted.generator_diesel_capacity || prev.generator_diesel_capacity,
+                      generator_dip: extracted.generator_dip || prev.generator_dip,
+                      eb_meter: extracted.eb_meter || prev.eb_meter,
+                      eb_unit: extracted.eb_unit || prev.eb_unit,
+                      petrol_kl: extracted.petrol_kl || prev.petrol_kl,
+                      diesel_kl: extracted.diesel_kl || prev.diesel_kl,
+                      oil_reading: extracted.oil_reading || prev.oil_reading,
+                      two_t_oil_barrel_stock: extracted.two_t_oil_barrel_stock || prev.two_t_oil_barrel_stock,
+                      empty_barrel: extracted.empty_barrel || prev.empty_barrel,
+                      tvs_xl_meter: extracted.tvs_xl_meter || prev.tvs_xl_meter,
+                      petrol_density_value: extracted.petrol_density_value || prev.petrol_density_value,
+                      petrol_temperature: extracted.petrol_temperature || prev.petrol_temperature,
+                      petrol_density_at_15c: extracted.petrol_density_at_15c || prev.petrol_density_at_15c,
+                      diesel_density_value: extracted.diesel_density_value || prev.diesel_density_value,
+                      diesel_temperature: extracted.diesel_temperature || prev.diesel_temperature,
+                      diesel_density_at_15c: extracted.diesel_density_at_15c || prev.diesel_density_at_15c,
+                      load_capacity: extracted.load_capacity || prev.load_capacity,
+                      density_checker: extracted.density_checker || prev.density_checker,
+                      lorry_entry_time: extracted.lorry_entry_time || prev.lorry_entry_time,
+                      lorry_exit_time: extracted.lorry_exit_time || prev.lorry_exit_time,
+                      duration: extracted.duration || prev.duration,
+                    }));
+                  }}
+                  disabled={loading}
+                />
               </div>
             </div>
           </CardContent>
