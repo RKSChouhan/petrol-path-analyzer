@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ interface DebtorLedgerProps {
 
 const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
   const { toast } = useToast();
+  const { companyId } = useCompany();
   const [debtors, setDebtors] = useState<DebtorLedgerItem[]>([]);
   const [newDebtorName, setNewDebtorName] = useState("");
   const [newDebtorBillNumber, setNewDebtorBillNumber] = useState("");
@@ -58,15 +60,17 @@ const DebtorLedger = ({ userId }: DebtorLedgerProps) => {
       return;
     }
 
+    if (!companyId) return;
+
     setLoading(true);
-    const { error } = await supabase.from("debtor_ledger").upsert(
+    const { error } = await supabase.from("debtor_ledger").insert(
       {
         user_id: userId,
+        company_id: companyId,
         name: newDebtorName.trim(),
         bill_number: newDebtorBillNumber.trim(),
         amount: newDebtorAmount,
-      },
-      { onConflict: "user_id,name" }
+      }
     );
 
     if (error) {

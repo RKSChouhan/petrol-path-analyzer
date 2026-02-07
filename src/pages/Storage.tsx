@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useCompany } from "@/contexts/CompanyContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +64,7 @@ const initialData: StorageData = {
 
 const Storage = () => {
   const navigate = useNavigate();
+  const { companyId } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -200,6 +202,7 @@ const Storage = () => {
       // Prepare data, converting empty time strings to null
       const saveData = {
         user_id: userId,
+        company_id: companyId!,
         reading_date: dateStr,
         ...data,
         lorry_entry_time: data.lorry_entry_time || null,
@@ -208,7 +211,7 @@ const Storage = () => {
       
       const { error } = await supabase
         .from('storage_readings')
-        .upsert(saveData, { onConflict: 'user_id,reading_date' });
+        .upsert(saveData, { onConflict: 'company_id,reading_date' });
 
       if (error) throw error;
 
