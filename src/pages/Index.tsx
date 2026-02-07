@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
@@ -28,6 +29,7 @@ import logo from "@/assets/logo.png";
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { companyId } = useCompany();
   const [selectedDate, setSelectedDate] = useState<Date>(subDays(new Date(), 1));
   const [selectedEntry, setSelectedEntry] = useState<1 | 2>(1);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -750,6 +752,7 @@ const Index = () => {
           .from('daily_sales')
           .insert({
             user_id: userId,
+            company_id: companyId!,
             sale_date: dateStr,
             entry_number: selectedEntry,
             total_income: totalIncome,
@@ -932,6 +935,7 @@ const Index = () => {
             // Create new debtor entry
             await supabase.from('debtor_ledger').insert({
               user_id: userId,
+              company_id: companyId!,
               name: debtor.name,
               amount: debtor.amount,
             });

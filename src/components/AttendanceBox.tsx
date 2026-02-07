@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ const JOB_OPTIONS = ["Supervisor", "Cashier", "Pump Operator", "Scavenger", "Air
 
 const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onAttendanceChange }: AttendanceBoxProps) => {
   const { toast } = useToast();
+  const { companyId } = useCompany();
   const [employees, setEmployees] = useState<{ id: string; name: string; default_shift: string; default_job: string }[]>([]);
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -65,11 +67,14 @@ const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onA
       return;
     }
 
+    if (!companyId) return;
+
     const { error } = await supabase
       .from('employees')
       .insert({
         name: newEmployeeName.trim(),
         user_id: userId,
+        company_id: companyId,
         default_shift: 'Full',
         default_job: 'Pump Operator',
       });

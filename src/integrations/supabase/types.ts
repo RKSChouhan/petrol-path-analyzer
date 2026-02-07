@@ -21,6 +21,7 @@ export type Database = {
           bill_date: string
           bill_time: string
           card_id: string
+          company_id: string
           created_at: string
           id: string
           updated_at: string
@@ -32,6 +33,7 @@ export type Database = {
           bill_date: string
           bill_time: string
           card_id: string
+          company_id: string
           created_at?: string
           id?: string
           updated_at?: string
@@ -43,12 +45,21 @@ export type Database = {
           bill_date?: string
           bill_time?: string
           card_id?: string
+          company_id?: string
           created_at?: string
           id?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bharat_fleet_bills_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cash_denominations: {
         Row: {
@@ -103,6 +114,57 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          contact_phone: string | null
+          created_at: string
+          default_debtors: Json | null
+          default_expenses: Json | null
+          diesel_price: number
+          id: string
+          logo_url: string | null
+          name: string
+          petrol_price: number
+          proprietor_password: string
+          pump_count_diesel: number
+          pump_count_petrol: number
+          supervisor_password: string
+          updated_at: string
+        }
+        Insert: {
+          contact_phone?: string | null
+          created_at?: string
+          default_debtors?: Json | null
+          default_expenses?: Json | null
+          diesel_price?: number
+          id?: string
+          logo_url?: string | null
+          name: string
+          petrol_price?: number
+          proprietor_password: string
+          pump_count_diesel?: number
+          pump_count_petrol?: number
+          supervisor_password: string
+          updated_at?: string
+        }
+        Update: {
+          contact_phone?: string | null
+          created_at?: string
+          default_debtors?: Json | null
+          default_expenses?: Json | null
+          diesel_price?: number
+          id?: string
+          logo_url?: string | null
+          name?: string
+          petrol_price?: number
+          proprietor_password?: string
+          pump_count_diesel?: number
+          pump_count_petrol?: number
+          supervisor_password?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_attendance: {
         Row: {
           created_at: string
@@ -151,6 +213,7 @@ export type Database = {
       daily_sales: {
         Row: {
           comment: string | null
+          company_id: string
           created_at: string | null
           entry_number: number
           id: string
@@ -163,6 +226,7 @@ export type Database = {
         }
         Insert: {
           comment?: string | null
+          company_id: string
           created_at?: string | null
           entry_number?: number
           id?: string
@@ -175,6 +239,7 @@ export type Database = {
         }
         Update: {
           comment?: string | null
+          company_id?: string
           created_at?: string | null
           entry_number?: number
           id?: string
@@ -185,12 +250,21 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "daily_sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       debtor_ledger: {
         Row: {
           amount: number
           bill_number: string | null
+          company_id: string
           created_at: string
           id: string
           name: string
@@ -200,6 +274,7 @@ export type Database = {
         Insert: {
           amount?: number
           bill_number?: string | null
+          company_id: string
           created_at?: string
           id?: string
           name: string
@@ -209,13 +284,22 @@ export type Database = {
         Update: {
           amount?: number
           bill_number?: string | null
+          company_id?: string
           created_at?: string
           id?: string
           name?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "debtor_ledger_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       debtors: {
         Row: {
@@ -254,6 +338,7 @@ export type Database = {
       }
       employees: {
         Row: {
+          company_id: string
           created_at: string
           default_job: string | null
           default_shift: string | null
@@ -263,6 +348,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          company_id: string
           created_at?: string
           default_job?: string | null
           default_shift?: string | null
@@ -272,6 +358,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          company_id?: string
           created_at?: string
           default_job?: string | null
           default_shift?: string | null
@@ -280,7 +367,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       expenses: {
         Row: {
@@ -320,6 +415,7 @@ export type Database = {
           bill_date: string
           bill_time: string
           card_last_four: string
+          company_id: string
           created_at: string
           id: string
           invoice_number: string
@@ -331,6 +427,7 @@ export type Database = {
           bill_date: string
           bill_time: string
           card_last_four: string
+          company_id: string
           created_at?: string
           id?: string
           invoice_number: string
@@ -342,16 +439,26 @@ export type Database = {
           bill_date?: string
           bill_time?: string
           card_last_four?: string
+          company_id?: string
           created_at?: string
           id?: string
           invoice_number?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fiserv_bills_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lock_settings: {
         Row: {
+          company_id: string
           id: string
           proprietor_locked: boolean | null
           supervisor_locked: boolean | null
@@ -359,6 +466,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          company_id: string
           id?: string
           proprietor_locked?: boolean | null
           supervisor_locked?: boolean | null
@@ -366,13 +474,22 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          company_id?: string
           id?: string
           proprietor_locked?: boolean | null
           supervisor_locked?: boolean | null
           updated_at?: string | null
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "lock_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       oil_sales: {
         Row: {
@@ -588,6 +705,7 @@ export type Database = {
       }
       storage_readings: {
         Row: {
+          company_id: string
           created_at: string | null
           density_checker: string | null
           diesel_density_at_15c: number | null
@@ -616,6 +734,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          company_id: string
           created_at?: string | null
           density_checker?: string | null
           diesel_density_at_15c?: number | null
@@ -644,6 +763,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          company_id?: string
           created_at?: string | null
           density_checker?: string | null
           diesel_density_at_15c?: number | null
@@ -671,7 +791,44 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "storage_readings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_companies: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_companies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -699,6 +856,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_company: {
+        Args: never
+        Returns: {
+          contact_phone: string
+          created_at: string
+          default_debtors: Json
+          default_expenses: Json
+          diesel_price: number
+          id: string
+          logo_url: string
+          name: string
+          petrol_price: number
+          pump_count_diesel: number
+          pump_count_petrol: number
+          updated_at: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -710,6 +884,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_company_id: { Args: never; Returns: string }
       user_has_elevated_role: { Args: never; Returns: boolean }
       user_is_proprietor: { Args: never; Returns: boolean }
     }

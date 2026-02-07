@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useCompany } from "@/contexts/CompanyContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +64,7 @@ interface GroupedBills<T> {
 
 const FiservBills = () => {
   const navigate = useNavigate();
+  const { companyId } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   
@@ -305,6 +307,7 @@ const FiservBills = () => {
         card_last_four: entry.card_last_four.trim(),
         amount: entry.amount,
         user_id: userId,
+        company_id: companyId!,
       }));
 
       const { error } = await supabase
@@ -348,6 +351,7 @@ const FiservBills = () => {
         card_id: entry.card_id.trim(),
         amount: entry.amount,
         user_id: userId,
+        company_id: companyId!,
       }));
 
       const { error } = await supabase
