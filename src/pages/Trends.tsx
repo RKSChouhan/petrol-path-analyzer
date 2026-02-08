@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LayoutGrid, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useCompany } from "@/contexts/CompanyContext";
 import { format, parseISO } from "date-fns";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import logo from "@/assets/logo.png";
@@ -17,11 +18,14 @@ const COLORS = {
 
 const Trends = () => {
   const navigate = useNavigate();
+  const { companyId, company } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [salesData, setSalesData] = useState<any[]>([]);
   const [expenseData, setExpenseData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const companyName = company?.name || "Sales Tracker";
+  const companyLogo = company?.logo_url || logo;
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -44,8 +48,6 @@ const Trends = () => {
         navigate("/login");
       } else {
         setUserRole(role);
-        const STATION_ID = "00000000-0000-0000-0000-000000000001";
-        setUserId(STATION_ID);
       }
     };
 
@@ -65,13 +67,13 @@ const Trends = () => {
   }, [navigate]);
 
   useEffect(() => {
-    if (userId) {
+    if (companyId) {
       fetchData();
     }
-  }, [userId]);
+  }, [companyId]);
 
   const fetchData = async () => {
-    if (!userId) return;
+    if (!companyId) return;
     setLoading(true);
 
     try {
@@ -83,7 +85,7 @@ const Trends = () => {
           oil_sales(*),
           expenses(*)
         `)
-        .eq('user_id', userId)
+        .eq('company_id', companyId)
         .order('sale_date', { ascending: true })
         .limit(60);
 
@@ -155,7 +157,7 @@ const Trends = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Trends</h1>
                 <p className="text-sm text-muted-foreground">Sales & Expense Trends</p>

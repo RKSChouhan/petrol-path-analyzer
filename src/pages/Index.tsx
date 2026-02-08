@@ -29,12 +29,19 @@ import logo from "@/assets/logo.png";
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { companyId } = useCompany();
+  const { companyId, company } = useCompany();
   const [selectedDate, setSelectedDate] = useState<Date>(subDays(new Date(), 1));
   const [selectedEntry, setSelectedEntry] = useState<1 | 2>(1);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  const companyName = company?.name || "Sales Tracker";
+  const companyLogo = company?.logo_url || logo;
+  const petrolPrice = company?.petrol_price || 101.88;
+  const dieselPrice = company?.diesel_price || 93.48;
+  const defaultExpenses = company?.default_expenses || ["Density test", "food & tea", "Drinking water"];
+  const defaultDebtors = company?.default_debtors || ["Pandian"];
   const [emptyFieldsDialogOpen, setEmptyFieldsDialogOpen] = useState(false);
   const [emptyFields, setEmptyFields] = useState<string[]>([]);
 
@@ -129,15 +136,14 @@ const Index = () => {
         return;
       }
 
+      setAuthUserId(session.user.id);
+
       // Check for role in sessionStorage
       const role = sessionStorage.getItem("userRole");
       if (!role) {
         navigate("/login");
       } else {
         setUserRole(role);
-        // Use a fixed UUID so all devices share the same data
-        const STATION_ID = "00000000-0000-0000-0000-000000000001";
-        setUserId(STATION_ID);
       }
     };
 
@@ -158,10 +164,10 @@ const Index = () => {
   }, [navigate]);
 
   useEffect(() => {
-    if (userId) {
+    if (companyId) {
       loadEntryData();
     }
-  }, [userId, selectedDate, selectedEntry]);
+  }, [companyId, selectedDate, selectedEntry]);
 
   const clearFormFields = () => {
     setPumpReadings({
@@ -195,7 +201,7 @@ const Index = () => {
   };
 
   const loadEntryData = async () => {
-    if (!userId) return;
+    if (!companyId) return;
     
     const dateStr = format(selectedDate, "yyyy-MM-dd");
     
@@ -213,7 +219,7 @@ const Index = () => {
         debtors (*),
         repaid_debtors (*)
       `)
-      .eq("user_id", userId)
+      .eq("company_id", companyId)
       .eq("sale_date", dateStr)
       .eq("entry_number", selectedEntry)
       .maybeSingle();
@@ -426,7 +432,7 @@ const Index = () => {
       const { data } = await supabase
         .from('lock_settings')
         .select('supervisor_locked, proprietor_locked')
-        .eq('id', '00000000-0000-0000-0000-000000000001')
+        .eq('company_id', companyId!)
         .single();
       
       if (data) {
@@ -446,7 +452,7 @@ const Index = () => {
         [lockType === 'supervisor' ? 'supervisor_locked' : 'proprietor_locked']: newValue,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', '00000000-0000-0000-0000-000000000001');
+      .eq('company_id', companyId!);
     
     if (!error) {
       if (lockType === 'supervisor') {
@@ -697,7 +703,7 @@ const Index = () => {
   };
 
   const handleSaveData = async () => {
-    if (!userId) return;
+    if (!companyId) return;
     
     setLoading(true);
     try {
@@ -708,7 +714,7 @@ const Index = () => {
       const { data: existingRecord } = await supabase
         .from('daily_sales')
         .select('id')
-        .eq('user_id', userId)
+        .eq('company_id', companyId)
         .eq('sale_date', dateStr)
         .eq('entry_number', selectedEntry)
         .maybeSingle();
@@ -751,7 +757,7 @@ const Index = () => {
         const { data, error: insertError } = await supabase
           .from('daily_sales')
           .insert({
-            user_id: userId,
+            user_id: authUserId!,
             company_id: companyId!,
             sale_date: dateStr,
             entry_number: selectedEntry,
@@ -918,7 +924,7 @@ const Index = () => {
           const { data: existingDebtor } = await supabase
             .from('debtor_ledger')
             .select('id, amount')
-            .eq('user_id', userId)
+            .eq('company_id', companyId)
             .eq('name', debtor.name)
             .maybeSingle();
 
@@ -934,7 +940,6 @@ const Index = () => {
           } else {
             // Create new debtor entry
             await supabase.from('debtor_ledger').insert({
-              user_id: userId,
               company_id: companyId!,
               name: debtor.name,
               amount: debtor.amount,
@@ -949,7 +954,7 @@ const Index = () => {
           const { data: existingDebtor } = await supabase
             .from('debtor_ledger')
             .select('id, amount')
-            .eq('user_id', userId)
+            .eq('company_id', companyId)
             .eq('name', repaid.name)
             .maybeSingle();
 
@@ -1075,7 +1080,7 @@ const Index = () => {
             {/* First row: Logo, Entry buttons, Date, Stat, Logout */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
+                <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">Daily tree</h1>
                   <p className="text-sm text-muted-foreground">Digital Sales Tracking System</p>
@@ -1266,9 +1271,9 @@ const Index = () => {
             <OilSalesForm data={oilSales} onChange={setOilSales} disabled={editDisabled} />
             
             {/* Attendance Box - below Oil Sales */}
-            {userId && (
+            {companyId && (
               <AttendanceBox 
-                userId={userId} 
+                userId={companyId} 
                 disabled={editDisabled}
                 selectedAttendance={selectedAttendance}
                 onAttendanceChange={setSelectedAttendance}

@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { LayoutGrid, LogOut, Wallet, Construction } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useCompany } from "@/contexts/CompanyContext";
 import logo from "@/assets/logo.png";
 
 const Salary = () => {
   const navigate = useNavigate();
+  const { company } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
 
+  const companyName = company?.name || "Sales Tracker";
+  const companyLogo = company?.logo_url || logo;
   useEffect(() => {
     const handleBeforeUnload = () => {
       sessionStorage.removeItem("userRole");
@@ -65,7 +69,7 @@ const Salary = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Salary</h1>
                 <p className="text-sm text-muted-foreground">Employee Salary Management</p>

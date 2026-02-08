@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/contexts/CompanyContext";
 import { LayoutGrid, LogOut, Users, Calendar, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -34,11 +35,15 @@ interface GroupedByMonth {
 
 const Attendance = () => {
   const navigate = useNavigate();
+  const { company } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [groupedData, setGroupedData] = useState<GroupedByMonth[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+
+  const companyName = company?.name || "Sales Tracker";
+  const companyLogo = company?.logo_url || logo;
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -275,7 +280,7 @@ const Attendance = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Attendance</h1>
                 <p className="text-sm text-muted-foreground">Employee attendance records</p>

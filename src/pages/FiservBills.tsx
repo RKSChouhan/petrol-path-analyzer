@@ -64,9 +64,12 @@ interface GroupedBills<T> {
 
 const FiservBills = () => {
   const navigate = useNavigate();
-  const { companyId } = useCompany();
+  const { companyId, company } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+
+  const companyName = company?.name || "Sales Tracker";
+  const companyLogo = company?.logo_url || logo;
   
   const [fiservEntries, setFiservEntries] = useState<FiservBillEntry[]>([
     { bill_date: new Date(), bill_time: '', invoice_number: '', card_last_four: '', amount: 0 }
@@ -455,7 +458,7 @@ const FiservBills = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Bill Entry</h1>
                 <p className="text-sm text-muted-foreground">Manage Fiserv & Bharat Fleet transactions</p>
