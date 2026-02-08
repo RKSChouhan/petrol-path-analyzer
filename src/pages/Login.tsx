@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePresence } from "@/hooks/use-presence";
+import { useCompany } from "@/contexts/CompanyContext";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ type Role = "Proprietor" | "Supervisor";
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { company } = useCompany();
   const [showPassword, setShowPassword] = useState(false);
   const [showRolePassword, setShowRolePassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,11 @@ const Login = () => {
   
   // Track all visitors on the website
   const onlineUsers = usePresence(null, 'login');
+
+  // Use company branding or fallback to defaults
+  const companyName = company?.name || "Digital Sales Tracker";
+  const contactPhone = company?.contact_phone || "";
+  const companyLogo = company?.logo_url || logo;
   
   // Supabase auth states
   const [email, setEmail] = useState("");
@@ -144,7 +151,7 @@ const Login = () => {
         <div className="w-full max-w-md space-y-6">
           <div className="text-center">
             <div className="flex justify-center mb-3">
-              <img src={logo} alt="Sri MahaLingam Agency" className="h-20 sm:h-24 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-20 sm:h-24 w-auto object-contain" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Select Your Role</h1>
             <p className="text-sm text-muted-foreground mt-1 truncate px-4">{authUser.email}</p>
@@ -228,7 +235,7 @@ const Login = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col items-center gap-4 py-4">
-              <p className="text-lg font-medium text-foreground">+91 82487 60240</p>
+              <p className="text-lg font-medium text-foreground">{contactPhone || "Contact the owner"}</p>
               <Button onClick={() => setShowForgetDialog(false)} className="w-full h-12">
                 Back
               </Button>
@@ -245,9 +252,9 @@ const Login = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <div className="flex justify-center mb-3">
-            <img src={logo} alt="Sri MahaLingam Agency" className="h-24 sm:h-28 w-auto object-contain" />
+            <img src={companyLogo} alt={companyName} className="h-24 sm:h-28 w-auto object-contain" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Sri MahaLingam Agency</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{companyName}</h1>
           <p className="text-sm text-muted-foreground mt-1">Digital Sales Tracking System</p>
         </div>
         <div className="bg-card p-5 sm:p-8 rounded-xl shadow-lg">
@@ -332,7 +339,7 @@ const Login = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
-            <p className="text-lg font-medium text-foreground">+91 82487 60240</p>
+            <p className="text-lg font-medium text-foreground">{contactPhone || "Contact the owner"}</p>
             <Button onClick={() => setShowForgetDialog(false)} className="w-full h-12">
               Back
             </Button>
