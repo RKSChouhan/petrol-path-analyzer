@@ -64,14 +64,16 @@ const initialData: StorageData = {
 
 const Storage = () => {
   const navigate = useNavigate();
-  const { companyId } = useCompany();
+  const { companyId, company } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [data, setData] = useState<StorageData>(initialData);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedDates, setSavedDates] = useState<string[]>([]);
+
+  const companyName = company?.name || "Sales Tracker";
+  const companyLogo = company?.logo_url || logo;
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -94,8 +96,6 @@ const Storage = () => {
         navigate("/login");
       } else {
         setUserRole(role);
-        const STATION_ID = "00000000-0000-0000-0000-000000000001";
-        setUserId(STATION_ID);
       }
     };
 
@@ -115,25 +115,25 @@ const Storage = () => {
   }, [navigate]);
 
   useEffect(() => {
-    if (userId && selectedDate) {
+    if (companyId && selectedDate) {
       fetchData();
     }
-  }, [userId, selectedDate]);
+  }, [companyId, selectedDate]);
 
   useEffect(() => {
-    if (userId) {
+    if (companyId) {
       fetchSavedDates();
     }
-  }, [userId]);
+  }, [companyId]);
 
   const fetchSavedDates = async () => {
-    if (!userId) return;
+    if (!companyId) return;
     
     try {
       const { data: readings, error } = await supabase
         .from('storage_readings')
         .select('reading_date')
-        .eq('user_id', userId);
+        .eq('company_id', companyId);
 
       if (error) throw error;
 
@@ -145,14 +145,14 @@ const Storage = () => {
   };
 
   const fetchData = async () => {
-    if (!userId) return;
+    if (!companyId) return;
     setLoading(true);
     
     try {
       const { data: reading, error } = await supabase
         .from('storage_readings')
         .select('*')
-        .eq('user_id', userId)
+        .eq('company_id', companyId)
         .eq('reading_date', format(selectedDate, 'yyyy-MM-dd'))
         .maybeSingle();
 
@@ -193,7 +193,7 @@ const Storage = () => {
   };
 
   const handleSave = async () => {
-    if (!userId) return;
+    if (!companyId) return;
     setSaving(true);
 
     try {
@@ -201,8 +201,7 @@ const Storage = () => {
       
       // Prepare data, converting empty time strings to null
       const saveData = {
-        user_id: userId,
-        company_id: companyId!,
+        company_id: companyId,
         reading_date: dateStr,
         ...data,
         lorry_entry_time: data.lorry_entry_time || null,
@@ -253,7 +252,7 @@ const Storage = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Storage</h1>
                 <p className="text-sm text-muted-foreground">Fuel storage & readings management</p>

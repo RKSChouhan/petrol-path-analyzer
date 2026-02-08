@@ -3,14 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/contexts/CompanyContext";
 import { FuelIcon, BarChart3, Flower2, Receipt, Users, Archive, LogOut, TrendingUp, Wallet, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import logo from "@/assets/logo.png";
 
 const Shortcut = () => {
   const navigate = useNavigate();
+  const { companyId, company } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<{ dailyTree: boolean; storage: boolean }>({ dailyTree: false, storage: false });
+
+  const companyName = company?.name || "Sales Tracker";
+  const companyLogo = company?.logo_url || logo;
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -54,7 +59,7 @@ const Shortcut = () => {
   // Check for incomplete daily entries
   useEffect(() => {
     const checkIncompleteWork = async () => {
-      const STATION_ID = "00000000-0000-0000-0000-000000000001";
+      if (!companyId) return;
       const today = format(new Date(), 'yyyy-MM-dd');
 
       try {
@@ -62,7 +67,7 @@ const Shortcut = () => {
         const { data: dailySales } = await supabase
           .from('daily_sales')
           .select('id')
-          .eq('user_id', STATION_ID)
+          .eq('company_id', companyId)
           .eq('sale_date', today)
           .limit(1);
 
@@ -70,7 +75,7 @@ const Shortcut = () => {
         const { data: storageData } = await supabase
           .from('storage_readings')
           .select('id')
-          .eq('user_id', STATION_ID)
+          .eq('company_id', companyId)
           .eq('reading_date', today)
           .limit(1);
 
@@ -84,7 +89,7 @@ const Shortcut = () => {
     };
 
     checkIncompleteWork();
-  }, []);
+  }, [companyId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -111,7 +116,7 @@ const Shortcut = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Sri MahaLingam Agency" className="h-14 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Shortcut</h1>
                 <p className="text-sm text-muted-foreground">Quick navigation hub</p>
