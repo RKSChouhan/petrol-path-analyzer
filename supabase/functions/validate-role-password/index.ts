@@ -55,25 +55,52 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Get passwords from environment variables (stored securely in Supabase vault)
-    const validPasswords: Record<string, string | undefined> = {
-      'Supervisor': Deno.env.get('SUPERVISOR_PASSWORD_HASH'),
-      'Proprietor': Deno.env.get('PROPRIETOR_PASSWORD_HASH')
+    // Use service role client to bypass RLS
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+
+    // Step 1: Look up the user's company from user_companies
+    const { data: userCompany, error: companyLookupError } = await supabaseAdmin
+      .from('user_companies')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .single()
+
+    if (companyLookupError || !userCompany) {
+      console.log('No company found for user:', user.id, companyLookupError?.message)
+      return new Response(
+        JSON.stringify({ success: false, error: 'No company associated with this account. Please contact the owner.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    const storedPassword = validPasswords[role]
-    
-    if (!storedPassword) {
-      console.log('No password configured for role:', role)
+    console.log('Found company for user:', userCompany.company_id)
+
+    // Step 2: Fetch the company's role passwords
+    const { data: company, error: companyError } = await supabaseAdmin
+      .from('companies')
+      .select('supervisor_password, proprietor_password')
+      .eq('id', userCompany.company_id)
+      .single()
+
+    if (companyError || !company) {
+      console.error('Error fetching company passwords:', companyError?.message)
       return new Response(
-        JSON.stringify({ success: false, error: 'Role not configured' }),
+        JSON.stringify({ success: false, error: 'Company configuration error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('Validating password for role:', role)
+    // Step 3: Validate the password against the company's stored password
+    const storedPassword = role === 'Supervisor' 
+      ? company.supervisor_password 
+      : company.proprietor_password
 
-    // Compare the provided password directly with the stored secret
+    console.log('Validating password for role:', role, 'company:', userCompany.company_id)
+
     if (password !== storedPassword) {
       console.log('Password mismatch for role:', role)
       return new Response(
@@ -82,13 +109,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Use service role client to bypass RLS and assign role
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
-
-    // Assign role using service role (bypasses RLS)
+    // Step 4: Assign role using service role (bypasses RLS)
     const { error: insertError } = await supabaseAdmin
       .from('user_roles')
       .upsert({ user_id: user.id, role: role }, { onConflict: 'user_id,role' })
@@ -101,7 +122,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log('Role assigned successfully:', role, 'for user:', user.id)
+    console.log('Role assigned successfully:', role, 'for user:', user.id, 'company:', userCompany.company_id)
 
     return new Response(
       JSON.stringify({ success: true }),
