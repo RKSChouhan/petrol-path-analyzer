@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/contexts/CompanyContext";
-import { LayoutGrid, LogOut, Users, Calendar, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { LayoutGrid, LogOut, Users, Calendar, ChevronDown, ChevronRight, Trash2, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
@@ -268,6 +269,39 @@ const Attendance = () => {
     navigate("/login");
   };
 
+  const handleExportAttendance = () => {
+    if (groupedData.length === 0) return;
+
+    const wb = XLSX.utils.book_new();
+    const sheetData: any[][] = [
+      ['Attendance Records Export'],
+      [],
+      ['Date', 'Day', 'Employee Name', 'Shift', 'Job', 'Entry Number'],
+    ];
+
+    groupedData.forEach(monthGroup => {
+      monthGroup.dates.forEach(dateGroup => {
+        dateGroup.records.forEach(record => {
+          sheetData.push([
+            format(parseISO(dateGroup.date), 'dd MMM yyyy'),
+            dateGroup.dayName,
+            record.employee_name,
+            record.shift || 'Full',
+            record.job || 'Pump boy',
+            record.entry_number || '-',
+          ]);
+        });
+      });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    ws['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 10 }, { wch: 12 }, { wch: 10 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+
+    XLSX.writeFile(wb, `Attendance_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success("Attendance exported to Excel");
+  };
+
   const handleGoToShortcut = () => {
     navigate("/shortcut");
   };
@@ -287,6 +321,10 @@ const Attendance = () => {
               </div>
             </div>
             <div className="flex gap-3">
+              <Button variant="outline" onClick={handleExportAttendance} disabled={groupedData.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
               <Button variant="outline" onClick={handleGoToShortcut}>
                 <LayoutGrid className="mr-2 h-4 w-4" />
                 Shortcut

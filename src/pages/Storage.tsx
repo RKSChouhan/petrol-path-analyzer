@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutGrid, LogOut, Archive, Save, Fuel, Gauge, Zap, Truck, RotateCcw } from "lucide-react";
+import { LayoutGrid, LogOut, Archive, Save, Fuel, Gauge, Zap, Truck, RotateCcw, Calculator as CalcIcon } from "lucide-react";
+import Calculator from "@/components/Calculator";
 import StorageOCRUpload from "@/components/StorageOCRUpload";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -71,6 +72,8 @@ const Storage = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedDates, setSavedDates] = useState<string[]>([]);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calcPosition, setCalcPosition] = useState({ x: 20, y: 100 });
 
   const companyName = company?.name || "Sales Tracker";
   const companyLogo = company?.logo_url || logo;
@@ -259,6 +262,9 @@ const Storage = () => {
               </div>
             </div>
             <div className="flex gap-3">
+              <Button variant="outline" size="icon" onClick={() => setShowCalculator(!showCalculator)}>
+                <CalcIcon className="h-4 w-4" />
+              </Button>
               <Button variant="outline" onClick={handleGoToShortcut}>
                 <LayoutGrid className="mr-2 h-4 w-4" />
                 Shortcut
@@ -650,6 +656,13 @@ const Storage = () => {
           </>
         )}
       </main>
+
+      <Calculator
+        isOpen={showCalculator}
+        onClose={() => setShowCalculator(false)}
+        position={calcPosition}
+        onPositionChange={setCalcPosition}
+      />
     </div>
   );
 };

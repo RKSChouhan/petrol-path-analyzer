@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, LogOut, Users } from "lucide-react";
+import { LayoutGrid, LogOut, Users, Calculator as CalcIcon } from "lucide-react";
+import Calculator from "@/components/Calculator";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useCompany } from "@/contexts/CompanyContext";
@@ -15,7 +16,8 @@ const Stat = () => {
   const { companyId, company } = useCompany();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [salesData, setSalesData] = useState<any[]>([]);
-  
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calcPosition, setCalcPosition] = useState({ x: 20, y: 100 });
   const onlineUsers = usePresence(userRole, 'stat');
 
   const companyName = company?.name || "Sales Tracker";
@@ -146,6 +148,9 @@ const Stat = () => {
               </div>
             </div>
             <div className="flex gap-3">
+              <Button variant="outline" size="icon" onClick={() => setShowCalculator(!showCalculator)}>
+                <CalcIcon className="h-4 w-4" />
+              </Button>
               <Button variant="outline" onClick={handleGoToShortcut}>
                 <LayoutGrid className="mr-2 h-4 w-4" />
                 Shortcut
@@ -177,6 +182,13 @@ const Stat = () => {
 
         <SalesCharts salesData={salesData} onRefresh={fetchSalesData} userRole={userRole} />
       </main>
+
+      <Calculator
+        isOpen={showCalculator}
+        onClose={() => setShowCalculator(false)}
+        position={calcPosition}
+        onPositionChange={setCalcPosition}
+      />
     </div>
   );
 };

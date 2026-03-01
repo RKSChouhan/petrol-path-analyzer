@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutGrid, LogOut, Receipt, Save, Plus, Trash2, Calendar, CreditCard, ChevronDown, ChevronRight } from "lucide-react";
+import { LayoutGrid, LogOut, Receipt, Save, Plus, Trash2, Calendar, CreditCard, ChevronDown, ChevronRight, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
@@ -452,6 +453,55 @@ const FiservBills = () => {
     toast.success("Bill data extracted and added");
   };
 
+  const handleExportBills = () => {
+    const wb = XLSX.utils.book_new();
+
+    // Fiserv Bills sheet
+    if (savedFiservBills.length > 0) {
+      const fiservData = [
+        ['Fiserv Bills Export'],
+        [],
+        ['Date', 'Time', 'Invoice Number', 'Card Last 4', 'Amount'],
+        ...savedFiservBills.map(bill => [
+          format(parseISO(bill.bill_date), 'dd MMM yyyy'),
+          bill.bill_time.slice(0, 5),
+          bill.invoice_number,
+          bill.card_last_four,
+          Number(bill.amount),
+        ]),
+        [],
+        ['', '', '', 'Grand Total', savedFiservBills.reduce((sum, b) => sum + Number(b.amount), 0)],
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(fiservData);
+      ws['!cols'] = [{ wch: 15 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'Fiserv Bills');
+    }
+
+    // Bharat Fleet Bills sheet
+    if (savedBharatBills.length > 0) {
+      const bharatData = [
+        ['Bharat Fleet Card Bills Export'],
+        [],
+        ['Date', 'Time', 'Account No', 'Card ID', 'Amount'],
+        ...savedBharatBills.map(bill => [
+          format(parseISO(bill.bill_date), 'dd MMM yyyy'),
+          bill.bill_time.slice(0, 5),
+          bill.account_no,
+          bill.card_id,
+          Number(bill.amount),
+        ]),
+        [],
+        ['', '', '', 'Grand Total', savedBharatBills.reduce((sum, b) => sum + Number(b.amount), 0)],
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(bharatData);
+      ws['!cols'] = [{ wch: 15 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'Bharat Fleet');
+    }
+
+    XLSX.writeFile(wb, `Bill_Entry_Export_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success("Bills exported to Excel");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
@@ -465,6 +515,10 @@ const FiservBills = () => {
               </div>
             </div>
             <div className="flex gap-3">
+              <Button variant="outline" onClick={handleExportBills} disabled={savedFiservBills.length === 0 && savedBharatBills.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
               <Button variant="outline" onClick={handleGoToShortcut}>
                 <LayoutGrid className="mr-2 h-4 w-4" />
                 Shortcut

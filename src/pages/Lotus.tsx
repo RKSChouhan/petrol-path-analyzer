@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, LogOut, Download, Trash2 } from "lucide-react";
+import { LayoutGrid, LogOut, Download, Trash2, Calculator as CalcIcon } from "lucide-react";
+import Calculator from "@/components/Calculator";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useCompany } from "@/contexts/CompanyContext";
@@ -37,6 +38,8 @@ const Lotus = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [entries, setEntries] = useState<DailyEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calcPosition, setCalcPosition] = useState({ x: 20, y: 100 });
 
   const companyName = company?.name || "Sales Tracker";
   const companyLogo = company?.logo_url || logo;
@@ -292,6 +295,9 @@ const Lotus = () => {
               </div>
             </div>
             <div className="flex gap-3">
+              <Button variant="outline" size="icon" onClick={() => setShowCalculator(!showCalculator)}>
+                <CalcIcon className="h-4 w-4" />
+              </Button>
               <Button variant="outline" onClick={handleExportAll}>
                 <Download className="mr-2 h-4 w-4" />
                 Export All
@@ -435,6 +441,13 @@ const Lotus = () => {
           </Card>
         )}
       </main>
+
+      <Calculator
+        isOpen={showCalculator}
+        onClose={() => setShowCalculator(false)}
+        position={calcPosition}
+        onPositionChange={setCalcPosition}
+      />
     </div>
   );
 };
