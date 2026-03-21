@@ -36,8 +36,8 @@ const SalesCharts = ({ salesData, onRefresh, userRole }: SalesChartsProps) => {
   const [sortOrder, setSortOrder] = useState<'new-to-old' | 'old-to-new' | 'edited'>('new-to-old');
   const [pendingDelete, setPendingDelete] = useState<{ date: string; entryNumber: number } | null>(null);
   const [countdown, setCountdown] = useState(10);
-  const deleteTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toastIdRef = useRef<string | null>(null);
   
   // Cleanup timers on unmount
