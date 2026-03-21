@@ -10,6 +10,7 @@ import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import DateRangeExportControls from "@/components/DateRangeExportControls";
 
 interface AttendanceRecord {
   id: string;
@@ -42,6 +43,8 @@ const Attendance = () => {
   const [loading, setLoading] = useState(true);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [exportStartDate, setExportStartDate] = useState<Date | undefined>();
+  const [exportEndDate, setExportEndDate] = useState<Date | undefined>();
 
   const companyName = company?.name || "Sales Tracker";
   const companyLogo = company?.logo_url || logo;
@@ -272,6 +275,33 @@ const Attendance = () => {
   const handleExportAttendance = () => {
     if (groupedData.length === 0) return;
 
+    if (exportStartDate && exportEndDate && exportStartDate > exportEndDate) {
+      toast.error("From date must be before To date");
+      return;
+    }
+
+    const filteredRows = groupedData.flatMap((monthGroup) =>
+      monthGroup.dates.flatMap((dateGroup) => {
+        const currentDate = parseISO(dateGroup.date);
+        const withinRange =
+          (!exportStartDate || currentDate >= exportStartDate) &&
+          (!exportEndDate || currentDate <= exportEndDate);
+
+        if (!withinRange) return [];
+
+        return dateGroup.records.map((record) => ({
+          date: dateGroup.date,
+          dayName: dateGroup.dayName,
+          record,
+        }));
+      })
+    );
+
+    if (filteredRows.length === 0) {
+      toast.error("No attendance records found in the selected range");
+      return;
+    }
+
     const wb = XLSX.utils.book_new();
     const sheetData: any[][] = [
       ['Attendance Records Export'],
@@ -279,19 +309,15 @@ const Attendance = () => {
       ['Date', 'Day', 'Employee Name', 'Shift', 'Job', 'Entry Number'],
     ];
 
-    groupedData.forEach(monthGroup => {
-      monthGroup.dates.forEach(dateGroup => {
-        dateGroup.records.forEach(record => {
-          sheetData.push([
-            format(parseISO(dateGroup.date), 'dd MMM yyyy'),
-            dateGroup.dayName,
-            record.employee_name,
-            record.shift || 'Full',
-            record.job || 'Pump boy',
-            record.entry_number || '-',
-          ]);
-        });
-      });
+    filteredRows.forEach(({ date, dayName, record }) => {
+      sheetData.push([
+        format(parseISO(date), 'dd MMM yyyy'),
+        dayName,
+        record.employee_name,
+        record.shift || 'Full',
+        record.job || 'Pump boy',
+        record.entry_number || '-',
+      ]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
@@ -339,6 +365,16 @@ const Attendance = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <DateRangeExportControls
+            startDate={exportStartDate}
+            endDate={exportEndDate}
+            onStartDateChange={setExportStartDate}
+            onEndDateChange={setExportEndDate}
+            onExport={handleExportAttendance}
+            disabled={groupedData.length === 0}
+          />
+        </div>
         <Card className="shadow-[var(--shadow-card)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

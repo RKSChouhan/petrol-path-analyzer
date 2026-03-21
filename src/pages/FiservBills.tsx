@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import BillOCRUpload from "@/components/BillOCRUpload";
+import DateRangeExportControls from "@/components/DateRangeExportControls";
 
 interface FiservBillEntry {
   id?: string;
@@ -90,6 +91,8 @@ const FiservBills = () => {
   const [expandedFiservDates, setExpandedFiservDates] = useState<Set<string>>(new Set());
   const [expandedBharatMonths, setExpandedBharatMonths] = useState<Set<string>>(new Set());
   const [expandedBharatDates, setExpandedBharatDates] = useState<Set<string>>(new Set());
+  const [exportStartDate, setExportStartDate] = useState<Date | undefined>();
+  const [exportEndDate, setExportEndDate] = useState<Date | undefined>();
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -454,15 +457,36 @@ const FiservBills = () => {
   };
 
   const handleExportBills = () => {
+    if (exportStartDate && exportEndDate && exportStartDate > exportEndDate) {
+      toast.error("From date must be before To date");
+      return;
+    }
+
+    const isWithinRange = (billDate: string) => {
+      const currentDate = parseISO(billDate);
+      return (
+        (!exportStartDate || currentDate >= exportStartDate) &&
+        (!exportEndDate || currentDate <= exportEndDate)
+      );
+    };
+
+    const filteredFiservBills = savedFiservBills.filter((bill) => isWithinRange(bill.bill_date));
+    const filteredBharatBills = savedBharatBills.filter((bill) => isWithinRange(bill.bill_date));
+
+    if (filteredFiservBills.length === 0 && filteredBharatBills.length === 0) {
+      toast.error("No bills found in the selected range");
+      return;
+    }
+
     const wb = XLSX.utils.book_new();
 
     // Fiserv Bills sheet
-    if (savedFiservBills.length > 0) {
+    if (filteredFiservBills.length > 0) {
       const fiservData = [
         ['Fiserv Bills Export'],
         [],
         ['Date', 'Time', 'Invoice Number', 'Card Last 4', 'Amount'],
-        ...savedFiservBills.map(bill => [
+        ...filteredFiservBills.map(bill => [
           format(parseISO(bill.bill_date), 'dd MMM yyyy'),
           bill.bill_time.slice(0, 5),
           bill.invoice_number,
@@ -470,7 +494,7 @@ const FiservBills = () => {
           Number(bill.amount),
         ]),
         [],
-        ['', '', '', 'Grand Total', savedFiservBills.reduce((sum, b) => sum + Number(b.amount), 0)],
+        ['', '', '', 'Grand Total', filteredFiservBills.reduce((sum, b) => sum + Number(b.amount), 0)],
       ];
       const ws = XLSX.utils.aoa_to_sheet(fiservData);
       ws['!cols'] = [{ wch: 15 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 15 }];
@@ -478,12 +502,12 @@ const FiservBills = () => {
     }
 
     // Bharat Fleet Bills sheet
-    if (savedBharatBills.length > 0) {
+    if (filteredBharatBills.length > 0) {
       const bharatData = [
         ['Bharat Fleet Card Bills Export'],
         [],
         ['Date', 'Time', 'Account No', 'Card ID', 'Amount'],
-        ...savedBharatBills.map(bill => [
+        ...filteredBharatBills.map(bill => [
           format(parseISO(bill.bill_date), 'dd MMM yyyy'),
           bill.bill_time.slice(0, 5),
           bill.account_no,
@@ -491,7 +515,7 @@ const FiservBills = () => {
           Number(bill.amount),
         ]),
         [],
-        ['', '', '', 'Grand Total', savedBharatBills.reduce((sum, b) => sum + Number(b.amount), 0)],
+        ['', '', '', 'Grand Total', filteredBharatBills.reduce((sum, b) => sum + Number(b.amount), 0)],
       ];
       const ws = XLSX.utils.aoa_to_sheet(bharatData);
       ws['!cols'] = [{ wch: 15 }, { wch: 8 }, { wch: 18 }, { wch: 12 }, { wch: 15 }];
@@ -533,6 +557,15 @@ const FiservBills = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-6">
+        <DateRangeExportControls
+          startDate={exportStartDate}
+          endDate={exportEndDate}
+          onStartDateChange={setExportStartDate}
+          onEndDateChange={setExportEndDate}
+          onExport={handleExportBills}
+          disabled={savedFiservBills.length === 0 && savedBharatBills.length === 0}
+        />
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="fiserv" className="flex items-center gap-2">
