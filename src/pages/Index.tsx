@@ -1080,7 +1080,14 @@ const Index = () => {
             {/* First row: Logo, Entry buttons, Date, Stat, Logout */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
+                <button
+                  type="button"
+                  onClick={() => navigate("/developer")}
+                  className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label="Open developer page"
+                >
+                  <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
+                </button>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">Daily tree</h1>
                   <p className="text-sm text-muted-foreground">Digital Sales Tracking System</p>

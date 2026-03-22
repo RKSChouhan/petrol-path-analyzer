@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { Shield, Building2, RefreshCcw, Trash2, Plus, KeyRound } from "lucide-react";
+import { Shield, Building2, RefreshCcw, Trash2, Plus, KeyRound, ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const companySchema = z.object({
   companyName: z.string().trim().min(2, "Company name is required").max(120),
@@ -70,6 +71,7 @@ const defaultFormValues: CompanyForm = {
 };
 
 const DeveloperAdmin = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [password, setPassword] = useState("");
   const [unlocked, setUnlocked] = useState(false);
@@ -201,6 +203,10 @@ const DeveloperAdmin = () => {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="flex flex-col gap-3 rounded-2xl border bg-card p-6 shadow-[var(--shadow-card)] md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="w-fit">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
             <div className="inline-flex w-fit items-center gap-2 rounded-full border bg-secondary px-3 py-1 text-sm text-secondary-foreground">
               <Shield className="h-4 w-4" />
               Developer Console
