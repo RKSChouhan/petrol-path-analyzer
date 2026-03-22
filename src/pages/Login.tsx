@@ -29,6 +29,7 @@ const Login = () => {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [rolePassword, setRolePassword] = useState("");
   const [showForgetDialog, setShowForgetDialog] = useState(false);
+  const [showDeveloperDialog, setShowDeveloperDialog] = useState(false);
   
   // Track all visitors on the website
   const onlineUsers = usePresence(null, 'login');
@@ -144,6 +145,11 @@ const Login = () => {
     sessionStorage.removeItem("userRole");
   };
 
+  const handleDeveloperAccess = () => {
+    setShowDeveloperDialog(false);
+    navigate("/developer");
+  };
+
   // Show role selection after authentication (Step 2)
   if (isAuthenticated && authUser) {
     return (
@@ -252,7 +258,14 @@ const Login = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <div className="flex justify-center mb-3">
-            <img src={companyLogo} alt={companyName} className="h-24 sm:h-28 w-auto object-contain" />
+            <button
+              type="button"
+              onClick={() => setShowDeveloperDialog(true)}
+              className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Open developer access confirmation"
+            >
+              <img src={companyLogo} alt={companyName} className="h-24 sm:h-28 w-auto object-contain" />
+            </button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{companyName}</h1>
           <p className="text-sm text-muted-foreground mt-1">Digital Sales Tracking System</p>
@@ -342,6 +355,25 @@ const Login = () => {
             <p className="text-lg font-medium text-foreground">{contactPhone || "Contact the owner"}</p>
             <Button onClick={() => setShowForgetDialog(false)} className="w-full h-12">
               Back
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeveloperDialog} onOpenChange={setShowDeveloperDialog}>
+        <DialogContent className="w-[90vw] max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Open developer page?</DialogTitle>
+            <DialogDescription>
+              This shortcut is for developer access only. Continue only if you meant to open the developer page.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" onClick={() => setShowDeveloperDialog(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleDeveloperAccess}>
+              Continue
             </Button>
           </div>
         </DialogContent>
