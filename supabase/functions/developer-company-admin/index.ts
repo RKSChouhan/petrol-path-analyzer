@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const baseSchema = z.object({
   password: z.string().min(1),
-  action: z.enum(["listCompanies", "createCompany", "deleteCompany"]),
+  action: z.enum(["listCompanies", "createCompany", "deleteCompany", "updateCompany"]),
 });
 
 const createCompanySchema = baseSchema.extend({
