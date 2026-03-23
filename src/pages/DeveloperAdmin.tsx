@@ -1,30 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { Shield, Building2, RefreshCcw, Trash2, Plus, KeyRound, ArrowLeft } from "lucide-react";
+import { Shield, Building2, RefreshCcw, Trash2, Plus, KeyRound, ArrowLeft, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -70,6 +61,17 @@ const defaultFormValues: CompanyForm = {
   pumpCountDiesel: 2,
 };
 
+type EditForm = {
+  companyName: string;
+  contactPhone: string;
+  petrolPrice: number;
+  dieselPrice: number;
+  pumpCountPetrol: number;
+  pumpCountDiesel: number;
+  proprietorPassword: string;
+  supervisorPassword: string;
+};
+
 const DeveloperAdmin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -79,6 +81,8 @@ const DeveloperAdmin = () => {
   const [submitting, setSubmitting] = useState(false);
   const [companies, setCompanies] = useState<CompanyRecord[]>([]);
   const [form, setForm] = useState<CompanyForm>(defaultFormValues);
+  const [editingCompany, setEditingCompany] = useState<CompanyRecord | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
 
   const companyCount = useMemo(() => companies.length, [companies]);
 
@@ -198,7 +202,57 @@ const DeveloperAdmin = () => {
     }
   };
 
+  const openEditDialog = (company: CompanyRecord) => {
+    setEditingCompany(company);
+    setEditForm({
+      companyName: company.name,
+      contactPhone: company.contact_phone || "",
+      petrolPrice: company.petrol_price,
+      dieselPrice: company.diesel_price,
+      pumpCountPetrol: company.pump_count_petrol,
+      pumpCountDiesel: company.pump_count_diesel,
+      proprietorPassword: "",
+      supervisorPassword: "",
+    });
+  };
+
+  const handleUpdateCompany = async () => {
+    if (!editingCompany || !editForm) return;
+    setSubmitting(true);
+    try {
+      const payload: Record<string, unknown> = { companyId: editingCompany.id };
+      if (editForm.companyName !== editingCompany.name) payload.companyName = editForm.companyName;
+      if (editForm.contactPhone !== (editingCompany.contact_phone || "")) payload.contactPhone = editForm.contactPhone;
+      if (editForm.petrolPrice !== editingCompany.petrol_price) payload.petrolPrice = editForm.petrolPrice;
+      if (editForm.dieselPrice !== editingCompany.diesel_price) payload.dieselPrice = editForm.dieselPrice;
+      if (editForm.pumpCountPetrol !== editingCompany.pump_count_petrol) payload.pumpCountPetrol = editForm.pumpCountPetrol;
+      if (editForm.pumpCountDiesel !== editingCompany.pump_count_diesel) payload.pumpCountDiesel = editForm.pumpCountDiesel;
+      if (editForm.proprietorPassword) payload.proprietorPassword = editForm.proprietorPassword;
+      if (editForm.supervisorPassword) payload.supervisorPassword = editForm.supervisorPassword;
+
+      if (Object.keys(payload).length <= 1) {
+        toast({ title: "No changes", description: "Nothing was modified." });
+        return;
+      }
+
+      await invokeAdmin<{ message: string }>("updateCompany", payload);
+      toast({ title: "Company updated", description: "Changes saved successfully." });
+      setEditingCompany(null);
+      setEditForm(null);
+      await loadCompanies();
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Unable to update company.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
+    <>
     <main className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="flex flex-col gap-3 rounded-2xl border bg-card p-6 shadow-[var(--shadow-card)] md:flex-row md:items-end md:justify-between">
@@ -374,27 +428,32 @@ const DeveloperAdmin = () => {
                             P {company.petrol_price} / D {company.diesel_price}
                           </TableCell>
                           <TableCell className="text-right">
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon" disabled={submitting || loading}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete {company.name}?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This removes company data, daily records, bills, employees, and company-user links. Auth accounts are kept.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteCompany(company.id)}>
-                                    Delete company
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="outline" size="icon" onClick={() => openEditDialog(company)} disabled={submitting || loading}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="icon" disabled={submitting || loading}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete {company.name}?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This removes company data, daily records, bills, employees, and company-user links. Auth accounts are kept.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteCompany(company.id)}>
+                                      Delete company
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -407,6 +466,62 @@ const DeveloperAdmin = () => {
         )}
       </div>
     </main>
+
+    <Dialog open={!!editingCompany} onOpenChange={(open) => { if (!open) { setEditingCompany(null); setEditForm(null); } }}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit {editingCompany?.name}</DialogTitle>
+          <DialogDescription>Update company settings. Leave password fields blank to keep current passwords.</DialogDescription>
+        </DialogHeader>
+        {editForm && (
+          <div className="grid gap-4 py-2">
+            <div className="space-y-2">
+              <Label>Company name</Label>
+              <Input value={editForm.companyName} onChange={(e) => setEditForm({ ...editForm, companyName: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Contact phone</Label>
+              <Input value={editForm.contactPhone} onChange={(e) => setEditForm({ ...editForm, contactPhone: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Petrol price</Label>
+                <Input type="number" min="0" step="0.01" value={editForm.petrolPrice} onChange={(e) => setEditForm({ ...editForm, petrolPrice: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Diesel price</Label>
+                <Input type="number" min="0" step="0.01" value={editForm.dieselPrice} onChange={(e) => setEditForm({ ...editForm, dieselPrice: Number(e.target.value) })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Petrol pumps</Label>
+                <Input type="number" min="1" step="1" value={editForm.pumpCountPetrol} onChange={(e) => setEditForm({ ...editForm, pumpCountPetrol: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Diesel pumps</Label>
+                <Input type="number" min="1" step="1" value={editForm.pumpCountDiesel} onChange={(e) => setEditForm({ ...editForm, pumpCountDiesel: Number(e.target.value) })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Proprietor password</Label>
+                <Input placeholder="Leave blank to keep" value={editForm.proprietorPassword} onChange={(e) => setEditForm({ ...editForm, proprietorPassword: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Supervisor password</Label>
+                <Input placeholder="Leave blank to keep" value={editForm.supervisorPassword} onChange={(e) => setEditForm({ ...editForm, supervisorPassword: e.target.value })} />
+              </div>
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setEditingCompany(null); setEditForm(null); }}>Cancel</Button>
+          <Button onClick={handleUpdateCompany} disabled={submitting}>{submitting ? "Saving..." : "Save changes"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
