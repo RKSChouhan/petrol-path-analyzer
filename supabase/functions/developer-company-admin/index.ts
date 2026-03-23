@@ -135,10 +135,10 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
     await admin.auth.admin.deleteUser(ownerId);
   };
 
-  const { error: profileError } = await admin.from("profiles").insert({
+  const { error: profileError } = await admin.from("profiles").upsert({
     user_id: ownerId,
     email: payload.ownerEmail,
-  });
+  }, { onConflict: "user_id" });
 
   if (profileError) {
     await cleanup();
