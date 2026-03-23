@@ -202,7 +202,55 @@ const DeveloperAdmin = () => {
     }
   };
 
-  return (
+  const openEditDialog = (company: CompanyRecord) => {
+    setEditingCompany(company);
+    setEditForm({
+      companyName: company.name,
+      contactPhone: company.contact_phone || "",
+      petrolPrice: company.petrol_price,
+      dieselPrice: company.diesel_price,
+      pumpCountPetrol: company.pump_count_petrol,
+      pumpCountDiesel: company.pump_count_diesel,
+      proprietorPassword: "",
+      supervisorPassword: "",
+    });
+  };
+
+  const handleUpdateCompany = async () => {
+    if (!editingCompany || !editForm) return;
+    setSubmitting(true);
+    try {
+      const payload: Record<string, unknown> = { companyId: editingCompany.id };
+      if (editForm.companyName !== editingCompany.name) payload.companyName = editForm.companyName;
+      if (editForm.contactPhone !== (editingCompany.contact_phone || "")) payload.contactPhone = editForm.contactPhone;
+      if (editForm.petrolPrice !== editingCompany.petrol_price) payload.petrolPrice = editForm.petrolPrice;
+      if (editForm.dieselPrice !== editingCompany.diesel_price) payload.dieselPrice = editForm.dieselPrice;
+      if (editForm.pumpCountPetrol !== editingCompany.pump_count_petrol) payload.pumpCountPetrol = editForm.pumpCountPetrol;
+      if (editForm.pumpCountDiesel !== editingCompany.pump_count_diesel) payload.pumpCountDiesel = editForm.pumpCountDiesel;
+      if (editForm.proprietorPassword) payload.proprietorPassword = editForm.proprietorPassword;
+      if (editForm.supervisorPassword) payload.supervisorPassword = editForm.supervisorPassword;
+
+      if (Object.keys(payload).length <= 1) {
+        toast({ title: "No changes", description: "Nothing was modified." });
+        return;
+      }
+
+      await invokeAdmin<{ message: string }>("updateCompany", payload);
+      toast({ title: "Company updated", description: "Changes saved successfully." });
+      setEditingCompany(null);
+      setEditForm(null);
+      await loadCompanies();
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Unable to update company.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
     <main className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="flex flex-col gap-3 rounded-2xl border bg-card p-6 shadow-[var(--shadow-card)] md:flex-row md:items-end md:justify-between">
