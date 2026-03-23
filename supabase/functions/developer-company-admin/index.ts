@@ -30,6 +30,19 @@ const deleteCompanySchema = baseSchema.extend({
   companyId: z.string().uuid(),
 });
 
+const updateCompanySchema = baseSchema.extend({
+  action: z.literal("updateCompany"),
+  companyId: z.string().uuid(),
+  petrolPrice: z.coerce.number().min(0).max(10000).optional(),
+  dieselPrice: z.coerce.number().min(0).max(10000).optional(),
+  pumpCountPetrol: z.coerce.number().int().min(1).max(20).optional(),
+  pumpCountDiesel: z.coerce.number().int().min(1).max(20).optional(),
+  proprietorPassword: z.string().trim().min(1).max(100).optional(),
+  supervisorPassword: z.string().trim().min(1).max(100).optional(),
+  contactPhone: z.string().trim().max(40).optional(),
+  companyName: z.string().trim().min(2).max(120).optional(),
+});
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
