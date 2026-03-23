@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { z } from "https://esm.sh/zod@3.25.76";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { z } from "npm:zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -135,10 +135,10 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
     await admin.auth.admin.deleteUser(ownerId);
   };
 
-  const { error: profileError } = await admin.from("profiles").insert({
+  const { error: profileError } = await admin.from("profiles").upsert({
     user_id: ownerId,
     email: payload.ownerEmail,
-  });
+  }, { onConflict: "user_id" });
 
   if (profileError) {
     await cleanup();
