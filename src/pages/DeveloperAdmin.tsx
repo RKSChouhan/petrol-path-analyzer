@@ -61,6 +61,17 @@ const defaultFormValues: CompanyForm = {
   pumpCountDiesel: 2,
 };
 
+type EditForm = {
+  companyName: string;
+  contactPhone: string;
+  petrolPrice: number;
+  dieselPrice: number;
+  pumpCountPetrol: number;
+  pumpCountDiesel: number;
+  proprietorPassword: string;
+  supervisorPassword: string;
+};
+
 const DeveloperAdmin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -70,6 +81,8 @@ const DeveloperAdmin = () => {
   const [submitting, setSubmitting] = useState(false);
   const [companies, setCompanies] = useState<CompanyRecord[]>([]);
   const [form, setForm] = useState<CompanyForm>(defaultFormValues);
+  const [editingCompany, setEditingCompany] = useState<CompanyRecord | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
 
   const companyCount = useMemo(() => companies.length, [companies]);
 
