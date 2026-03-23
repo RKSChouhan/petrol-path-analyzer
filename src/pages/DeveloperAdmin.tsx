@@ -432,26 +432,27 @@ const DeveloperAdmin = () => {
                               <Button variant="outline" size="icon" onClick={() => openEditDialog(company)} disabled={submitting || loading}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon" disabled={submitting || loading}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete {company.name}?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This removes company data, daily records, bills, employees, and company-user links. Auth accounts are kept.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteCompany(company.id)}>
-                                    Delete company
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="icon" disabled={submitting || loading}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete {company.name}?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This removes company data, daily records, bills, employees, and company-user links. Auth accounts are kept.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteCompany(company.id)}>
+                                      Delete company
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             </div>
                           </TableCell>
                         </TableRow>
