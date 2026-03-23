@@ -259,6 +259,31 @@ async function deleteCompany(companyId: string) {
   return "Company records removed successfully. Linked auth accounts were kept.";
 }
 
+async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
+  const updates: Record<string, unknown> = {};
+  if (payload.petrolPrice !== undefined) updates.petrol_price = payload.petrolPrice;
+  if (payload.dieselPrice !== undefined) updates.diesel_price = payload.dieselPrice;
+  if (payload.pumpCountPetrol !== undefined) updates.pump_count_petrol = payload.pumpCountPetrol;
+  if (payload.pumpCountDiesel !== undefined) updates.pump_count_diesel = payload.pumpCountDiesel;
+  if (payload.proprietorPassword !== undefined) updates.proprietor_password = payload.proprietorPassword;
+  if (payload.supervisorPassword !== undefined) updates.supervisor_password = payload.supervisorPassword;
+  if (payload.contactPhone !== undefined) updates.contact_phone = payload.contactPhone.trim() || null;
+  if (payload.companyName !== undefined) updates.name = payload.companyName;
+
+  if (Object.keys(updates).length === 0) {
+    throw new Error("No fields to update");
+  }
+
+  const { error } = await admin
+    .from("companies")
+    .update(updates)
+    .eq("id", payload.companyId);
+
+  if (error) throw new Error(error.message);
+
+  return "Company updated successfully";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -290,6 +315,16 @@ Deno.serve(async (req) => {
 
       const company = await createCompany(parsedCreate.data);
       return json({ company }, 201);
+    }
+
+    if (parsedBase.data.action === "updateCompany") {
+      const parsedUpdate = updateCompanySchema.safeParse(body);
+      if (!parsedUpdate.success) {
+        return json({ error: parsedUpdate.error.issues[0]?.message ?? "Invalid update details" }, 400);
+      }
+
+      const message = await updateCompany(parsedUpdate.data);
+      return json({ message });
     }
 
     const parsedDelete = deleteCompanySchema.safeParse(body);
