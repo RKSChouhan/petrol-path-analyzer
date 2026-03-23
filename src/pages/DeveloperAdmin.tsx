@@ -428,7 +428,10 @@ const DeveloperAdmin = () => {
                             P {company.petrol_price} / D {company.diesel_price}
                           </TableCell>
                           <TableCell className="text-right">
-                            <AlertDialog>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="outline" size="icon" onClick={() => openEditDialog(company)} disabled={submitting || loading}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
                               <AlertDialogTrigger asChild>
                                 <Button variant="destructive" size="icon" disabled={submitting || loading}>
                                   <Trash2 className="h-4 w-4" />
