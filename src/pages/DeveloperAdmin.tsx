@@ -461,6 +461,62 @@ const DeveloperAdmin = () => {
         )}
       </div>
     </main>
+
+    <Dialog open={!!editingCompany} onOpenChange={(open) => { if (!open) { setEditingCompany(null); setEditForm(null); } }}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit {editingCompany?.name}</DialogTitle>
+          <DialogDescription>Update company settings. Leave password fields blank to keep current passwords.</DialogDescription>
+        </DialogHeader>
+        {editForm && (
+          <div className="grid gap-4 py-2">
+            <div className="space-y-2">
+              <Label>Company name</Label>
+              <Input value={editForm.companyName} onChange={(e) => setEditForm({ ...editForm, companyName: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Contact phone</Label>
+              <Input value={editForm.contactPhone} onChange={(e) => setEditForm({ ...editForm, contactPhone: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Petrol price</Label>
+                <Input type="number" min="0" step="0.01" value={editForm.petrolPrice} onChange={(e) => setEditForm({ ...editForm, petrolPrice: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Diesel price</Label>
+                <Input type="number" min="0" step="0.01" value={editForm.dieselPrice} onChange={(e) => setEditForm({ ...editForm, dieselPrice: Number(e.target.value) })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Petrol pumps</Label>
+                <Input type="number" min="1" step="1" value={editForm.pumpCountPetrol} onChange={(e) => setEditForm({ ...editForm, pumpCountPetrol: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Diesel pumps</Label>
+                <Input type="number" min="1" step="1" value={editForm.pumpCountDiesel} onChange={(e) => setEditForm({ ...editForm, pumpCountDiesel: Number(e.target.value) })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Proprietor password</Label>
+                <Input placeholder="Leave blank to keep" value={editForm.proprietorPassword} onChange={(e) => setEditForm({ ...editForm, proprietorPassword: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Supervisor password</Label>
+                <Input placeholder="Leave blank to keep" value={editForm.supervisorPassword} onChange={(e) => setEditForm({ ...editForm, supervisorPassword: e.target.value })} />
+              </div>
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setEditingCompany(null); setEditForm(null); }}>Cancel</Button>
+          <Button onClick={handleUpdateCompany} disabled={submitting}>{submitting ? "Saving..." : "Save changes"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
