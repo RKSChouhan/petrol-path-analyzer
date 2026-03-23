@@ -251,6 +251,8 @@ const DeveloperAdmin = () => {
     }
   };
 
+  return (
+    <>
     <main className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="flex flex-col gap-3 rounded-2xl border bg-card p-6 shadow-[var(--shadow-card)] md:flex-row md:items-end md:justify-between">
