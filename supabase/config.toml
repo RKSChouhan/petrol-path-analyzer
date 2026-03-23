@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.ocr-storage]
 verify_jwt = false
+
+[functions.developer-company-admin]
+verify_jwt = false
