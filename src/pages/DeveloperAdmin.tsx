@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { Shield, Building2, RefreshCcw, Trash2, Plus, KeyRound, ArrowLeft } from "lucide-react";
+import { Shield, Building2, RefreshCcw, Trash2, Plus, KeyRound, ArrowLeft, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
