@@ -452,6 +452,7 @@ const DeveloperAdmin = () => {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
