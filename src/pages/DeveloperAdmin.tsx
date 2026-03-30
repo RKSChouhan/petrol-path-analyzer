@@ -112,7 +112,19 @@ const DeveloperAdmin = () => {
     });
 
     if (error) {
-      throw new Error(error.message || "Request failed");
+      const fallbackMessage = error.message || "Request failed";
+      const responseContext = (error as { context?: Response }).context;
+
+      if (responseContext instanceof Response) {
+        try {
+          const body = await responseContext.clone().json() as { error?: string; message?: string };
+          throw new Error(body.error || body.message || fallbackMessage);
+        } catch {
+          throw new Error(fallbackMessage);
+        }
+      }
+
+      throw new Error(fallbackMessage);
     }
 
     return data as T;
