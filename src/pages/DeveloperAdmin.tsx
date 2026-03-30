@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { Shield, Building2, RefreshCcw, Trash2, Plus, KeyRound, ArrowLeft, Pencil } from "lucide-react";
+import { Shield, Building2, RefreshCcw, Trash2, Plus, KeyRound, LogIn, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +83,20 @@ const DeveloperAdmin = () => {
   const [form, setForm] = useState<CompanyForm>(defaultFormValues);
   const [editingCompany, setEditingCompany] = useState<CompanyRecord | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
+
+  // On full page refresh (not SPA navigation), redirect to login
+  useEffect(() => {
+    const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    if (navEntries.length > 0 && navEntries[0].type === "reload") {
+      navigate("/login", { replace: true });
+      return;
+    }
+    // Also redirect if user directly navigates to /developer via URL
+    if (navEntries.length > 0 && navEntries[0].type === "navigate") {
+      navigate("/login", { replace: true });
+      return;
+    }
+  }, [navigate]);
 
   const companyCount = useMemo(() => companies.length, [companies]);
 
@@ -257,9 +271,9 @@ const DeveloperAdmin = () => {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="flex flex-col gap-3 rounded-2xl border bg-card p-6 shadow-[var(--shadow-card)] md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="w-fit">
-              <ArrowLeft className="h-4 w-4" />
-              Back
+            <Button variant="outline" size="sm" onClick={() => navigate("/login")} className="w-fit">
+              <LogIn className="h-4 w-4" />
+              Login Page
             </Button>
             <div className="inline-flex w-fit items-center gap-2 rounded-full border bg-secondary px-3 py-1 text-sm text-secondary-foreground">
               <Shield className="h-4 w-4" />
