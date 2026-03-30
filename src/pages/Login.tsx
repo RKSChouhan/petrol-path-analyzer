@@ -147,6 +147,7 @@ const Login = () => {
 
   const handleDeveloperAccess = () => {
     setShowDeveloperDialog(false);
+    sessionStorage.setItem("developerAccess", "true");
     navigate("/developer");
   };
 

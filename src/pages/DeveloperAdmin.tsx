@@ -84,15 +84,17 @@ const DeveloperAdmin = () => {
   const [editingCompany, setEditingCompany] = useState<CompanyRecord | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
 
-  // On full page refresh (not SPA navigation), redirect to login
+  // Only allow access if navigated from login page via the logo tap flow
   useEffect(() => {
-    const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
-    if (navEntries.length > 0 && navEntries[0].type === "reload") {
+    const hasAccess = sessionStorage.getItem("developerAccess");
+    if (!hasAccess) {
       navigate("/login", { replace: true });
       return;
     }
-    // Also redirect if user directly navigates to /developer via URL
-    if (navEntries.length > 0 && navEntries[0].type === "navigate") {
+    // Clear the flag on refresh (reload clears it naturally since we check on mount)
+    const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    if (navEntries.length > 0 && navEntries[0].type === "reload") {
+      sessionStorage.removeItem("developerAccess");
       navigate("/login", { replace: true });
       return;
     }
