@@ -49,6 +49,15 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+class AppError extends Error {
+  status: number;
+
+  constructor(message: string, status = 400) {
+    super(message);
+    this.status = status;
+  }
+}
+
 const admin = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -96,6 +105,19 @@ async function listCompanies() {
 }
 
 async function createCompany(payload: z.infer<typeof createCompanySchema>) {
+  const normalizedOwnerEmail = payload.ownerEmail.trim().toLowerCase();
+
+  const { data: existingProfile, error: existingProfileError } = await admin
+    .from("profiles")
+    .select("user_id")
+    .ilike("email", normalizedOwnerEmail)
+    .maybeSingle();
+
+  if (existingProfileError) throw new Error(existingProfileError.message);
+  if (existingProfile) {
+    throw new AppError("Owner email already exists. Use a different owner email.", 409);
+  }
+
   const { data: company, error: companyError } = await admin
     .from("companies")
     .insert({
@@ -114,14 +136,17 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
   if (companyError || !company) throw new Error(companyError?.message || "Unable to create company");
 
   const { data: ownerResult, error: ownerError } = await admin.auth.admin.createUser({
-    email: payload.ownerEmail,
+    email: normalizedOwnerEmail,
     password: payload.ownerPassword,
     email_confirm: true,
   });
 
   if (ownerError || !ownerResult.user) {
     await admin.from("companies").delete().eq("id", company.id);
-    throw new Error(ownerError?.message || "Unable to create owner account");
+    const ownerMessage = ownerError?.message?.toLowerCase().includes("already been registered")
+      ? "Owner email already exists. Use a different owner email."
+      : ownerError?.message || "Unable to create owner account";
+    throw new AppError(ownerMessage, ownerError?.status ?? 400);
   }
 
   const ownerId = ownerResult.user.id;
@@ -137,7 +162,7 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
 
   const { error: profileError } = await admin.from("profiles").upsert({
     user_id: ownerId,
-    email: payload.ownerEmail,
+    email: normalizedOwnerEmail,
   }, { onConflict: "user_id" });
 
   if (profileError) {
@@ -180,7 +205,7 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
   return {
     ...company,
     linked_users: 1,
-    primary_email: payload.ownerEmail,
+    primary_email: normalizedOwnerEmail,
   };
 }
 
@@ -336,6 +361,7 @@ Deno.serve(async (req) => {
     return json({ message });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
-    return json({ error: message }, 500);
+    const status = error instanceof AppError ? error.status : 500;
+    return json({ error: message }, status);
   }
 });
