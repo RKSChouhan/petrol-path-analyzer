@@ -84,6 +84,20 @@ const DeveloperAdmin = () => {
   const [editingCompany, setEditingCompany] = useState<CompanyRecord | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
 
+  // On full page refresh (not SPA navigation), redirect to login
+  useEffect(() => {
+    const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    if (navEntries.length > 0 && navEntries[0].type === "reload") {
+      navigate("/login", { replace: true });
+      return;
+    }
+    // Also redirect if user directly navigates to /developer via URL
+    if (navEntries.length > 0 && navEntries[0].type === "navigate") {
+      navigate("/login", { replace: true });
+      return;
+    }
+  }, [navigate]);
+
   const companyCount = useMemo(() => companies.length, [companies]);
 
   const invokeAdmin = async <T,>(action: string, payload?: Record<string, unknown>): Promise<T> => {
