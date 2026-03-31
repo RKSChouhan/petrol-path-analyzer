@@ -242,6 +242,7 @@ const DeveloperAdmin = () => {
       pumpCountDiesel: company.pump_count_diesel,
       proprietorPassword: "",
       supervisorPassword: "",
+      ownerPassword: "",
     });
   };
 
