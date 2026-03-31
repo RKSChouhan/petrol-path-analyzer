@@ -544,6 +544,10 @@ const DeveloperAdmin = () => {
                 <Input placeholder="Leave blank to keep" value={editForm.supervisorPassword} onChange={(e) => setEditForm({ ...editForm, supervisorPassword: e.target.value })} />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label>Owner login password</Label>
+              <Input type="password" placeholder="Leave blank to keep" value={editForm.ownerPassword} onChange={(e) => setEditForm({ ...editForm, ownerPassword: e.target.value })} />
+            </div>
           </div>
         )}
         <DialogFooter>
