@@ -70,6 +70,7 @@ type EditForm = {
   pumpCountDiesel: number;
   proprietorPassword: string;
   supervisorPassword: string;
+  ownerPassword: string;
 };
 
 const DeveloperAdmin = () => {
@@ -241,6 +242,7 @@ const DeveloperAdmin = () => {
       pumpCountDiesel: company.pump_count_diesel,
       proprietorPassword: "",
       supervisorPassword: "",
+      ownerPassword: "",
     });
   };
 
@@ -257,6 +259,7 @@ const DeveloperAdmin = () => {
       if (editForm.pumpCountDiesel !== editingCompany.pump_count_diesel) payload.pumpCountDiesel = editForm.pumpCountDiesel;
       if (editForm.proprietorPassword) payload.proprietorPassword = editForm.proprietorPassword;
       if (editForm.supervisorPassword) payload.supervisorPassword = editForm.supervisorPassword;
+      if (editForm.ownerPassword) payload.ownerPassword = editForm.ownerPassword;
 
       if (Object.keys(payload).length <= 1) {
         toast({ title: "No changes", description: "Nothing was modified." });
@@ -540,6 +543,10 @@ const DeveloperAdmin = () => {
                 <Label>Supervisor password</Label>
                 <Input placeholder="Leave blank to keep" value={editForm.supervisorPassword} onChange={(e) => setEditForm({ ...editForm, supervisorPassword: e.target.value })} />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Owner login password</Label>
+              <Input type="password" placeholder="Leave blank to keep" value={editForm.ownerPassword} onChange={(e) => setEditForm({ ...editForm, ownerPassword: e.target.value })} />
             </div>
           </div>
         )}

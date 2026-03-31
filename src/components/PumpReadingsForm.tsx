@@ -10,14 +10,7 @@ interface PumpReading {
 }
 
 interface PumpReadingsData {
-  petrol1: PumpReading;
-  petrol2: PumpReading;
-  petrol3: PumpReading;
-  petrol4: PumpReading;
-  diesel1: PumpReading;
-  diesel2: PumpReading;
-  diesel3: PumpReading;
-  diesel4: PumpReading;
+  [key: string]: PumpReading;
 }
 
 interface PumpReadingsFormProps {
@@ -25,11 +18,13 @@ interface PumpReadingsFormProps {
   onChange: (data: PumpReadingsData) => void;
   disabled?: boolean;
   isProprietor?: boolean;
+  pumpCountPetrol?: number;
+  pumpCountDiesel?: number;
 }
 
-const PumpReadingsForm = ({ data, onChange, disabled = false, isProprietor = false }: PumpReadingsFormProps) => {
+const PumpReadingsForm = ({ data, onChange, disabled = false, isProprietor = false, pumpCountPetrol = 4, pumpCountDiesel = 4 }: PumpReadingsFormProps) => {
   const handlePumpChange = (
-    pumpKey: keyof PumpReadingsData,
+    pumpKey: string,
     field: keyof PumpReading,
     value: string
   ) => {
@@ -49,11 +44,11 @@ const PumpReadingsForm = ({ data, onChange, disabled = false, isProprietor = fal
   };
 
   const renderPumpInputs = (
-    pumpKey: keyof PumpReadingsData,
+    pumpKey: string,
     pumpNumber: number,
     type: 'petrol' | 'diesel'
   ) => {
-    const pump = data[pumpKey];
+    const pump = data[pumpKey] || { opening_reading: 0, closing_reading: 0, price_per_litre: type === 'petrol' ? 101.88 : 93.48 };
     const sales = calculateSales(pump);
     const Icon = type === 'petrol' ? Fuel : Droplet;
     const color = type === 'petrol' ? 'text-primary' : 'text-accent';
@@ -124,6 +119,9 @@ const PumpReadingsForm = ({ data, onChange, disabled = false, isProprietor = fal
     );
   };
 
+  const petrolPumps = Array.from({ length: pumpCountPetrol }, (_, i) => i + 1);
+  const dieselPumps = Array.from({ length: pumpCountDiesel }, (_, i) => i + 1);
+
   return (
     <div className="space-y-6">
       <div>
@@ -131,11 +129,8 @@ const PumpReadingsForm = ({ data, onChange, disabled = false, isProprietor = fal
           <Fuel className="h-5 w-5 text-primary" />
           Petrol Pumps Readings
         </h3>
-        <div className="grid md:grid-cols-4 gap-4">
-          {renderPumpInputs('petrol1', 1, 'petrol')}
-          {renderPumpInputs('petrol2', 2, 'petrol')}
-          {renderPumpInputs('petrol3', 3, 'petrol')}
-          {renderPumpInputs('petrol4', 4, 'petrol')}
+        <div className={`grid gap-4 ${pumpCountPetrol <= 2 ? 'md:grid-cols-2' : 'md:grid-cols-4'}`}>
+          {petrolPumps.map(n => renderPumpInputs(`petrol${n}`, n, 'petrol'))}
         </div>
       </div>
 
@@ -144,11 +139,8 @@ const PumpReadingsForm = ({ data, onChange, disabled = false, isProprietor = fal
           <Droplet className="h-5 w-5 text-accent" />
           Diesel Pumps Readings
         </h3>
-        <div className="grid md:grid-cols-4 gap-4">
-          {renderPumpInputs('diesel1', 1, 'diesel')}
-          {renderPumpInputs('diesel2', 2, 'diesel')}
-          {renderPumpInputs('diesel3', 3, 'diesel')}
-          {renderPumpInputs('diesel4', 4, 'diesel')}
+        <div className={`grid gap-4 ${pumpCountDiesel <= 2 ? 'md:grid-cols-2' : 'md:grid-cols-4'}`}>
+          {dieselPumps.map(n => renderPumpInputs(`diesel${n}`, n, 'diesel'))}
         </div>
       </div>
     </div>
