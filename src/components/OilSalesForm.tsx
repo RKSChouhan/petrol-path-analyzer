@@ -217,48 +217,20 @@ const OilSalesForm = ({
               <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
                 <div>
                   <Label className="text-sm">Oil Type</Label>
-                  {item.oil_name === 'OTHERS' ? (
+                  {item.oil_name === '__custom__' || isCustomName(item.oil_name) ? (
                     <div className="flex gap-1">
                       <Input
                         type="text"
-                        value={item.oil_name === 'OTHERS' ? '' : item.oil_name}
+                        value={item.oil_name === '__custom__' ? '' : item.oil_name}
                         onChange={(e) => {
                           const updatedItems = [...data.items];
                           updatedItems[index] = {
                             ...updatedItems[index],
-                            oil_name: e.target.value || 'OTHERS',
+                            oil_name: e.target.value || '__custom__',
                           };
                           onChange({ ...data, items: updatedItems });
                         }}
-                        placeholder="Enter oil name"
-                        className="h-9 flex-1"
-                        disabled={disabled}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 shrink-0"
-                        onClick={() => handleItemChange(index, 'oil_name', '')}
-                        disabled={disabled}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : item.oil_name && !OIL_VARIETIES.find(oil => oil.name === item.oil_name) ? (
-                    <div className="flex gap-1">
-                      <Input
-                        type="text"
-                        value={item.oil_name}
-                        onChange={(e) => {
-                          const updatedItems = [...data.items];
-                          updatedItems[index] = {
-                            ...updatedItems[index],
-                            oil_name: e.target.value || 'OTHERS',
-                          };
-                          onChange({ ...data, items: updatedItems });
-                        }}
-                        placeholder="Enter oil name"
+                        placeholder="Enter product name"
                         className="h-9 flex-1"
                         disabled={disabled}
                       />
@@ -310,28 +282,18 @@ const OilSalesForm = ({
                     type="number" 
                     step="0.01" 
                     min="0"
-                    value={item.oil_name === 'OTHERS' 
+                    value={isCustomName(item.oil_name) || item.oil_name === '__custom__'
                       ? (item.oil_price === 0 ? '0' : item.oil_price)
                       : (item.oil_price === 0 ? '' : item.oil_price.toFixed(2))} 
-                    onChange={e => item.oil_name === 'OTHERS' && handleItemChange(index, 'oil_price', e.target.value)}
+                    onChange={e => (isCustomName(item.oil_name) || item.oil_name === '__custom__') && handleItemChange(index, 'oil_price', e.target.value)}
                     onFocus={e => e.target.select()}
-                    readOnly={item.oil_name !== 'OTHERS'}
-                    disabled={disabled || item.oil_name !== 'OTHERS'}
-                    className={cn("h-9 font-semibold", item.oil_name === 'OTHERS' ? '' : 'bg-muted')} 
+                    readOnly={!isCustomName(item.oil_name) && item.oil_name !== '__custom__'}
+                    disabled={disabled || (!isCustomName(item.oil_name) && item.oil_name !== '__custom__')}
+                    className={cn("h-9 font-semibold", (isCustomName(item.oil_name) || item.oil_name === '__custom__') ? '' : 'bg-muted')} 
                   />
                 </div>
                 <div className="flex items-end">
-                  {!disabled && (index === 0 ? (
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-9 w-9" 
-                      onClick={addOilItem}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  ) : (
+                  {!disabled && data.items.length > 1 && (
                     <Button 
                       type="button" 
                       variant="outline" 
@@ -341,10 +303,22 @@ const OilSalesForm = ({
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  ))}
+                  )}
                 </div>
               </div>
             ))}
+            {!disabled && (
+              <div className="flex gap-2 pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={addOilItem}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Oil
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addCustomProduct}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  New Product
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
