@@ -230,16 +230,7 @@ const Index = () => {
     }
     
     // Populate pump readings
-    const newPumpReadings = {
-      petrol1: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-      petrol2: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-      petrol3: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-      petrol4: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-      diesel1: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-      diesel2: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-      diesel3: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-      diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-    };
+    const newPumpReadings = buildDefaultPumpReadings();
     
     if (existingEntry.pump_readings) {
       existingEntry.pump_readings.forEach((reading: any) => {
