@@ -68,51 +68,39 @@ const OilSalesForm = ({
   onChange,
   disabled = false
 }: OilSalesFormProps) => {
+  const isCustomName = (name: string) => {
+    return name !== '' && !OIL_VARIETIES.find(oil => oil.name === name);
+  };
+
   const handleItemChange = (index: number, field: keyof OilItem, value: string | number) => {
     const updatedItems = [...data.items];
     
     if (field === 'oil_name') {
-      // Find the selected oil variety
       const selectedOil = OIL_VARIETIES.find(oil => oil.name === value);
-      // For "OTHERS", price is 0 (manual entry needed)
-      const unitPrice = value === 'OTHERS' ? 0 : (selectedOil?.price || 0);
+      const unitPrice = selectedOil?.price || 0;
       const count = updatedItems[index].oil_count;
       
       updatedItems[index] = {
         ...updatedItems[index],
         oil_name: value as string,
-        oil_price: value === 'OTHERS' ? 0 : unitPrice * count,
+        oil_price: unitPrice * count,
       };
     } else if (field === 'oil_count') {
       const count = typeof value === 'string' ? parseFloat(value) || 0 : value;
       const selectedOil = OIL_VARIETIES.find(oil => oil.name === updatedItems[index].oil_name);
-      // For "OTHERS", don't auto-calculate price
-      if (updatedItems[index].oil_name === 'OTHERS') {
-        updatedItems[index] = {
-          ...updatedItems[index],
-          oil_count: count,
-        };
+      if (isCustomName(updatedItems[index].oil_name)) {
+        // Custom product - don't auto-calculate price
+        updatedItems[index] = { ...updatedItems[index], oil_count: count };
       } else {
         const unitPrice = selectedOil?.price || 0;
-        updatedItems[index] = {
-          ...updatedItems[index],
-          oil_count: count,
-          oil_price: unitPrice * count,
-        };
+        updatedItems[index] = { ...updatedItems[index], oil_count: count, oil_price: unitPrice * count };
       }
     } else if (field === 'oil_price') {
-      // Manual price entry for "OTHERS"
       const price = typeof value === 'string' ? parseFloat(value) || 0 : value;
-      updatedItems[index] = {
-        ...updatedItems[index],
-        oil_price: price,
-      };
+      updatedItems[index] = { ...updatedItems[index], oil_price: price };
     }
     
-    onChange({
-      ...data,
-      items: updatedItems
-    });
+    onChange({ ...data, items: updatedItems });
   };
 
   const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | number) => {
