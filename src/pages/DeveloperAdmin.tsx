@@ -70,6 +70,7 @@ type EditForm = {
   pumpCountDiesel: number;
   proprietorPassword: string;
   supervisorPassword: string;
+  ownerPassword: string;
 };
 
 const DeveloperAdmin = () => {
