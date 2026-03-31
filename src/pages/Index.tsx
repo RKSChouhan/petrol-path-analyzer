@@ -173,16 +173,7 @@ const Index = () => {
   }, [companyId, selectedDate, selectedEntry]);
 
   const clearFormFields = () => {
-    setPumpReadings({
-      petrol1: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-      petrol2: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-      petrol3: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-      petrol4: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-      diesel1: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-      diesel2: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-      diesel3: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-      diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-    });
+    setPumpReadings(buildDefaultPumpReadings());
     setPaymentMethods({
       group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
       group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
