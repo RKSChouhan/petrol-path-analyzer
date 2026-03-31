@@ -38,7 +38,6 @@ const OIL_VARIETIES = [
   { name: "MAK DIAMOND -1 ltr", price: 380.00 },
   { name: "MAK DIAMOND -1/2 ltr", price: 192.00 },
   { name: "HONDA POWER-1 Ltr", price: 404.00 },
-  { name: "OTHERS", price: 0 },
 ];
 
 interface OilItem {
