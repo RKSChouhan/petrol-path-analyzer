@@ -123,11 +123,14 @@ const OilSalesForm = ({
   const addOilItem = () => {
     onChange({
       ...data,
-      items: [...data.items, {
-        oil_name: '',
-        oil_count: 0,
-        oil_price: 0
-      }]
+      items: [...data.items, { oil_name: '', oil_count: 0, oil_price: 0 }]
+    });
+  };
+
+  const addCustomProduct = () => {
+    onChange({
+      ...data,
+      items: [...data.items, { oil_name: '__custom__', oil_count: 0, oil_price: 0 }]
     });
   };
 
