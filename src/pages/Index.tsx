@@ -49,16 +49,19 @@ const Index = () => {
   usePresence(userRole, 'daily-tree');
 
   // Form states
-  const [pumpReadings, setPumpReadings] = useState({
-    petrol1: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-    petrol2: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-    petrol3: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-    petrol4: { opening_reading: 0, closing_reading: 0, price_per_litre: 101.88 },
-    diesel1: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-    diesel2: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-    diesel3: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-    diesel4: { opening_reading: 0, closing_reading: 0, price_per_litre: 93.48 },
-  });
+  const pumpCountPetrol = company?.pump_count_petrol || 4;
+  const pumpCountDiesel = company?.pump_count_diesel || 4;
+
+  const buildDefaultPumpReadings = () => {
+    const readings: Record<string, { opening_reading: number; closing_reading: number; price_per_litre: number }> = {};
+    for (let i = 1; i <= 20; i++) {
+      readings[`petrol${i}`] = { opening_reading: 0, closing_reading: 0, price_per_litre: petrolPrice };
+      readings[`diesel${i}`] = { opening_reading: 0, closing_reading: 0, price_per_litre: dieselPrice };
+    }
+    return readings;
+  };
+
+  const [pumpReadings, setPumpReadings] = useState<Record<string, { opening_reading: number; closing_reading: number; price_per_litre: number }>>(buildDefaultPumpReadings);
 
   const [paymentMethods, setPaymentMethods] = useState({
     group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
