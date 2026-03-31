@@ -41,6 +41,7 @@ const updateCompanySchema = baseSchema.extend({
   supervisorPassword: z.string().trim().min(1).max(100).optional(),
   contactPhone: z.string().trim().max(40).optional(),
   companyName: z.string().trim().min(2).max(120).optional(),
+  ownerPassword: z.string().min(8).max(72).optional(),
 });
 
 const json = (body: unknown, status = 200) =>
