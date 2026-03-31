@@ -259,6 +259,7 @@ const DeveloperAdmin = () => {
       if (editForm.pumpCountDiesel !== editingCompany.pump_count_diesel) payload.pumpCountDiesel = editForm.pumpCountDiesel;
       if (editForm.proprietorPassword) payload.proprietorPassword = editForm.proprietorPassword;
       if (editForm.supervisorPassword) payload.supervisorPassword = editForm.supervisorPassword;
+      if (editForm.ownerPassword) payload.ownerPassword = editForm.ownerPassword;
 
       if (Object.keys(payload).length <= 1) {
         toast({ title: "No changes", description: "Nothing was modified." });
