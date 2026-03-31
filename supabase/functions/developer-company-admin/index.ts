@@ -333,16 +333,40 @@ async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
   if (payload.contactPhone !== undefined) updates.contact_phone = payload.contactPhone.trim() || null;
   if (payload.companyName !== undefined) updates.name = payload.companyName;
 
-  if (Object.keys(updates).length === 0) {
+  const hasCompanyUpdates = Object.keys(updates).length > 0;
+  const hasOwnerPasswordUpdate = !!payload.ownerPassword;
+
+  if (!hasCompanyUpdates && !hasOwnerPasswordUpdate) {
     throw new Error("No fields to update");
   }
 
-  const { error } = await admin
-    .from("companies")
-    .update(updates)
-    .eq("id", payload.companyId);
+  if (hasCompanyUpdates) {
+    const { error } = await admin
+      .from("companies")
+      .update(updates)
+      .eq("id", payload.companyId);
+    if (error) throw new Error(error.message);
+  }
 
-  if (error) throw new Error(error.message);
+  if (hasOwnerPasswordUpdate) {
+    // Find the owner user for this company
+    const { data: mappings, error: mappingsError } = await admin
+      .from("user_companies")
+      .select("user_id")
+      .eq("company_id", payload.companyId);
+    if (mappingsError) throw new Error(mappingsError.message);
+
+    if (!mappings || mappings.length === 0) {
+      throw new AppError("No owner found for this company", 404);
+    }
+
+    // Update the first linked user's password (the owner)
+    const ownerId = mappings[0].user_id;
+    const { error: pwError } = await admin.auth.admin.updateUserById(ownerId, {
+      password: payload.ownerPassword,
+    });
+    if (pwError) throw new AppError(pwError.message, 400);
+  }
 
   return "Company updated successfully";
 }
