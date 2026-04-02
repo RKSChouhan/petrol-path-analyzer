@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Container, Plus, Trash2, X } from "lucide-react";
+import { Container, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -11,9 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 // Oil varieties with prices from the provided list
-const OIL_VARIETIES = [
+const DEFAULT_OIL_VARIETIES = [
   { name: "2T OIL-1/2 Ltr", price: 173.00 },
   { name: "DWATER", price: 20.00 },
   { name: "WASTE", price: 20.00 },
@@ -68,15 +76,18 @@ const OilSalesForm = ({
   onChange,
   disabled = false
 }: OilSalesFormProps) => {
-  const isCustomName = (name: string) => {
-    return name !== '' && !OIL_VARIETIES.find(oil => oil.name === name);
-  };
+  const [customVarieties, setCustomVarieties] = useState<{ name: string; price: number }[]>([]);
+  const [showNewProductDialog, setShowNewProductDialog] = useState(false);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductPrice, setNewProductPrice] = useState("");
+
+  const allVarieties = [...DEFAULT_OIL_VARIETIES, ...customVarieties];
 
   const handleItemChange = (index: number, field: keyof OilItem, value: string | number) => {
     const updatedItems = [...data.items];
     
     if (field === 'oil_name') {
-      const selectedOil = OIL_VARIETIES.find(oil => oil.name === value);
+      const selectedOil = allVarieties.find(oil => oil.name === value);
       const unitPrice = selectedOil?.price || 0;
       const count = updatedItems[index].oil_count;
       
@@ -87,14 +98,9 @@ const OilSalesForm = ({
       };
     } else if (field === 'oil_count') {
       const count = typeof value === 'string' ? parseFloat(value) || 0 : value;
-      const selectedOil = OIL_VARIETIES.find(oil => oil.name === updatedItems[index].oil_name);
-      if (isCustomName(updatedItems[index].oil_name)) {
-        // Custom product - don't auto-calculate price
-        updatedItems[index] = { ...updatedItems[index], oil_count: count };
-      } else {
-        const unitPrice = selectedOil?.price || 0;
-        updatedItems[index] = { ...updatedItems[index], oil_count: count, oil_price: unitPrice * count };
-      }
+      const selectedOil = allVarieties.find(oil => oil.name === updatedItems[index].oil_name);
+      const unitPrice = selectedOil?.price || 0;
+      updatedItems[index] = { ...updatedItems[index], oil_count: count, oil_price: unitPrice * count };
     } else if (field === 'oil_price') {
       const price = typeof value === 'string' ? parseFloat(value) || 0 : value;
       updatedItems[index] = { ...updatedItems[index], oil_price: price };
@@ -109,7 +115,6 @@ const OilSalesForm = ({
       [field]: typeof value === 'string' ? parseFloat(value) || 0 : value
     };
 
-    // Auto-calculate total_litres and total_amount when readings change
     if (field === 'yesterday_reading' || field === 'today_reading') {
       const yesterday = field === 'yesterday_reading' ? (parseFloat(value as string) || 0) : data.yesterday_reading;
       const today = field === 'today_reading' ? (parseFloat(value as string) || 0) : data.today_reading;
@@ -127,13 +132,6 @@ const OilSalesForm = ({
     });
   };
 
-  const addCustomProduct = () => {
-    onChange({
-      ...data,
-      items: [...data.items, { oil_name: '__custom__', oil_count: 0, oil_price: 0 }]
-    });
-  };
-
   const removeOilItem = (index: number) => {
     if (data.items.length > 1) {
       onChange({
@@ -141,6 +139,18 @@ const OilSalesForm = ({
         items: data.items.filter((_, i) => i !== index)
       });
     }
+  };
+
+  const handleAddNewProduct = () => {
+    const name = newProductName.trim().toUpperCase();
+    const price = parseFloat(newProductPrice) || 0;
+    if (!name || price <= 0) return;
+    if (allVarieties.find(v => v.name === name)) return;
+
+    setCustomVarieties(prev => [...prev, { name, price }]);
+    setNewProductName("");
+    setNewProductPrice("");
+    setShowNewProductDialog(false);
   };
 
   return (
@@ -158,50 +168,28 @@ const OilSalesForm = ({
             <div>
               <Label className="text-xs">Today Reading</Label>
               <Input 
-                type="number" 
-                step="0.001" 
+                type="number" step="0.001" 
                 value={data.today_reading === 0 ? '' : data.today_reading} 
                 onChange={e => handleChange('today_reading', e.target.value)} 
-                onFocus={e => e.target.select()} 
-                className="h-9" 
-                placeholder="0" 
-                disabled={disabled} 
+                onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} 
               />
             </div>
             <div>
               <Label className="text-xs">Yesterday Reading</Label>
               <Input 
-                type="number" 
-                step="0.001" 
+                type="number" step="0.001" 
                 value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} 
                 onChange={e => handleChange('yesterday_reading', e.target.value)} 
-                onFocus={e => e.target.select()} 
-                className="h-9" 
-                placeholder="0" 
-                disabled={disabled} 
+                onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} 
               />
             </div>
             <div>
               <Label className="text-xs">Total 2T Oil Liters</Label>
-              <Input 
-                type="number" 
-                step="0.001" 
-                value={data.total_litres.toFixed(3)} 
-                readOnly 
-                disabled 
-                className="h-9 bg-muted font-semibold" 
-              />
+              <Input type="number" step="0.001" value={data.total_litres.toFixed(3)} readOnly disabled className="h-9 bg-muted font-semibold" />
             </div>
             <div>
               <Label className="text-xs">Total 2T Oil Amount (₹)</Label>
-              <Input 
-                type="number" 
-                step="0.01" 
-                value={data.total_amount.toFixed(2)} 
-                readOnly 
-                disabled 
-                className="h-9 bg-muted font-semibold" 
-              />
+              <Input type="number" step="0.01" value={data.total_amount.toFixed(2)} readOnly disabled className="h-9 bg-muted font-semibold" />
             </div>
           </div>
         </CardContent>
@@ -217,52 +205,22 @@ const OilSalesForm = ({
               <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
                 <div>
                   <Label className="text-sm">Oil Type</Label>
-                  {item.oil_name === '__custom__' || isCustomName(item.oil_name) ? (
-                    <div className="flex gap-1">
-                      <Input
-                        type="text"
-                        value={item.oil_name === '__custom__' ? '' : item.oil_name}
-                        onChange={(e) => {
-                          const updatedItems = [...data.items];
-                          updatedItems[index] = {
-                            ...updatedItems[index],
-                            oil_name: e.target.value || '__custom__',
-                          };
-                          onChange({ ...data, items: updatedItems });
-                        }}
-                        placeholder="Enter product name"
-                        className="h-9 flex-1"
-                        disabled={disabled}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 shrink-0"
-                        onClick={() => handleItemChange(index, 'oil_name', '')}
-                        disabled={disabled}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Select
-                      value={item.oil_name}
-                      onValueChange={(value) => handleItemChange(index, 'oil_name', value)}
-                      disabled={disabled}
-                    >
-                      <SelectTrigger className="h-9">
-                        <SelectValue placeholder="Select oil type" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover z-50 max-h-[300px]">
-                        {OIL_VARIETIES.map((oil) => (
-                          <SelectItem key={oil.name} value={oil.name}>
-                            {oil.name} - ₹{oil.price.toFixed(2)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <Select
+                    value={item.oil_name}
+                    onValueChange={(value) => handleItemChange(index, 'oil_name', value)}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Select oil type" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50 max-h-[300px]">
+                      {allVarieties.map((oil) => (
+                        <SelectItem key={oil.name} value={oil.name}>
+                          {oil.name} - ₹{oil.price.toFixed(2)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label className="text-sm">Count</Label>
@@ -270,37 +228,21 @@ const OilSalesForm = ({
                     type="number" 
                     value={item.oil_count === 0 ? '' : item.oil_count} 
                     onChange={e => handleItemChange(index, 'oil_count', e.target.value)} 
-                    onFocus={e => e.target.select()} 
-                    className="h-9" 
-                    placeholder="0" 
-                    disabled={disabled} 
+                    onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} 
                   />
                 </div>
                 <div>
                   <Label className="text-sm">Price (₹)</Label>
                   <Input 
-                    type="number" 
-                    step="0.01" 
-                    min="0"
-                    value={isCustomName(item.oil_name) || item.oil_name === '__custom__'
-                      ? (item.oil_price === 0 ? '0' : item.oil_price)
-                      : (item.oil_price === 0 ? '' : item.oil_price.toFixed(2))} 
-                    onChange={e => (isCustomName(item.oil_name) || item.oil_name === '__custom__') && handleItemChange(index, 'oil_price', e.target.value)}
-                    onFocus={e => e.target.select()}
-                    readOnly={!isCustomName(item.oil_name) && item.oil_name !== '__custom__'}
-                    disabled={disabled || (!isCustomName(item.oil_name) && item.oil_name !== '__custom__')}
-                    className={cn("h-9 font-semibold", (isCustomName(item.oil_name) || item.oil_name === '__custom__') ? '' : 'bg-muted')} 
+                    type="number" step="0.01" min="0"
+                    value={item.oil_price === 0 ? '' : item.oil_price.toFixed(2)} 
+                    readOnly disabled
+                    className="h-9 font-semibold bg-muted"
                   />
                 </div>
                 <div className="flex items-end">
                   {!disabled && data.items.length > 1 && (
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-9 w-9 text-destructive hover:text-destructive" 
-                      onClick={() => removeOilItem(index)}
-                    >
+                    <Button type="button" variant="outline" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => removeOilItem(index)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
@@ -313,7 +255,7 @@ const OilSalesForm = ({
                   <Plus className="h-4 w-4 mr-1" />
                   Add Oil
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={addCustomProduct}>
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowNewProductDialog(true)}>
                   <Plus className="h-4 w-4 mr-1" />
                   New Product
                 </Button>
@@ -322,6 +264,28 @@ const OilSalesForm = ({
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showNewProductDialog} onOpenChange={setShowNewProductDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Add New Product</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label>Product Name</Label>
+              <Input value={newProductName} onChange={e => setNewProductName(e.target.value)} placeholder="e.g. CASTROL 1Ltr" />
+            </div>
+            <div>
+              <Label>Price per unit (₹)</Label>
+              <Input type="number" step="0.01" min="0" value={newProductPrice} onChange={e => setNewProductPrice(e.target.value)} placeholder="0.00" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewProductDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddNewProduct} disabled={!newProductName.trim() || !newProductPrice}>Add to List</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
