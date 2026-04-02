@@ -643,6 +643,9 @@ const Storage = () => {
               </CardContent>
             </Card>
 
+            {/* Product Stock List */}
+            <StorageProductList companyId={companyId} userRole={userRole} />
+
             {/* Action Buttons */}
             <div className="flex justify-center gap-4 pt-4">
               <Button onClick={handleClear} variant="outline" size="lg" className="px-8">
