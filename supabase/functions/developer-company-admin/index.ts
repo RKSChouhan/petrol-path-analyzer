@@ -323,6 +323,8 @@ async function deleteCompany(companyId: string) {
 }
 
 async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
+  console.log("updateCompany called, companyId:", payload.companyId);
+  
   const updates: Record<string, unknown> = {};
   if (payload.petrolPrice !== undefined) updates.petrol_price = payload.petrolPrice;
   if (payload.dieselPrice !== undefined) updates.diesel_price = payload.dieselPrice;
@@ -337,35 +339,47 @@ async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
   const hasOwnerPasswordUpdate = !!payload.ownerPassword;
 
   if (!hasCompanyUpdates && !hasOwnerPasswordUpdate) {
-    throw new Error("No fields to update");
+    throw new AppError("No fields to update", 400);
   }
 
   if (hasCompanyUpdates) {
+    console.log("Updating company fields:", Object.keys(updates));
     const { error } = await admin
       .from("companies")
       .update(updates)
       .eq("id", payload.companyId);
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Company update error:", error.message);
+      throw new Error(error.message);
+    }
   }
 
   if (hasOwnerPasswordUpdate) {
-    // Find the owner user for this company
+    console.log("Updating owner password for company:", payload.companyId);
     const { data: mappings, error: mappingsError } = await admin
       .from("user_companies")
       .select("user_id")
       .eq("company_id", payload.companyId);
-    if (mappingsError) throw new Error(mappingsError.message);
+    if (mappingsError) {
+      console.error("Mapping lookup error:", mappingsError.message);
+      throw new Error(mappingsError.message);
+    }
 
     if (!mappings || mappings.length === 0) {
+      console.error("No owner found for company:", payload.companyId);
       throw new AppError("No owner found for this company", 404);
     }
 
-    // Update the first linked user's password (the owner)
     const ownerId = mappings[0].user_id;
-    const { error: pwError } = await admin.auth.admin.updateUserById(ownerId, {
+    console.log("Found owner:", ownerId, "updating password...");
+    const { data: updatedUser, error: pwError } = await admin.auth.admin.updateUserById(ownerId, {
       password: payload.ownerPassword,
     });
-    if (pwError) throw new AppError(pwError.message, 400);
+    if (pwError) {
+      console.error("Password update error:", pwError.message);
+      throw new AppError(pwError.message, 400);
+    }
+    console.log("Password updated successfully for user:", updatedUser?.user?.id);
   }
 
   return "Company updated successfully";
