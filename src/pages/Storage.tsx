@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { LayoutGrid, LogOut, Archive, Save, Fuel, Gauge, Zap, Truck, RotateCcw, Calculator as CalcIcon } from "lucide-react";
+import StorageProductList from "@/components/StorageProductList";
 import Calculator from "@/components/Calculator";
 import StorageOCRUpload from "@/components/StorageOCRUpload";
 import { format } from "date-fns";
