@@ -119,9 +119,10 @@ const DeveloperAdmin = () => {
       if (responseContext instanceof Response) {
         try {
           const body = await responseContext.clone().json() as { error?: string; message?: string };
-          throw new Error(body.error || body.message || fallbackMessage);
-        } catch {
-          throw new Error(fallbackMessage);
+          const detail = body.error || body.message;
+          if (detail) throw new Error(detail);
+        } catch (innerErr) {
+          if (innerErr instanceof Error && innerErr.message !== fallbackMessage) throw innerErr;
         }
       }
 
