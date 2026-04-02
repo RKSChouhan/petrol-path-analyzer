@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { LayoutGrid, LogOut, Archive, Save, Fuel, Gauge, Zap, Truck, RotateCcw, Calculator as CalcIcon } from "lucide-react";
+import StorageProductList from "@/components/StorageProductList";
 import Calculator from "@/components/Calculator";
 import StorageOCRUpload from "@/components/StorageOCRUpload";
 import { format } from "date-fns";
@@ -641,6 +642,9 @@ const Storage = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Product Stock List */}
+            <StorageProductList companyId={companyId} userRole={userRole} />
 
             {/* Action Buttons */}
             <div className="flex justify-center gap-4 pt-4">

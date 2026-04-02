@@ -3,8 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Container, Plus, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Container, Plus, Trash2, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -69,19 +68,27 @@ interface OilSalesFormProps {
   data: OilSalesData;
   onChange: (data: OilSalesData) => void;
   disabled?: boolean;
+  userRole?: string | null;
 }
 
 const OilSalesForm = ({
   data,
   onChange,
-  disabled = false
+  disabled = false,
+  userRole,
 }: OilSalesFormProps) => {
+  const [deletedDefaults, setDeletedDefaults] = useState<string[]>([]);
   const [customVarieties, setCustomVarieties] = useState<{ name: string; price: number }[]>([]);
   const [showNewProductDialog, setShowNewProductDialog] = useState(false);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
 
-  const allVarieties = [...DEFAULT_OIL_VARIETIES, ...customVarieties];
+  const isProprietor = userRole === "Proprietor";
+
+  const allVarieties = [
+    ...DEFAULT_OIL_VARIETIES.filter(o => !deletedDefaults.includes(o.name)),
+    ...customVarieties,
+  ];
 
   const handleItemChange = (index: number, field: keyof OilItem, value: string | number) => {
     const updatedItems = [...data.items];
@@ -90,12 +97,7 @@ const OilSalesForm = ({
       const selectedOil = allVarieties.find(oil => oil.name === value);
       const unitPrice = selectedOil?.price || 0;
       const count = updatedItems[index].oil_count;
-      
-      updatedItems[index] = {
-        ...updatedItems[index],
-        oil_name: value as string,
-        oil_price: unitPrice * count,
-      };
+      updatedItems[index] = { ...updatedItems[index], oil_name: value as string, oil_price: unitPrice * count };
     } else if (field === 'oil_count') {
       const count = typeof value === 'string' ? parseFloat(value) || 0 : value;
       const selectedOil = allVarieties.find(oil => oil.name === updatedItems[index].oil_name);
@@ -110,34 +112,23 @@ const OilSalesForm = ({
   };
 
   const handleChange = (field: keyof Omit<OilSalesData, 'items'>, value: string | number) => {
-    const updatedData = {
-      ...data,
-      [field]: typeof value === 'string' ? parseFloat(value) || 0 : value
-    };
-
+    const updatedData = { ...data, [field]: typeof value === 'string' ? parseFloat(value) || 0 : value };
     if (field === 'yesterday_reading' || field === 'today_reading') {
       const yesterday = field === 'yesterday_reading' ? (parseFloat(value as string) || 0) : data.yesterday_reading;
       const today = field === 'today_reading' ? (parseFloat(value as string) || 0) : data.today_reading;
       updatedData.total_litres = today - yesterday;
       updatedData.total_amount = updatedData.total_litres * 330;
     }
-    
     onChange(updatedData);
   };
 
   const addOilItem = () => {
-    onChange({
-      ...data,
-      items: [...data.items, { oil_name: '', oil_count: 0, oil_price: 0 }]
-    });
+    onChange({ ...data, items: [...data.items, { oil_name: '', oil_count: 0, oil_price: 0 }] });
   };
 
   const removeOilItem = (index: number) => {
     if (data.items.length > 1) {
-      onChange({
-        ...data,
-        items: data.items.filter((_, i) => i !== index)
-      });
+      onChange({ ...data, items: data.items.filter((_, i) => i !== index) });
     }
   };
 
@@ -146,11 +137,24 @@ const OilSalesForm = ({
     const price = parseFloat(newProductPrice) || 0;
     if (!name || price <= 0) return;
     if (allVarieties.find(v => v.name === name)) return;
-
     setCustomVarieties(prev => [...prev, { name, price }]);
     setNewProductName("");
     setNewProductPrice("");
     setShowNewProductDialog(false);
+  };
+
+  const handleDeleteVariety = (oilName: string) => {
+    // Check if it's a default or custom
+    if (DEFAULT_OIL_VARIETIES.find(o => o.name === oilName)) {
+      setDeletedDefaults(prev => [...prev, oilName]);
+    } else {
+      setCustomVarieties(prev => prev.filter(v => v.name !== oilName));
+    }
+    // Clear any items using this variety
+    const updatedItems = data.items.map(item =>
+      item.oil_name === oilName ? { ...item, oil_name: '', oil_price: 0 } : item
+    );
+    onChange({ ...data, items: updatedItems });
   };
 
   return (
@@ -167,21 +171,11 @@ const OilSalesForm = ({
           <div className="grid md:grid-cols-4 gap-4">
             <div>
               <Label className="text-xs">Today Reading</Label>
-              <Input 
-                type="number" step="0.001" 
-                value={data.today_reading === 0 ? '' : data.today_reading} 
-                onChange={e => handleChange('today_reading', e.target.value)} 
-                onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} 
-              />
+              <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
             </div>
             <div>
               <Label className="text-xs">Yesterday Reading</Label>
-              <Input 
-                type="number" step="0.001" 
-                value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} 
-                onChange={e => handleChange('yesterday_reading', e.target.value)} 
-                onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} 
-              />
+              <Input type="number" step="0.001" value={data.yesterday_reading === 0 ? '' : data.yesterday_reading} onChange={e => handleChange('yesterday_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
             </div>
             <div>
               <Label className="text-xs">Total 2T Oil Liters</Label>
@@ -205,40 +199,41 @@ const OilSalesForm = ({
               <div key={index} className="grid grid-cols-[1fr_100px_120px_40px] gap-2">
                 <div>
                   <Label className="text-sm">Oil Type</Label>
-                  <Select
-                    value={item.oil_name}
-                    onValueChange={(value) => handleItemChange(index, 'oil_name', value)}
-                    disabled={disabled}
-                  >
+                  <Select value={item.oil_name} onValueChange={(value) => handleItemChange(index, 'oil_name', value)} disabled={disabled}>
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Select oil type" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50 max-h-[300px]">
                       {allVarieties.map((oil) => (
-                        <SelectItem key={oil.name} value={oil.name}>
-                          {oil.name} - ₹{oil.price.toFixed(2)}
-                        </SelectItem>
+                        <div key={oil.name} className="flex items-center">
+                          <SelectItem value={oil.name} className="flex-1">
+                            {oil.name} - ₹{oil.price.toFixed(2)}
+                          </SelectItem>
+                          {isProprietor && (
+                            <button
+                              type="button"
+                              className="p-1 mr-2 text-destructive hover:text-destructive/80 shrink-0"
+                              onPointerDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDeleteVariety(oil.name);
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-sm">Count</Label>
-                  <Input 
-                    type="number" 
-                    value={item.oil_count === 0 ? '' : item.oil_count} 
-                    onChange={e => handleItemChange(index, 'oil_count', e.target.value)} 
-                    onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} 
-                  />
+                  <Input type="number" value={item.oil_count === 0 ? '' : item.oil_count} onChange={e => handleItemChange(index, 'oil_count', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
                 </div>
                 <div>
                   <Label className="text-sm">Price (₹)</Label>
-                  <Input 
-                    type="number" step="0.01" min="0"
-                    value={item.oil_price === 0 ? '' : item.oil_price.toFixed(2)} 
-                    readOnly disabled
-                    className="h-9 font-semibold bg-muted"
-                  />
+                  <Input type="number" step="0.01" min="0" value={item.oil_price === 0 ? '' : item.oil_price.toFixed(2)} readOnly disabled className="h-9 font-semibold bg-muted" />
                 </div>
                 <div className="flex items-end">
                   {!disabled && data.items.length > 1 && (

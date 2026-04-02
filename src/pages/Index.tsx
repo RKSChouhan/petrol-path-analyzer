@@ -1244,7 +1244,7 @@ const Index = () => {
               </div>
             )}
             <PumpReadingsForm data={pumpReadings} onChange={setPumpReadings} disabled={editDisabled} isProprietor={userRole === 'Proprietor'} pumpCountPetrol={pumpCountPetrol} pumpCountDiesel={pumpCountDiesel} />
-            <OilSalesForm data={oilSales} onChange={setOilSales} disabled={editDisabled} />
+            <OilSalesForm data={oilSales} onChange={setOilSales} disabled={editDisabled} userRole={userRole} />
             
             {/* Attendance Box - below Oil Sales */}
             {companyId && (

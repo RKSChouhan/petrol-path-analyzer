@@ -145,6 +145,8 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
       pump_count_diesel: payload.pumpCountDiesel,
       proprietor_password: payload.proprietorPassword,
       supervisor_password: payload.supervisorPassword,
+      default_expenses: [],
+      default_debtors: [],
     })
     .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, created_at")
     .single();
