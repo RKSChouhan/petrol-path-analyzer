@@ -40,8 +40,8 @@ const Index = () => {
   const companyLogo = company?.logo_url || logo;
   const petrolPrice = company?.petrol_price || 101.88;
   const dieselPrice = company?.diesel_price || 93.48;
-  const defaultExpenses = company?.default_expenses || ["Density test", "food & tea", "Drinking water"];
-  const defaultDebtors = company?.default_debtors || ["Pandian"];
+  const defaultExpenses = company?.default_expenses || [];
+  const defaultDebtors = company?.default_debtors || [];
   const [emptyFieldsDialogOpen, setEmptyFieldsDialogOpen] = useState(false);
   const [emptyFields, setEmptyFields] = useState<string[]>([]);
 
