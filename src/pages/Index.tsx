@@ -51,6 +51,23 @@ const Index = () => {
   // Form states
   const pumpCountPetrol = company?.pump_count_petrol || 4;
   const pumpCountDiesel = company?.pump_count_diesel || 4;
+  const cashierGroupCount = company?.cashier_group_count || 2;
+
+  const buildDefaultPaymentMethods = (): Record<string, PaymentGroupData> => {
+    const result: Record<string, PaymentGroupData> = {};
+    for (let i = 1; i <= cashierGroupCount; i++) {
+      result[`group${i}`] = { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 };
+    }
+    return result;
+  };
+
+  const buildDefaultCashDenominations = (): Record<string, CashData> => {
+    const result: Record<string, CashData> = {};
+    for (let i = 1; i <= cashierGroupCount; i++) {
+      result[`group${i}`] = { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 };
+    }
+    return result;
+  };
 
   const buildDefaultPumpReadings = () => {
     const readings: Record<string, { opening_reading: number; closing_reading: number; price_per_litre: number }> = {};
