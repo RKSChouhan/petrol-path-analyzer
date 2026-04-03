@@ -488,7 +488,7 @@ const Index = () => {
   };
 
   const calculateTotalCashInHand = () => {
-    const calculateGroupTotal = (group: typeof cashDenominations.group1) => {
+    const calculateGroupTotal = (group: CashData) => {
       return (
         group.rs_500 * 500 +
         group.rs_200 * 200 +
@@ -500,28 +500,13 @@ const Index = () => {
       );
     };
     
-    const group1Total = calculateGroupTotal(cashDenominations.group1);
-    const group2Total = calculateGroupTotal(cashDenominations.group2);
-    
-    return group1Total + group2Total;
+    return Object.values(cashDenominations).reduce((sum, group) => sum + calculateGroupTotal(group), 0);
   };
 
   const calculateTotalDigitalPayments = () => {
-    const group1Total = 
-      paymentMethods.group1.upi +
-      paymentMethods.group1.bharat_fleet_card +
-      paymentMethods.group1.fiserv +
-      paymentMethods.group1.gpay +
-      paymentMethods.group1.evening_locker;
-    
-    const group2Total = 
-      paymentMethods.group2.upi +
-      paymentMethods.group2.bharat_fleet_card +
-      paymentMethods.group2.fiserv +
-      paymentMethods.group2.phonepay +
-      paymentMethods.group2.evening_locker;
-    
-    return group1Total + group2Total;
+    return Object.values(paymentMethods).reduce((sum, group) => {
+      return sum + group.upi + group.bharat_fleet_card + group.fiserv + group.gpay + group.evening_locker;
+    }, 0);
   };
 
   const calculateTotalExpenseAmount = () => {
@@ -539,7 +524,6 @@ const Index = () => {
 
   const calculateTotalCashOnHandValue = () => {
     const cashOnHand = calculateRoundedSalesAmount() - calculateTotalDigitalPayments();
-    // Round up to the next ten
     return Math.ceil(cashOnHand / 10) * 10;
   };
 
@@ -548,28 +532,15 @@ const Index = () => {
   };
 
   // Cashier-specific calculations
-  const calculateCashierDigitalPayments = (group: 'group1' | 'group2') => {
-    if (group === 'group1') {
-      return (
-        paymentMethods.group1.upi +
-        paymentMethods.group1.bharat_fleet_card +
-        paymentMethods.group1.fiserv +
-        paymentMethods.group1.gpay +
-        paymentMethods.group1.evening_locker
-      );
-    } else {
-      return (
-        paymentMethods.group2.upi +
-        paymentMethods.group2.bharat_fleet_card +
-        paymentMethods.group2.fiserv +
-        paymentMethods.group2.phonepay +
-        paymentMethods.group2.evening_locker
-      );
-    }
+  const calculateCashierDigitalPayments = (groupKey: string) => {
+    const group = paymentMethods[groupKey];
+    if (!group) return 0;
+    return group.upi + group.bharat_fleet_card + group.fiserv + group.gpay + group.evening_locker;
   };
 
-  const calculateCashierCashTotal = (group: 'group1' | 'group2') => {
-    const denom = cashDenominations[group];
+  const calculateCashierCashTotal = (groupKey: string) => {
+    const denom = cashDenominations[groupKey];
+    if (!denom) return 0;
     return (
       denom.rs_500 * 500 +
       denom.rs_200 * 200 +
