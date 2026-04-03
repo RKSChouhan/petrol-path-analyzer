@@ -546,8 +546,8 @@ const Index = () => {
       distilled_water: 0,
       waste: 0,
     });
-    setExpenses([{ name: "Density test", amount: 0 }, { name: "food & tea", amount: 0 }, { name: "Drinking water", amount: 0 }]);
-    setDebtors([{ name: "Pandian", bill_number: "", amount: 0 }]);
+    setExpenses(defaultExpenses.length > 0 ? defaultExpenses.map(n => ({ name: n, amount: 0 })) : [{ name: "", amount: 0 }]);
+    setDebtors(defaultDebtors.length > 0 ? defaultDebtors.map(n => ({ name: n, bill_number: "", amount: 0 })) : [{ name: "", bill_number: "", amount: 0 }]);
     setRepaidDebtors([{ name: "", amount: 0 }]);
     setComment("");
     toast({
