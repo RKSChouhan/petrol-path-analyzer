@@ -550,6 +550,14 @@ const DeveloperAdmin = () => {
                 <Input type="number" min="1" step="1" value={editForm.pumpCountDiesel} onChange={(e) => setEditForm({ ...editForm, pumpCountDiesel: Number(e.target.value) })} />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label>Cashier groups</Label>
+              <Input type="number" min="1" max="10" step="1" value={editForm.cashierGroupCount} onChange={(e) => setEditForm({ ...editForm, cashierGroupCount: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Company logo URL</Label>
+              <Input placeholder="Leave blank for default" value={editForm.logoUrl} onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })} />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Proprietor password</Label>
