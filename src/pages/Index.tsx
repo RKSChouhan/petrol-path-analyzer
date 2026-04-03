@@ -554,14 +554,8 @@ const Index = () => {
 
   const handleClearAll = () => {
     setPumpReadings(buildDefaultPumpReadings());
-    setPaymentMethods({
-      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
-      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
-    });
-    setCashDenominations({
-      group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-      group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-    });
+    setPaymentMethods(buildDefaultPaymentMethods());
+    setCashDenominations(buildDefaultCashDenominations());
     setOilSales({
       items: [{ oil_name: '', oil_count: 0, oil_price: 0 }],
       yesterday_reading: 0,
