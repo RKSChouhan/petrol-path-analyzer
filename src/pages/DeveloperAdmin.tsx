@@ -247,9 +247,11 @@ const DeveloperAdmin = () => {
       dieselPrice: company.diesel_price,
       pumpCountPetrol: company.pump_count_petrol,
       pumpCountDiesel: company.pump_count_diesel,
+      cashierGroupCount: company.cashier_group_count || 2,
       proprietorPassword: "",
       supervisorPassword: "",
       ownerPassword: "",
+      logoUrl: company.logo_url || "",
     });
   };
 
