@@ -37,11 +37,13 @@ const updateCompanySchema = baseSchema.extend({
   dieselPrice: z.coerce.number().min(0).max(10000).optional(),
   pumpCountPetrol: z.coerce.number().int().min(1).max(20).optional(),
   pumpCountDiesel: z.coerce.number().int().min(1).max(20).optional(),
+  cashierGroupCount: z.coerce.number().int().min(1).max(10).optional(),
   proprietorPassword: z.string().trim().min(1).max(100).optional(),
   supervisorPassword: z.string().trim().min(1).max(100).optional(),
   contactPhone: z.string().trim().max(40).optional(),
   companyName: z.string().trim().min(2).max(120).optional(),
   ownerPassword: z.string().min(8).max(72).optional(),
+  logoUrl: z.string().trim().max(500).optional(),
 });
 
 const json = (body: unknown, status = 200) =>
