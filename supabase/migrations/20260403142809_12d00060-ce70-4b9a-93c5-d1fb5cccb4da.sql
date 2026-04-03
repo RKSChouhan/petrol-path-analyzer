@@ -1,0 +1,2 @@
+ALTER TABLE public.pump_readings DROP CONSTRAINT pump_readings_pump_number_check;
+ALTER TABLE public.pump_readings ADD CONSTRAINT pump_readings_pump_number_check CHECK (pump_number >= 1 AND pump_number <= 20);

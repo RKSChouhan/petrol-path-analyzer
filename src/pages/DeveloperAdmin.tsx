@@ -31,6 +31,7 @@ const companySchema = z.object({
   dieselPrice: z.coerce.number().min(0, "Diesel price must be 0 or more"),
   pumpCountPetrol: z.coerce.number().int().min(1).max(20),
   pumpCountDiesel: z.coerce.number().int().min(1).max(20),
+  cashierGroupCount: z.coerce.number().int().min(1).max(10),
 });
 
 type CompanyForm = z.infer<typeof companySchema>;
@@ -59,6 +60,7 @@ const defaultFormValues: CompanyForm = {
   dieselPrice: 93.48,
   pumpCountPetrol: 2,
   pumpCountDiesel: 2,
+  cashierGroupCount: 2,
 };
 
 type EditForm = {
@@ -408,6 +410,11 @@ const DeveloperAdmin = () => {
                   <div className="space-y-2">
                     <Label htmlFor="pumpCountDiesel">Diesel pumps</Label>
                     <Input id="pumpCountDiesel" type="number" min="1" step="1" value={form.pumpCountDiesel} onChange={(event) => handleFieldChange("pumpCountDiesel", Number(event.target.value))} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="cashierGroupCount">Cashier groups (Payment & Cash)</Label>
+                    <Input id="cashierGroupCount" type="number" min="1" max="10" step="1" value={form.cashierGroupCount} onChange={(event) => handleFieldChange("cashierGroupCount", Number(event.target.value))} />
                   </div>
 
                   <div className="md:col-span-2">
