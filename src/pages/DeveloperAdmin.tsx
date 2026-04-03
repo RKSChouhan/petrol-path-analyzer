@@ -44,6 +44,8 @@ type CompanyRecord = {
   diesel_price: number;
   pump_count_petrol: number;
   pump_count_diesel: number;
+  cashier_group_count: number;
+  logo_url: string | null;
   created_at: string;
   linked_users: number;
   primary_email: string | null;
