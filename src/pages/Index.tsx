@@ -320,22 +320,14 @@ const Index = () => {
     setCashDenominations(newCashDenominations);
     
     // Populate expenses - ensure fixed rows exist
-    const FIXED_EXPENSE_NAMES = ["Density test", "food & tea", "Drinking water"];
     if (existingEntry.expenses && existingEntry.expenses.length > 0) {
       const loadedExpenses = existingEntry.expenses.map((exp: any) => ({
         name: exp.name || '',
         amount: exp.amount || 0,
       }));
-      // Ensure fixed rows are at start with their saved amounts (or 0)
-      const fixedRows = FIXED_EXPENSE_NAMES.map(fixedName => {
-        const existing = loadedExpenses.find((e: { name: string }) => e.name === fixedName);
-        return existing || { name: fixedName, amount: 0 };
-      });
-      // Add remaining non-fixed rows
-      const otherRows = loadedExpenses.filter((e: { name: string }) => !FIXED_EXPENSE_NAMES.includes(e.name));
-      setExpenses([...fixedRows, ...otherRows]);
+      setExpenses(loadedExpenses);
     } else {
-      setExpenses([{ name: "Density test", amount: 0 }, { name: "food & tea", amount: 0 }, { name: "Drinking water", amount: 0 }]);
+      setExpenses(defaultExpenses.length > 0 ? defaultExpenses.map(n => ({ name: n, amount: 0 })) : [{ name: "", amount: 0 }]);
     }
     
     // Populate debtors - ensure fixed rows exist
