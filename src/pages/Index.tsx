@@ -285,28 +285,17 @@ const Index = () => {
       });
     }
     
-    // Populate payment methods
-    const newPaymentMethods = {
-      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
-      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
-    };
+    // Populate payment methods dynamically
+    const newPaymentMethods = buildDefaultPaymentMethods();
     if (existingEntry.payment_methods) {
       existingEntry.payment_methods.forEach((payment: any) => {
-        const group = payment.cashier_group === 'group1' ? 'group1' : 'group2';
-        if (group === 'group1') {
-          newPaymentMethods.group1 = {
+        const group = payment.cashier_group as string;
+        if (newPaymentMethods[group]) {
+          newPaymentMethods[group] = {
             upi: (payment.phone_pay || 0) + (payment.gpay || 0),
             bharat_fleet_card: payment.bharat_fleet_card || 0,
             fiserv: payment.fiserv || 0,
             gpay: payment.debit || 0,
-            evening_locker: payment.evening_locker || 0,
-          };
-        } else {
-          newPaymentMethods.group2 = {
-            upi: (payment.phone_pay || 0) + (payment.gpay || 0),
-            bharat_fleet_card: payment.bharat_fleet_card || 0,
-            fiserv: payment.fiserv || 0,
-            phonepay: payment.debit || 0,
             evening_locker: payment.evening_locker || 0,
           };
         }
