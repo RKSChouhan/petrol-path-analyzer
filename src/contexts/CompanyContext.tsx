@@ -12,6 +12,7 @@ export interface CompanySettings {
   pump_count_diesel: number;
   default_expenses: string[];
   default_debtors: string[];
+  cashier_group_count: number;
 }
 
 interface CompanyContextType {
