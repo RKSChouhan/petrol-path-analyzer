@@ -60,6 +60,7 @@ const defaultFormValues: CompanyForm = {
   dieselPrice: 93.48,
   pumpCountPetrol: 2,
   pumpCountDiesel: 2,
+  cashierGroupCount: 2,
 };
 
 type EditForm = {
