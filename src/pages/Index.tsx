@@ -925,13 +925,16 @@ const Index = () => {
       evening_locker: "Evening Locker"
     };
     
-    (["group1", "group2"] as const).forEach((group) => {
-      const groupLabel = group === "group1" ? "Group 1" : "Group 2";
-      Object.entries(paymentMethods[group]).forEach(([key, value]) => {
-        if (value === 0 && paymentLabels[key]) {
-          empty.push(`Payment ${groupLabel} - ${paymentLabels[key]}`);
-        }
-      });
+    Array.from({ length: cashierGroupCount }, (_, i) => `group${i + 1}`).forEach((group) => {
+      const groupLabel = `Group ${group.replace('group', '')}`;
+      const groupData = paymentMethods[group];
+      if (groupData) {
+        Object.entries(groupData).forEach(([key, value]) => {
+          if (value === 0 && paymentLabels[key]) {
+            empty.push(`Payment ${groupLabel} - ${paymentLabels[key]}`);
+          }
+        });
+      }
     });
     
     // Check cash denominations
