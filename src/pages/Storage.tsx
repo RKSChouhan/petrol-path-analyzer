@@ -343,6 +343,9 @@ const Storage = () => {
           </CardContent>
         </Card>
 
+        {/* Product Stock List - above all other sections */}
+        <StorageProductList companyId={companyId} userRole={userRole} />
+
         {loading ? (
           <div className="flex justify-center py-8">
             <p className="text-muted-foreground">Loading...</p>
