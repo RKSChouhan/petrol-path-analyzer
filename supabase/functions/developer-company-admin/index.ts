@@ -69,7 +69,7 @@ const admin = createClient(
 async function listCompanies() {
   const { data: companies, error: companiesError } = await admin
     .from("companies")
-    .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, created_at")
+    .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, cashier_group_count, logo_url, created_at")
     .order("created_at", { ascending: false });
 
   if (companiesError) throw new Error(companiesError.message);
