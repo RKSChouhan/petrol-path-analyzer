@@ -1120,7 +1120,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
-                {(['diesel1', 'diesel2', 'diesel3', 'diesel4'] as const).reduce((sum, key) => sum + (pumpReadings[key].closing_reading - pumpReadings[key].opening_reading), 0).toFixed(2)}L
+                {Array.from({ length: pumpCountDiesel }, (_, i) => `diesel${i + 1}`).reduce((sum, key) => sum + (pumpReadings[key]?.closing_reading || 0) - (pumpReadings[key]?.opening_reading || 0), 0).toFixed(2)}L
               </div>
               <p className="text-xs text-muted-foreground mt-1">Total diesel sold</p>
             </CardContent>
