@@ -735,42 +735,31 @@ const Index = () => {
       const { error: pumpError } = await supabase.from('pump_readings').insert(pumpData);
       if (pumpError) throw pumpError;
 
-      // Save payment methods (map upi to phone_pay for backward compatibility)
+      // Save payment methods (dynamic groups)
       await supabase.from('payment_methods').delete().eq('daily_sales_id', dailySales.id);
-      const { error: paymentError } = await supabase.from('payment_methods').insert([
-        { 
-          daily_sales_id: dailySales.id, 
-          cashier_group: 'group1', 
-          phone_pay: paymentMethods.group1.upi, 
-          gpay: 0, 
-          bharat_fleet_card: paymentMethods.group1.bharat_fleet_card,
-          fiserv: paymentMethods.group1.fiserv,
-          debit: paymentMethods.group1.gpay,
-          ubi: 0,
-          evening_locker: paymentMethods.group1.evening_locker,
-          cash_on_hand: 0
-        },
-        { 
-          daily_sales_id: dailySales.id, 
-          cashier_group: 'group2', 
-          phone_pay: paymentMethods.group2.upi, 
-          gpay: 0, 
-          bharat_fleet_card: paymentMethods.group2.bharat_fleet_card,
-          fiserv: paymentMethods.group2.fiserv,
-          debit: paymentMethods.group2.phonepay,
-          ubi: 0,
-          evening_locker: paymentMethods.group2.evening_locker,
-          cash_on_hand: 0
-        },
-      ]);
+      const paymentData = Object.entries(paymentMethods).map(([groupKey, group]) => ({
+        daily_sales_id: dailySales.id,
+        cashier_group: groupKey as any,
+        phone_pay: group.upi,
+        gpay: 0,
+        bharat_fleet_card: group.bharat_fleet_card,
+        fiserv: group.fiserv,
+        debit: group.gpay,
+        ubi: 0,
+        evening_locker: group.evening_locker,
+        cash_on_hand: 0,
+      }));
+      const { error: paymentError } = await supabase.from('payment_methods').insert(paymentData);
       if (paymentError) throw paymentError;
 
-      // Save cash denominations
+      // Save cash denominations (dynamic groups)
       await supabase.from('cash_denominations').delete().eq('daily_sales_id', dailySales.id);
-      const { error: cashError } = await supabase.from('cash_denominations').insert([
-        { daily_sales_id: dailySales.id, cashier_group: 'group1', ...cashDenominations.group1 },
-        { daily_sales_id: dailySales.id, cashier_group: 'group2', ...cashDenominations.group2 },
-      ]);
+      const cashData = Object.entries(cashDenominations).map(([groupKey, group]) => ({
+        daily_sales_id: dailySales.id,
+        cashier_group: groupKey as any,
+        ...group,
+      }));
+      const { error: cashError } = await supabase.from('cash_denominations').insert(cashData);
       if (cashError) throw cashError;
 
       // Save oil sales - ensure integer fields are properly typed
