@@ -145,12 +145,13 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
       diesel_price: payload.dieselPrice,
       pump_count_petrol: payload.pumpCountPetrol,
       pump_count_diesel: payload.pumpCountDiesel,
+      cashier_group_count: payload.cashierGroupCount || 2,
       proprietor_password: payload.proprietorPassword,
       supervisor_password: payload.supervisorPassword,
       default_expenses: [],
       default_debtors: [],
     })
-    .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, created_at")
+    .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, cashier_group_count, logo_url, created_at")
     .single();
 
   if (companyError || !company) throw new Error(companyError?.message || "Unable to create company");
