@@ -304,22 +304,21 @@ const Index = () => {
     setPaymentMethods(newPaymentMethods);
     
     // Populate cash denominations
-    const newCashDenominations = {
-      group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-      group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-    };
+    const newCashDenominations = buildDefaultCashDenominations();
     if (existingEntry.cash_denominations) {
       existingEntry.cash_denominations.forEach((cash: any) => {
-        const group = cash.cashier_group === 'group1' ? 'group1' : 'group2';
-        newCashDenominations[group] = {
-          rs_500: cash.rs_500 || 0,
-          rs_200: cash.rs_200 || 0,
-          rs_100: cash.rs_100 || 0,
-          rs_50: cash.rs_50 || 0,
-          rs_20: cash.rs_20 || 0,
-          rs_10: cash.rs_10 || 0,
-          coins: cash.coins || 0,
-        };
+        const group = cash.cashier_group as string;
+        if (newCashDenominations[group]) {
+          newCashDenominations[group] = {
+            rs_500: cash.rs_500 || 0,
+            rs_200: cash.rs_200 || 0,
+            rs_100: cash.rs_100 || 0,
+            rs_50: cash.rs_50 || 0,
+            rs_20: cash.rs_20 || 0,
+            rs_10: cash.rs_10 || 0,
+            coins: cash.coins || 0,
+          };
+        }
       });
     }
     setCashDenominations(newCashDenominations);
