@@ -331,23 +331,15 @@ const Index = () => {
     }
     
     // Populate debtors - ensure fixed rows exist
-    const FIXED_DEBTOR_NAMES = ["Pandian"];
     if (existingEntry.debtors && existingEntry.debtors.length > 0) {
       const loadedDebtors = existingEntry.debtors.map((deb: any) => ({
         name: deb.name || '',
         bill_number: deb.bill_number || '',
         amount: deb.amount || 0,
       }));
-      // Ensure fixed rows are at start with their saved amounts (or 0)
-      const fixedDebtorRows = FIXED_DEBTOR_NAMES.map(fixedName => {
-        const existing = loadedDebtors.find((d: { name: string }) => d.name === fixedName);
-        return existing || { name: fixedName, bill_number: '', amount: 0 };
-      });
-      // Add remaining non-fixed rows
-      const otherDebtorRows = loadedDebtors.filter((d: { name: string }) => !FIXED_DEBTOR_NAMES.includes(d.name));
-      setDebtors([...fixedDebtorRows, ...otherDebtorRows]);
+      setDebtors(loadedDebtors);
     } else {
-      setDebtors([{ name: "Pandian", bill_number: "", amount: 0 }]);
+      setDebtors(defaultDebtors.length > 0 ? defaultDebtors.map(n => ({ name: n, bill_number: "", amount: 0 })) : [{ name: "", bill_number: "", amount: 0 }]);
     }
     
     // Populate repaid debtors
