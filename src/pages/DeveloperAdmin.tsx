@@ -412,6 +412,11 @@ const DeveloperAdmin = () => {
                     <Input id="pumpCountDiesel" type="number" min="1" step="1" value={form.pumpCountDiesel} onChange={(event) => handleFieldChange("pumpCountDiesel", Number(event.target.value))} />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="cashierGroupCount">Cashier groups (Payment & Cash)</Label>
+                    <Input id="cashierGroupCount" type="number" min="1" max="10" step="1" value={form.cashierGroupCount} onChange={(event) => handleFieldChange("cashierGroupCount", Number(event.target.value))} />
+                  </div>
+
                   <div className="md:col-span-2">
                     <Button className="w-full" type="submit" disabled={submitting || loading}>
                       {submitting ? "Creating company..." : "Create company"}

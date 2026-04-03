@@ -646,8 +646,7 @@ const Storage = () => {
               </CardContent>
             </Card>
 
-            {/* Product Stock List */}
-            <StorageProductList companyId={companyId} userRole={userRole} />
+            {/* Action Buttons */}
 
             {/* Action Buttons */}
             <div className="flex justify-center gap-4 pt-4">
