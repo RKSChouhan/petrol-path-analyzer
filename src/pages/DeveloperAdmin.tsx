@@ -266,6 +266,8 @@ const DeveloperAdmin = () => {
       if (editForm.dieselPrice !== editingCompany.diesel_price) payload.dieselPrice = editForm.dieselPrice;
       if (editForm.pumpCountPetrol !== editingCompany.pump_count_petrol) payload.pumpCountPetrol = editForm.pumpCountPetrol;
       if (editForm.pumpCountDiesel !== editingCompany.pump_count_diesel) payload.pumpCountDiesel = editForm.pumpCountDiesel;
+      if (editForm.cashierGroupCount !== (editingCompany.cashier_group_count || 2)) payload.cashierGroupCount = editForm.cashierGroupCount;
+      if (editForm.logoUrl !== (editingCompany.logo_url || "")) payload.logoUrl = editForm.logoUrl;
       if (editForm.proprietorPassword) payload.proprietorPassword = editForm.proprietorPassword;
       if (editForm.supervisorPassword) payload.supervisorPassword = editForm.supervisorPassword;
       if (editForm.ownerPassword) payload.ownerPassword = editForm.ownerPassword;
