@@ -928,7 +928,17 @@ export type Database = {
     }
     Enums: {
       app_role: "Proprietor" | "Supervisor"
-      cashier_group: "group1" | "group2"
+      cashier_group:
+        | "group1"
+        | "group2"
+        | "group3"
+        | "group4"
+        | "group5"
+        | "group6"
+        | "group7"
+        | "group8"
+        | "group9"
+        | "group10"
       pump_type: "petrol" | "diesel"
     }
     CompositeTypes: {
@@ -1058,7 +1068,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["Proprietor", "Supervisor"],
-      cashier_group: ["group1", "group2"],
+      cashier_group: [
+        "group1",
+        "group2",
+        "group3",
+        "group4",
+        "group5",
+        "group6",
+        "group7",
+        "group8",
+        "group9",
+        "group10",
+      ],
       pump_type: ["petrol", "diesel"],
     },
   },
