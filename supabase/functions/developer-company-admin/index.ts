@@ -335,10 +335,12 @@ async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
   if (payload.dieselPrice !== undefined) updates.diesel_price = payload.dieselPrice;
   if (payload.pumpCountPetrol !== undefined) updates.pump_count_petrol = payload.pumpCountPetrol;
   if (payload.pumpCountDiesel !== undefined) updates.pump_count_diesel = payload.pumpCountDiesel;
+  if (payload.cashierGroupCount !== undefined) updates.cashier_group_count = payload.cashierGroupCount;
   if (payload.proprietorPassword !== undefined) updates.proprietor_password = payload.proprietorPassword;
   if (payload.supervisorPassword !== undefined) updates.supervisor_password = payload.supervisorPassword;
   if (payload.contactPhone !== undefined) updates.contact_phone = payload.contactPhone.trim() || null;
   if (payload.companyName !== undefined) updates.name = payload.companyName;
+  if (payload.logoUrl !== undefined) updates.logo_url = payload.logoUrl.trim() || null;
 
   const hasCompanyUpdates = Object.keys(updates).length > 0;
   const hasOwnerPasswordUpdate = !!payload.ownerPassword;
