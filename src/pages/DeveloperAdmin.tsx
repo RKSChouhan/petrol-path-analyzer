@@ -31,6 +31,7 @@ const companySchema = z.object({
   dieselPrice: z.coerce.number().min(0, "Diesel price must be 0 or more"),
   pumpCountPetrol: z.coerce.number().int().min(1).max(20),
   pumpCountDiesel: z.coerce.number().int().min(1).max(20),
+  cashierGroupCount: z.coerce.number().int().min(1).max(10),
 });
 
 type CompanyForm = z.infer<typeof companySchema>;
