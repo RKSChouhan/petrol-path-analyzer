@@ -489,7 +489,7 @@ const DeveloperAdmin = () => {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Delete {company.name}?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This removes company data, daily records, bills, employees, and company-user links. Auth accounts are kept.
+                                      This removes company data, daily records, bills, employees, company-user links, and associated auth accounts.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>

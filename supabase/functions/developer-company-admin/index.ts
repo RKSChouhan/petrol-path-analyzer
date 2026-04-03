@@ -321,10 +321,17 @@ async function deleteCompany(companyId: string) {
     if (orphanedUserIds.length) {
       const { error: deleteRolesError } = await admin.from("user_roles").delete().in("user_id", orphanedUserIds);
       if (deleteRolesError) throw new Error(deleteRolesError.message);
+
+      const { error: deleteProfilesError } = await admin.from("profiles").delete().in("user_id", orphanedUserIds);
+      if (deleteProfilesError) throw new Error(deleteProfilesError.message);
+
+      for (const uid of orphanedUserIds) {
+        await admin.auth.admin.deleteUser(uid);
+      }
     }
   }
 
-  return "Company records removed successfully. Linked auth accounts were kept.";
+  return "Company and linked auth accounts removed successfully.";
 }
 
 async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
