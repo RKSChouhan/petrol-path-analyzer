@@ -1213,8 +1213,8 @@ const Index = () => {
               <DebtorForm items={debtors} onChange={setDebtors} disabled={editDisabled} employees={employees} />
             </div>
             
-            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} />
-            <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} disabled={editDisabled} />
+            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} groupCount={cashierGroupCount} />
+            <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} disabled={editDisabled} groupCount={cashierGroupCount} />
             
             {/* Summary */}
             <div className="space-y-4 pt-6 border-t">
