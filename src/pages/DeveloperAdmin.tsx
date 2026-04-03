@@ -72,9 +72,11 @@ type EditForm = {
   dieselPrice: number;
   pumpCountPetrol: number;
   pumpCountDiesel: number;
+  cashierGroupCount: number;
   proprietorPassword: string;
   supervisorPassword: string;
   ownerPassword: string;
+  logoUrl: string;
 };
 
 const DeveloperAdmin = () => {
