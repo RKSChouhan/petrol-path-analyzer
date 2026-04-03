@@ -1237,40 +1237,27 @@ const Index = () => {
                 <CardContent className="pt-6">
                   {showCashierSplit ? (
                     /* Cashier Split View */
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Cashier 1 Column */}
-                      <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-center border-b pb-2">Cashier 1</h4>
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                          <Label className="text-xs text-blue-600 dark:text-blue-400">Digital Payment</Label>
-                          <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
-                            ₹{calculateCashierDigitalPayments('group1').toLocaleString('en-IN')}
+                    <div className={`grid gap-4 ${cashierGroupCount === 1 ? '' : `grid-cols-${Math.min(cashierGroupCount, 4)}`}`}>
+                      {Array.from({ length: cashierGroupCount }, (_, i) => {
+                        const groupKey = `group${i + 1}`;
+                        return (
+                          <div key={groupKey} className="space-y-4">
+                            <h4 className="text-lg font-semibold text-center border-b pb-2">Cashier {i + 1}</h4>
+                            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <Label className="text-xs text-blue-600 dark:text-blue-400">Digital Payment</Label>
+                              <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
+                                ₹{calculateCashierDigitalPayments(groupKey).toLocaleString('en-IN')}
+                              </div>
+                            </div>
+                            <div className="p-3 bg-card rounded-lg">
+                              <Label className="text-xs text-muted-foreground">Cash Total</Label>
+                              <div className="text-xl font-bold mt-1">
+                                ₹{calculateCashierCashTotal(groupKey).toLocaleString('en-IN')}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="p-3 bg-card rounded-lg">
-                          <Label className="text-xs text-muted-foreground">Cash Total</Label>
-                          <div className="text-xl font-bold mt-1">
-                            ₹{calculateCashierCashTotal('group1').toLocaleString('en-IN')}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Cashier 2 Column */}
-                      <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-center border-b pb-2">Cashier 2</h4>
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                          <Label className="text-xs text-blue-600 dark:text-blue-400">Digital Payment</Label>
-                          <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
-                            ₹{calculateCashierDigitalPayments('group2').toLocaleString('en-IN')}
-                          </div>
-                        </div>
-                        <div className="p-3 bg-card rounded-lg">
-                          <Label className="text-xs text-muted-foreground">Cash Total</Label>
-                          <div className="text-xl font-bold mt-1">
-                            ₹{calculateCashierCashTotal('group2').toLocaleString('en-IN')}
-                          </div>
-                        </div>
-                      </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     /* Combined View (Original) */
