@@ -948,13 +948,16 @@ const Index = () => {
       coins: "Coins"
     };
     
-    (["group1", "group2"] as const).forEach((group) => {
-      const groupLabel = group === "group1" ? "Group 1" : "Group 2";
-      Object.entries(cashDenominations[group]).forEach(([key, value]) => {
-        if (value === 0 && denomLabels[key]) {
-          empty.push(`Cash ${groupLabel} - ${denomLabels[key]}`);
-        }
-      });
+    Array.from({ length: cashierGroupCount }, (_, i) => `group${i + 1}`).forEach((group) => {
+      const groupLabel = `Group ${group.replace('group', '')}`;
+      const groupData = cashDenominations[group];
+      if (groupData) {
+        Object.entries(groupData).forEach(([key, value]) => {
+          if (value === 0 && denomLabels[key]) {
+            empty.push(`Cash ${groupLabel} - ${denomLabels[key]}`);
+          }
+        });
+      }
     });
     
     return empty;
