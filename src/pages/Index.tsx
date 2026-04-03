@@ -1267,13 +1267,12 @@ const Index = () => {
                         <Label className="text-sm text-purple-600 dark:text-purple-400">Sales</Label>
                         <div className="text-2xl font-bold mt-2 text-purple-600 dark:text-purple-400">
                           ₹{(() => {
-                            // Petrol sales
-                            const petrolSales = (['petrol1', 'petrol2', 'petrol3', 'petrol4'] as const).reduce((sum, key) => 
-                              sum + ((pumpReadings[key].closing_reading - pumpReadings[key].opening_reading) * pumpReadings[key].price_per_litre), 0);
-                            // Diesel sales
-                            const dieselSales = (['diesel1', 'diesel2', 'diesel3', 'diesel4'] as const).reduce((sum, key) => 
-                              sum + ((pumpReadings[key].closing_reading - pumpReadings[key].opening_reading) * pumpReadings[key].price_per_litre), 0);
-                            // Oil sales
+                            const petrolKeys = Array.from({ length: pumpCountPetrol }, (_, i) => `petrol${i + 1}`);
+                            const petrolSales = petrolKeys.reduce((sum, key) => 
+                              sum + ((pumpReadings[key]?.closing_reading || 0) - (pumpReadings[key]?.opening_reading || 0)) * (pumpReadings[key]?.price_per_litre || 0), 0);
+                            const dieselKeys = Array.from({ length: pumpCountDiesel }, (_, i) => `diesel${i + 1}`);
+                            const dieselSales = dieselKeys.reduce((sum, key) => 
+                              sum + ((pumpReadings[key]?.closing_reading || 0) - (pumpReadings[key]?.opening_reading || 0)) * (pumpReadings[key]?.price_per_litre || 0), 0);
                             const oilTotal = oilSales.total_amount + oilSales.items.reduce((sum, item) => sum + item.oil_price, 0);
                             return (petrolSales + dieselSales + oilTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 });
                           })()}
