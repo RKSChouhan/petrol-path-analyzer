@@ -44,6 +44,8 @@ type CompanyRecord = {
   diesel_price: number;
   pump_count_petrol: number;
   pump_count_diesel: number;
+  cashier_group_count: number;
+  logo_url: string | null;
   created_at: string;
   linked_users: number;
   primary_email: string | null;
@@ -70,9 +72,11 @@ type EditForm = {
   dieselPrice: number;
   pumpCountPetrol: number;
   pumpCountDiesel: number;
+  cashierGroupCount: number;
   proprietorPassword: string;
   supervisorPassword: string;
   ownerPassword: string;
+  logoUrl: string;
 };
 
 const DeveloperAdmin = () => {
@@ -243,9 +247,11 @@ const DeveloperAdmin = () => {
       dieselPrice: company.diesel_price,
       pumpCountPetrol: company.pump_count_petrol,
       pumpCountDiesel: company.pump_count_diesel,
+      cashierGroupCount: company.cashier_group_count || 2,
       proprietorPassword: "",
       supervisorPassword: "",
       ownerPassword: "",
+      logoUrl: company.logo_url || "",
     });
   };
 
@@ -260,6 +266,8 @@ const DeveloperAdmin = () => {
       if (editForm.dieselPrice !== editingCompany.diesel_price) payload.dieselPrice = editForm.dieselPrice;
       if (editForm.pumpCountPetrol !== editingCompany.pump_count_petrol) payload.pumpCountPetrol = editForm.pumpCountPetrol;
       if (editForm.pumpCountDiesel !== editingCompany.pump_count_diesel) payload.pumpCountDiesel = editForm.pumpCountDiesel;
+      if (editForm.cashierGroupCount !== (editingCompany.cashier_group_count || 2)) payload.cashierGroupCount = editForm.cashierGroupCount;
+      if (editForm.logoUrl !== (editingCompany.logo_url || "")) payload.logoUrl = editForm.logoUrl;
       if (editForm.proprietorPassword) payload.proprietorPassword = editForm.proprietorPassword;
       if (editForm.supervisorPassword) payload.supervisorPassword = editForm.supervisorPassword;
       if (editForm.ownerPassword) payload.ownerPassword = editForm.ownerPassword;
@@ -481,7 +489,7 @@ const DeveloperAdmin = () => {
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Delete {company.name}?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This removes company data, daily records, bills, employees, and company-user links. Auth accounts are kept.
+                                      This removes company data, daily records, bills, employees, company-user links, and associated auth accounts.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -541,6 +549,14 @@ const DeveloperAdmin = () => {
                 <Label>Diesel pumps</Label>
                 <Input type="number" min="1" step="1" value={editForm.pumpCountDiesel} onChange={(e) => setEditForm({ ...editForm, pumpCountDiesel: Number(e.target.value) })} />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Cashier groups</Label>
+              <Input type="number" min="1" max="10" step="1" value={editForm.cashierGroupCount} onChange={(e) => setEditForm({ ...editForm, cashierGroupCount: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Company logo URL</Label>
+              <Input placeholder="Leave blank for default" value={editForm.logoUrl} onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

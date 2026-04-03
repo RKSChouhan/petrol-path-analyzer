@@ -116,6 +116,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          cashier_group_count: number
           contact_phone: string | null
           created_at: string
           default_debtors: Json | null
@@ -132,6 +133,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cashier_group_count?: number
           contact_phone?: string | null
           created_at?: string
           default_debtors?: Json | null
@@ -148,6 +150,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cashier_group_count?: number
           contact_phone?: string | null
           created_at?: string
           default_debtors?: Json | null
@@ -897,6 +900,7 @@ export type Database = {
       get_my_company: {
         Args: never
         Returns: {
+          cashier_group_count: number
           contact_phone: string
           created_at: string
           default_debtors: Json
@@ -928,7 +932,17 @@ export type Database = {
     }
     Enums: {
       app_role: "Proprietor" | "Supervisor"
-      cashier_group: "group1" | "group2"
+      cashier_group:
+        | "group1"
+        | "group2"
+        | "group3"
+        | "group4"
+        | "group5"
+        | "group6"
+        | "group7"
+        | "group8"
+        | "group9"
+        | "group10"
       pump_type: "petrol" | "diesel"
     }
     CompositeTypes: {
@@ -1058,7 +1072,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["Proprietor", "Supervisor"],
-      cashier_group: ["group1", "group2"],
+      cashier_group: [
+        "group1",
+        "group2",
+        "group3",
+        "group4",
+        "group5",
+        "group6",
+        "group7",
+        "group8",
+        "group9",
+        "group10",
+      ],
       pump_type: ["petrol", "diesel"],
     },
   },

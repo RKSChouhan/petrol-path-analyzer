@@ -14,8 +14,8 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { usePresence } from "@/hooks/use-presence";
 import PumpReadingsForm from "@/components/PumpReadingsForm";
-import PaymentMethodsForm from "@/components/PaymentMethodsForm";
-import CashDenominationsForm from "@/components/CashDenominationsForm";
+import PaymentMethodsForm, { PaymentGroupData } from "@/components/PaymentMethodsForm";
+import CashDenominationsForm, { CashData } from "@/components/CashDenominationsForm";
 import OilSalesForm from "@/components/OilSalesForm";
 import EmptyFieldsDialog from "@/components/EmptyFieldsDialog";
 import ExpenseForm from "@/components/ExpenseForm";
@@ -40,8 +40,8 @@ const Index = () => {
   const companyLogo = company?.logo_url || logo;
   const petrolPrice = company?.petrol_price || 101.88;
   const dieselPrice = company?.diesel_price || 93.48;
-  const defaultExpenses = company?.default_expenses || ["Density test", "food & tea", "Drinking water"];
-  const defaultDebtors = company?.default_debtors || ["Pandian"];
+  const defaultExpenses = company?.default_expenses || [];
+  const defaultDebtors = company?.default_debtors || [];
   const [emptyFieldsDialogOpen, setEmptyFieldsDialogOpen] = useState(false);
   const [emptyFields, setEmptyFields] = useState<string[]>([]);
 
@@ -51,6 +51,23 @@ const Index = () => {
   // Form states
   const pumpCountPetrol = company?.pump_count_petrol || 4;
   const pumpCountDiesel = company?.pump_count_diesel || 4;
+  const cashierGroupCount = company?.cashier_group_count || 2;
+
+  const buildDefaultPaymentMethods = (): Record<string, PaymentGroupData> => {
+    const result: Record<string, PaymentGroupData> = {};
+    for (let i = 1; i <= cashierGroupCount; i++) {
+      result[`group${i}`] = { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 };
+    }
+    return result;
+  };
+
+  const buildDefaultCashDenominations = (): Record<string, CashData> => {
+    const result: Record<string, CashData> = {};
+    for (let i = 1; i <= cashierGroupCount; i++) {
+      result[`group${i}`] = { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 };
+    }
+    return result;
+  };
 
   const buildDefaultPumpReadings = () => {
     const readings: Record<string, { opening_reading: number; closing_reading: number; price_per_litre: number }> = {};
@@ -63,12 +80,9 @@ const Index = () => {
 
   const [pumpReadings, setPumpReadings] = useState<Record<string, { opening_reading: number; closing_reading: number; price_per_litre: number }>>(buildDefaultPumpReadings);
 
-  const [paymentMethods, setPaymentMethods] = useState({
-    group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
-    group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
-  });
+  const [paymentMethods, setPaymentMethods] = useState<Record<string, PaymentGroupData>>(buildDefaultPaymentMethods);
 
-  const [cashDenominations, setCashDenominations] = useState({
+  const [cashDenominations, setCashDenominations] = useState<Record<string, CashData>>({
     group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
     group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
   });
@@ -93,12 +107,8 @@ const Index = () => {
   const [showCashTotal, setShowCashTotal] = useState(false);
   const [showSalesAmount, setShowSalesAmount] = useState(false);
   const [showCashierSplit, setShowCashierSplit] = useState(false);
-  const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([
-    { name: "Density test", amount: 0 },
-    { name: "food & tea", amount: 0 },
-    { name: "Drinking water", amount: 0 },
-  ]);
-  const [debtors, setDebtors] = useState<{ name: string; bill_number: string; amount: number }[]>([{ name: "Pandian", bill_number: "", amount: 0 }]);
+  const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
+  const [debtors, setDebtors] = useState<{ name: string; bill_number: string; amount: number }[]>([{ name: "", bill_number: "", amount: 0 }]);
   const [repaidDebtors, setRepaidDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [calculatorPosition, setCalculatorPosition] = useState({ x: window.innerWidth - 240, y: 100 });
@@ -174,14 +184,8 @@ const Index = () => {
 
   const clearFormFields = () => {
     setPumpReadings(buildDefaultPumpReadings());
-    setPaymentMethods({
-      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
-      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
-    });
-    setCashDenominations({
-      group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-      group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-    });
+    setPaymentMethods(buildDefaultPaymentMethods());
+    setCashDenominations(buildDefaultCashDenominations());
     setOilSales({
       items: [{ oil_name: '', oil_count: 0, oil_price: 0 }],
       yesterday_reading: 0,
@@ -221,8 +225,8 @@ const Index = () => {
     // If no data exists, clear the form
     if (!existingEntry) {
       clearFormFields();
-      setExpenses([{ name: "Density test", amount: 0 }, { name: "food & tea", amount: 0 }, { name: "Drinking water", amount: 0 }]);
-      setDebtors([{ name: "Pandian", bill_number: "", amount: 0 }]);
+      setExpenses(defaultExpenses.length > 0 ? defaultExpenses.map(n => ({ name: n, amount: 0 })) : [{ name: "", amount: 0 }]);
+      setDebtors(defaultDebtors.length > 0 ? defaultDebtors.map(n => ({ name: n, bill_number: "", amount: 0 })) : [{ name: "", bill_number: "", amount: 0 }]);
       setRepaidDebtors([{ name: "", amount: 0 }]);
       setComment("");
       setSelectedAttendance([]);
@@ -277,28 +281,17 @@ const Index = () => {
       });
     }
     
-    // Populate payment methods
-    const newPaymentMethods = {
-      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
-      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
-    };
+    // Populate payment methods dynamically
+    const newPaymentMethods = buildDefaultPaymentMethods();
     if (existingEntry.payment_methods) {
       existingEntry.payment_methods.forEach((payment: any) => {
-        const group = payment.cashier_group === 'group1' ? 'group1' : 'group2';
-        if (group === 'group1') {
-          newPaymentMethods.group1 = {
+        const group = payment.cashier_group as string;
+        if (newPaymentMethods[group]) {
+          newPaymentMethods[group] = {
             upi: (payment.phone_pay || 0) + (payment.gpay || 0),
             bharat_fleet_card: payment.bharat_fleet_card || 0,
             fiserv: payment.fiserv || 0,
             gpay: payment.debit || 0,
-            evening_locker: payment.evening_locker || 0,
-          };
-        } else {
-          newPaymentMethods.group2 = {
-            upi: (payment.phone_pay || 0) + (payment.gpay || 0),
-            bharat_fleet_card: payment.bharat_fleet_card || 0,
-            fiserv: payment.fiserv || 0,
-            phonepay: payment.debit || 0,
             evening_locker: payment.evening_locker || 0,
           };
         }
@@ -307,63 +300,46 @@ const Index = () => {
     setPaymentMethods(newPaymentMethods);
     
     // Populate cash denominations
-    const newCashDenominations = {
-      group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-      group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-    };
+    const newCashDenominations = buildDefaultCashDenominations();
     if (existingEntry.cash_denominations) {
       existingEntry.cash_denominations.forEach((cash: any) => {
-        const group = cash.cashier_group === 'group1' ? 'group1' : 'group2';
-        newCashDenominations[group] = {
-          rs_500: cash.rs_500 || 0,
-          rs_200: cash.rs_200 || 0,
-          rs_100: cash.rs_100 || 0,
-          rs_50: cash.rs_50 || 0,
-          rs_20: cash.rs_20 || 0,
-          rs_10: cash.rs_10 || 0,
-          coins: cash.coins || 0,
-        };
+        const group = cash.cashier_group as string;
+        if (newCashDenominations[group]) {
+          newCashDenominations[group] = {
+            rs_500: cash.rs_500 || 0,
+            rs_200: cash.rs_200 || 0,
+            rs_100: cash.rs_100 || 0,
+            rs_50: cash.rs_50 || 0,
+            rs_20: cash.rs_20 || 0,
+            rs_10: cash.rs_10 || 0,
+            coins: cash.coins || 0,
+          };
+        }
       });
     }
     setCashDenominations(newCashDenominations);
     
     // Populate expenses - ensure fixed rows exist
-    const FIXED_EXPENSE_NAMES = ["Density test", "food & tea", "Drinking water"];
     if (existingEntry.expenses && existingEntry.expenses.length > 0) {
       const loadedExpenses = existingEntry.expenses.map((exp: any) => ({
         name: exp.name || '',
         amount: exp.amount || 0,
       }));
-      // Ensure fixed rows are at start with their saved amounts (or 0)
-      const fixedRows = FIXED_EXPENSE_NAMES.map(fixedName => {
-        const existing = loadedExpenses.find((e: { name: string }) => e.name === fixedName);
-        return existing || { name: fixedName, amount: 0 };
-      });
-      // Add remaining non-fixed rows
-      const otherRows = loadedExpenses.filter((e: { name: string }) => !FIXED_EXPENSE_NAMES.includes(e.name));
-      setExpenses([...fixedRows, ...otherRows]);
+      setExpenses(loadedExpenses);
     } else {
-      setExpenses([{ name: "Density test", amount: 0 }, { name: "food & tea", amount: 0 }, { name: "Drinking water", amount: 0 }]);
+      setExpenses(defaultExpenses.length > 0 ? defaultExpenses.map(n => ({ name: n, amount: 0 })) : [{ name: "", amount: 0 }]);
     }
     
     // Populate debtors - ensure fixed rows exist
-    const FIXED_DEBTOR_NAMES = ["Pandian"];
     if (existingEntry.debtors && existingEntry.debtors.length > 0) {
       const loadedDebtors = existingEntry.debtors.map((deb: any) => ({
         name: deb.name || '',
         bill_number: deb.bill_number || '',
         amount: deb.amount || 0,
       }));
-      // Ensure fixed rows are at start with their saved amounts (or 0)
-      const fixedDebtorRows = FIXED_DEBTOR_NAMES.map(fixedName => {
-        const existing = loadedDebtors.find((d: { name: string }) => d.name === fixedName);
-        return existing || { name: fixedName, bill_number: '', amount: 0 };
-      });
-      // Add remaining non-fixed rows
-      const otherDebtorRows = loadedDebtors.filter((d: { name: string }) => !FIXED_DEBTOR_NAMES.includes(d.name));
-      setDebtors([...fixedDebtorRows, ...otherDebtorRows]);
+      setDebtors(loadedDebtors);
     } else {
-      setDebtors([{ name: "Pandian", bill_number: "", amount: 0 }]);
+      setDebtors(defaultDebtors.length > 0 ? defaultDebtors.map(n => ({ name: n, bill_number: "", amount: 0 })) : [{ name: "", bill_number: "", amount: 0 }]);
     }
     
     // Populate repaid debtors
@@ -492,7 +468,7 @@ const Index = () => {
   };
 
   const calculateTotalCashInHand = () => {
-    const calculateGroupTotal = (group: typeof cashDenominations.group1) => {
+    const calculateGroupTotal = (group: CashData) => {
       return (
         group.rs_500 * 500 +
         group.rs_200 * 200 +
@@ -504,28 +480,13 @@ const Index = () => {
       );
     };
     
-    const group1Total = calculateGroupTotal(cashDenominations.group1);
-    const group2Total = calculateGroupTotal(cashDenominations.group2);
-    
-    return group1Total + group2Total;
+    return Object.values(cashDenominations).reduce((sum, group) => sum + calculateGroupTotal(group), 0);
   };
 
   const calculateTotalDigitalPayments = () => {
-    const group1Total = 
-      paymentMethods.group1.upi +
-      paymentMethods.group1.bharat_fleet_card +
-      paymentMethods.group1.fiserv +
-      paymentMethods.group1.gpay +
-      paymentMethods.group1.evening_locker;
-    
-    const group2Total = 
-      paymentMethods.group2.upi +
-      paymentMethods.group2.bharat_fleet_card +
-      paymentMethods.group2.fiserv +
-      paymentMethods.group2.phonepay +
-      paymentMethods.group2.evening_locker;
-    
-    return group1Total + group2Total;
+    return Object.values(paymentMethods).reduce((sum, group) => {
+      return sum + group.upi + group.bharat_fleet_card + group.fiserv + group.gpay + group.evening_locker;
+    }, 0);
   };
 
   const calculateTotalExpenseAmount = () => {
@@ -543,7 +504,6 @@ const Index = () => {
 
   const calculateTotalCashOnHandValue = () => {
     const cashOnHand = calculateRoundedSalesAmount() - calculateTotalDigitalPayments();
-    // Round up to the next ten
     return Math.ceil(cashOnHand / 10) * 10;
   };
 
@@ -552,28 +512,15 @@ const Index = () => {
   };
 
   // Cashier-specific calculations
-  const calculateCashierDigitalPayments = (group: 'group1' | 'group2') => {
-    if (group === 'group1') {
-      return (
-        paymentMethods.group1.upi +
-        paymentMethods.group1.bharat_fleet_card +
-        paymentMethods.group1.fiserv +
-        paymentMethods.group1.gpay +
-        paymentMethods.group1.evening_locker
-      );
-    } else {
-      return (
-        paymentMethods.group2.upi +
-        paymentMethods.group2.bharat_fleet_card +
-        paymentMethods.group2.fiserv +
-        paymentMethods.group2.phonepay +
-        paymentMethods.group2.evening_locker
-      );
-    }
+  const calculateCashierDigitalPayments = (groupKey: string) => {
+    const group = paymentMethods[groupKey];
+    if (!group) return 0;
+    return group.upi + group.bharat_fleet_card + group.fiserv + group.gpay + group.evening_locker;
   };
 
-  const calculateCashierCashTotal = (group: 'group1' | 'group2') => {
-    const denom = cashDenominations[group];
+  const calculateCashierCashTotal = (groupKey: string) => {
+    const denom = cashDenominations[groupKey];
+    if (!denom) return 0;
     return (
       denom.rs_500 * 500 +
       denom.rs_200 * 200 +
@@ -587,14 +534,8 @@ const Index = () => {
 
   const handleClearAll = () => {
     setPumpReadings(buildDefaultPumpReadings());
-    setPaymentMethods({
-      group1: { upi: 0, bharat_fleet_card: 0, fiserv: 0, gpay: 0, evening_locker: 0 },
-      group2: { upi: 0, bharat_fleet_card: 0, fiserv: 0, phonepay: 0, evening_locker: 0 },
-    });
-    setCashDenominations({
-      group1: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-      group2: { rs_500: 0, rs_200: 0, rs_100: 0, rs_50: 0, rs_20: 0, rs_10: 0, coins: 0 },
-    });
+    setPaymentMethods(buildDefaultPaymentMethods());
+    setCashDenominations(buildDefaultCashDenominations());
     setOilSales({
       items: [{ oil_name: '', oil_count: 0, oil_price: 0 }],
       yesterday_reading: 0,
@@ -605,8 +546,8 @@ const Index = () => {
       distilled_water: 0,
       waste: 0,
     });
-    setExpenses([{ name: "Density test", amount: 0 }, { name: "food & tea", amount: 0 }, { name: "Drinking water", amount: 0 }]);
-    setDebtors([{ name: "Pandian", bill_number: "", amount: 0 }]);
+    setExpenses(defaultExpenses.length > 0 ? defaultExpenses.map(n => ({ name: n, amount: 0 })) : [{ name: "", amount: 0 }]);
+    setDebtors(defaultDebtors.length > 0 ? defaultDebtors.map(n => ({ name: n, bill_number: "", amount: 0 })) : [{ name: "", bill_number: "", amount: 0 }]);
     setRepaidDebtors([{ name: "", amount: 0 }]);
     setComment("");
     toast({
@@ -774,42 +715,31 @@ const Index = () => {
       const { error: pumpError } = await supabase.from('pump_readings').insert(pumpData);
       if (pumpError) throw pumpError;
 
-      // Save payment methods (map upi to phone_pay for backward compatibility)
+      // Save payment methods (dynamic groups)
       await supabase.from('payment_methods').delete().eq('daily_sales_id', dailySales.id);
-      const { error: paymentError } = await supabase.from('payment_methods').insert([
-        { 
-          daily_sales_id: dailySales.id, 
-          cashier_group: 'group1', 
-          phone_pay: paymentMethods.group1.upi, 
-          gpay: 0, 
-          bharat_fleet_card: paymentMethods.group1.bharat_fleet_card,
-          fiserv: paymentMethods.group1.fiserv,
-          debit: paymentMethods.group1.gpay,
-          ubi: 0,
-          evening_locker: paymentMethods.group1.evening_locker,
-          cash_on_hand: 0
-        },
-        { 
-          daily_sales_id: dailySales.id, 
-          cashier_group: 'group2', 
-          phone_pay: paymentMethods.group2.upi, 
-          gpay: 0, 
-          bharat_fleet_card: paymentMethods.group2.bharat_fleet_card,
-          fiserv: paymentMethods.group2.fiserv,
-          debit: paymentMethods.group2.phonepay,
-          ubi: 0,
-          evening_locker: paymentMethods.group2.evening_locker,
-          cash_on_hand: 0
-        },
-      ]);
+      const paymentData = Object.entries(paymentMethods).map(([groupKey, group]) => ({
+        daily_sales_id: dailySales.id,
+        cashier_group: groupKey as any,
+        phone_pay: group.upi,
+        gpay: 0,
+        bharat_fleet_card: group.bharat_fleet_card,
+        fiserv: group.fiserv,
+        debit: group.gpay,
+        ubi: 0,
+        evening_locker: group.evening_locker,
+        cash_on_hand: 0,
+      }));
+      const { error: paymentError } = await supabase.from('payment_methods').insert(paymentData);
       if (paymentError) throw paymentError;
 
-      // Save cash denominations
+      // Save cash denominations (dynamic groups)
       await supabase.from('cash_denominations').delete().eq('daily_sales_id', dailySales.id);
-      const { error: cashError } = await supabase.from('cash_denominations').insert([
-        { daily_sales_id: dailySales.id, cashier_group: 'group1', ...cashDenominations.group1 },
-        { daily_sales_id: dailySales.id, cashier_group: 'group2', ...cashDenominations.group2 },
-      ]);
+      const cashData = Object.entries(cashDenominations).map(([groupKey, group]) => ({
+        daily_sales_id: dailySales.id,
+        cashier_group: groupKey as any,
+        ...group,
+      }));
+      const { error: cashError } = await supabase.from('cash_denominations').insert(cashData);
       if (cashError) throw cashError;
 
       // Save oil sales - ensure integer fields are properly typed
@@ -995,13 +925,16 @@ const Index = () => {
       evening_locker: "Evening Locker"
     };
     
-    (["group1", "group2"] as const).forEach((group) => {
-      const groupLabel = group === "group1" ? "Group 1" : "Group 2";
-      Object.entries(paymentMethods[group]).forEach(([key, value]) => {
-        if (value === 0 && paymentLabels[key]) {
-          empty.push(`Payment ${groupLabel} - ${paymentLabels[key]}`);
-        }
-      });
+    Array.from({ length: cashierGroupCount }, (_, i) => `group${i + 1}`).forEach((group) => {
+      const groupLabel = `Group ${group.replace('group', '')}`;
+      const groupData = paymentMethods[group];
+      if (groupData) {
+        Object.entries(groupData).forEach(([key, value]) => {
+          if (value === 0 && paymentLabels[key]) {
+            empty.push(`Payment ${groupLabel} - ${paymentLabels[key]}`);
+          }
+        });
+      }
     });
     
     // Check cash denominations
@@ -1015,13 +948,16 @@ const Index = () => {
       coins: "Coins"
     };
     
-    (["group1", "group2"] as const).forEach((group) => {
-      const groupLabel = group === "group1" ? "Group 1" : "Group 2";
-      Object.entries(cashDenominations[group]).forEach(([key, value]) => {
-        if (value === 0 && denomLabels[key]) {
-          empty.push(`Cash ${groupLabel} - ${denomLabels[key]}`);
-        }
-      });
+    Array.from({ length: cashierGroupCount }, (_, i) => `group${i + 1}`).forEach((group) => {
+      const groupLabel = `Group ${group.replace('group', '')}`;
+      const groupData = cashDenominations[group];
+      if (groupData) {
+        Object.entries(groupData).forEach(([key, value]) => {
+          if (value === 0 && denomLabels[key]) {
+            empty.push(`Cash ${groupLabel} - ${denomLabels[key]}`);
+          }
+        });
+      }
     });
     
     return empty;
@@ -1157,7 +1093,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
-                {(['petrol1', 'petrol2', 'petrol3', 'petrol4'] as const).reduce((sum, key) => sum + (pumpReadings[key].closing_reading - pumpReadings[key].opening_reading), 0).toFixed(2)}L
+                {Array.from({ length: pumpCountPetrol }, (_, i) => `petrol${i + 1}`).reduce((sum, key) => sum + (pumpReadings[key]?.closing_reading || 0) - (pumpReadings[key]?.opening_reading || 0), 0).toFixed(2)}L
               </div>
               <p className="text-xs text-muted-foreground mt-1">Total petrol sold</p>
             </CardContent>
@@ -1170,7 +1106,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-foreground">
-                {(['diesel1', 'diesel2', 'diesel3', 'diesel4'] as const).reduce((sum, key) => sum + (pumpReadings[key].closing_reading - pumpReadings[key].opening_reading), 0).toFixed(2)}L
+                {Array.from({ length: pumpCountDiesel }, (_, i) => `diesel${i + 1}`).reduce((sum, key) => sum + (pumpReadings[key]?.closing_reading || 0) - (pumpReadings[key]?.opening_reading || 0), 0).toFixed(2)}L
               </div>
               <p className="text-xs text-muted-foreground mt-1">Total diesel sold</p>
             </CardContent>
@@ -1263,8 +1199,8 @@ const Index = () => {
               <DebtorForm items={debtors} onChange={setDebtors} disabled={editDisabled} employees={employees} />
             </div>
             
-            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} />
-            <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} disabled={editDisabled} />
+            <PaymentMethodsForm data={paymentMethods} onChange={setPaymentMethods} disabled={editDisabled} groupCount={cashierGroupCount} />
+            <CashDenominationsForm data={cashDenominations} onChange={setCashDenominations} disabled={editDisabled} groupCount={cashierGroupCount} />
             
             {/* Summary */}
             <div className="space-y-4 pt-6 border-t">
@@ -1287,40 +1223,27 @@ const Index = () => {
                 <CardContent className="pt-6">
                   {showCashierSplit ? (
                     /* Cashier Split View */
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Cashier 1 Column */}
-                      <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-center border-b pb-2">Cashier 1</h4>
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                          <Label className="text-xs text-blue-600 dark:text-blue-400">Digital Payment</Label>
-                          <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
-                            ₹{calculateCashierDigitalPayments('group1').toLocaleString('en-IN')}
+                    <div className={`grid gap-4 ${cashierGroupCount === 1 ? '' : `grid-cols-${Math.min(cashierGroupCount, 4)}`}`}>
+                      {Array.from({ length: cashierGroupCount }, (_, i) => {
+                        const groupKey = `group${i + 1}`;
+                        return (
+                          <div key={groupKey} className="space-y-4">
+                            <h4 className="text-lg font-semibold text-center border-b pb-2">Cashier {i + 1}</h4>
+                            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <Label className="text-xs text-blue-600 dark:text-blue-400">Digital Payment</Label>
+                              <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
+                                ₹{calculateCashierDigitalPayments(groupKey).toLocaleString('en-IN')}
+                              </div>
+                            </div>
+                            <div className="p-3 bg-card rounded-lg">
+                              <Label className="text-xs text-muted-foreground">Cash Total</Label>
+                              <div className="text-xl font-bold mt-1">
+                                ₹{calculateCashierCashTotal(groupKey).toLocaleString('en-IN')}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="p-3 bg-card rounded-lg">
-                          <Label className="text-xs text-muted-foreground">Cash Total</Label>
-                          <div className="text-xl font-bold mt-1">
-                            ₹{calculateCashierCashTotal('group1').toLocaleString('en-IN')}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Cashier 2 Column */}
-                      <div className="space-y-4">
-                        <h4 className="text-lg font-semibold text-center border-b pb-2">Cashier 2</h4>
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                          <Label className="text-xs text-blue-600 dark:text-blue-400">Digital Payment</Label>
-                          <div className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-400">
-                            ₹{calculateCashierDigitalPayments('group2').toLocaleString('en-IN')}
-                          </div>
-                        </div>
-                        <div className="p-3 bg-card rounded-lg">
-                          <Label className="text-xs text-muted-foreground">Cash Total</Label>
-                          <div className="text-xl font-bold mt-1">
-                            ₹{calculateCashierCashTotal('group2').toLocaleString('en-IN')}
-                          </div>
-                        </div>
-                      </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     /* Combined View (Original) */
@@ -1330,13 +1253,12 @@ const Index = () => {
                         <Label className="text-sm text-purple-600 dark:text-purple-400">Sales</Label>
                         <div className="text-2xl font-bold mt-2 text-purple-600 dark:text-purple-400">
                           ₹{(() => {
-                            // Petrol sales
-                            const petrolSales = (['petrol1', 'petrol2', 'petrol3', 'petrol4'] as const).reduce((sum, key) => 
-                              sum + ((pumpReadings[key].closing_reading - pumpReadings[key].opening_reading) * pumpReadings[key].price_per_litre), 0);
-                            // Diesel sales
-                            const dieselSales = (['diesel1', 'diesel2', 'diesel3', 'diesel4'] as const).reduce((sum, key) => 
-                              sum + ((pumpReadings[key].closing_reading - pumpReadings[key].opening_reading) * pumpReadings[key].price_per_litre), 0);
-                            // Oil sales
+                            const petrolKeys = Array.from({ length: pumpCountPetrol }, (_, i) => `petrol${i + 1}`);
+                            const petrolSales = petrolKeys.reduce((sum, key) => 
+                              sum + ((pumpReadings[key]?.closing_reading || 0) - (pumpReadings[key]?.opening_reading || 0)) * (pumpReadings[key]?.price_per_litre || 0), 0);
+                            const dieselKeys = Array.from({ length: pumpCountDiesel }, (_, i) => `diesel${i + 1}`);
+                            const dieselSales = dieselKeys.reduce((sum, key) => 
+                              sum + ((pumpReadings[key]?.closing_reading || 0) - (pumpReadings[key]?.opening_reading || 0)) * (pumpReadings[key]?.price_per_litre || 0), 0);
                             const oilTotal = oilSales.total_amount + oilSales.items.reduce((sum, item) => sum + item.oil_price, 0);
                             return (petrolSales + dieselSales + oilTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 });
                           })()}

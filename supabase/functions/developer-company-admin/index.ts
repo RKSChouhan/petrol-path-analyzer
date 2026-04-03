@@ -37,11 +37,13 @@ const updateCompanySchema = baseSchema.extend({
   dieselPrice: z.coerce.number().min(0).max(10000).optional(),
   pumpCountPetrol: z.coerce.number().int().min(1).max(20).optional(),
   pumpCountDiesel: z.coerce.number().int().min(1).max(20).optional(),
+  cashierGroupCount: z.coerce.number().int().min(1).max(10).optional(),
   proprietorPassword: z.string().trim().min(1).max(100).optional(),
   supervisorPassword: z.string().trim().min(1).max(100).optional(),
   contactPhone: z.string().trim().max(40).optional(),
   companyName: z.string().trim().min(2).max(120).optional(),
   ownerPassword: z.string().min(8).max(72).optional(),
+  logoUrl: z.string().trim().max(500).optional(),
 });
 
 const json = (body: unknown, status = 200) =>
@@ -67,7 +69,7 @@ const admin = createClient(
 async function listCompanies() {
   const { data: companies, error: companiesError } = await admin
     .from("companies")
-    .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, created_at")
+    .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, cashier_group_count, logo_url, created_at")
     .order("created_at", { ascending: false });
 
   if (companiesError) throw new Error(companiesError.message);
@@ -143,12 +145,13 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
       diesel_price: payload.dieselPrice,
       pump_count_petrol: payload.pumpCountPetrol,
       pump_count_diesel: payload.pumpCountDiesel,
+      cashier_group_count: payload.cashierGroupCount || 2,
       proprietor_password: payload.proprietorPassword,
       supervisor_password: payload.supervisorPassword,
       default_expenses: [],
       default_debtors: [],
     })
-    .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, created_at")
+    .select("id, name, contact_phone, petrol_price, diesel_price, pump_count_petrol, pump_count_diesel, cashier_group_count, logo_url, created_at")
     .single();
 
   if (companyError || !company) throw new Error(companyError?.message || "Unable to create company");
@@ -318,10 +321,17 @@ async function deleteCompany(companyId: string) {
     if (orphanedUserIds.length) {
       const { error: deleteRolesError } = await admin.from("user_roles").delete().in("user_id", orphanedUserIds);
       if (deleteRolesError) throw new Error(deleteRolesError.message);
+
+      const { error: deleteProfilesError } = await admin.from("profiles").delete().in("user_id", orphanedUserIds);
+      if (deleteProfilesError) throw new Error(deleteProfilesError.message);
+
+      for (const uid of orphanedUserIds) {
+        await admin.auth.admin.deleteUser(uid);
+      }
     }
   }
 
-  return "Company records removed successfully. Linked auth accounts were kept.";
+  return "Company and linked auth accounts removed successfully.";
 }
 
 async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
@@ -332,10 +342,12 @@ async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
   if (payload.dieselPrice !== undefined) updates.diesel_price = payload.dieselPrice;
   if (payload.pumpCountPetrol !== undefined) updates.pump_count_petrol = payload.pumpCountPetrol;
   if (payload.pumpCountDiesel !== undefined) updates.pump_count_diesel = payload.pumpCountDiesel;
+  if (payload.cashierGroupCount !== undefined) updates.cashier_group_count = payload.cashierGroupCount;
   if (payload.proprietorPassword !== undefined) updates.proprietor_password = payload.proprietorPassword;
   if (payload.supervisorPassword !== undefined) updates.supervisor_password = payload.supervisorPassword;
   if (payload.contactPhone !== undefined) updates.contact_phone = payload.contactPhone.trim() || null;
   if (payload.companyName !== undefined) updates.name = payload.companyName;
+  if (payload.logoUrl !== undefined) updates.logo_url = payload.logoUrl.trim() || null;
 
   const hasCompanyUpdates = Object.keys(updates).length > 0;
   const hasOwnerPasswordUpdate = !!payload.ownerPassword;

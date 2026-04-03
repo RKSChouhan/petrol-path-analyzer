@@ -12,6 +12,7 @@ export interface CompanySettings {
   pump_count_diesel: number;
   default_expenses: string[];
   default_debtors: string[];
+  cashier_group_count: number;
 }
 
 interface CompanyContextType {
@@ -64,6 +65,7 @@ export const CompanyProvider = ({ children }: { children: ReactNode }) => {
           pump_count_diesel: c.pump_count_diesel,
           default_expenses: (c.default_expenses as string[]) || [],
           default_debtors: (c.default_debtors as string[]) || [],
+          cashier_group_count: c.cashier_group_count ?? 2,
         });
       } else {
         setCompany(null);
