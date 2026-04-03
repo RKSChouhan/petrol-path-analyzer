@@ -107,12 +107,8 @@ const Index = () => {
   const [showCashTotal, setShowCashTotal] = useState(false);
   const [showSalesAmount, setShowSalesAmount] = useState(false);
   const [showCashierSplit, setShowCashierSplit] = useState(false);
-  const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([
-    { name: "Density test", amount: 0 },
-    { name: "food & tea", amount: 0 },
-    { name: "Drinking water", amount: 0 },
-  ]);
-  const [debtors, setDebtors] = useState<{ name: string; bill_number: string; amount: number }[]>([{ name: "Pandian", bill_number: "", amount: 0 }]);
+  const [expenses, setExpenses] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
+  const [debtors, setDebtors] = useState<{ name: string; bill_number: string; amount: number }[]>([{ name: "", bill_number: "", amount: 0 }]);
   const [repaidDebtors, setRepaidDebtors] = useState<{ name: string; amount: number }[]>([{ name: "", amount: 0 }]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [calculatorPosition, setCalculatorPosition] = useState({ x: window.innerWidth - 240, y: 100 });
