@@ -24,7 +24,10 @@ const companySchema = z.object({
   companyName: z.string().trim().min(2, "Company name is required").max(120),
   ownerEmail: z.string().trim().email("Valid owner email is required").max(255),
   ownerPassword: z.string().min(8, "Owner password must be at least 8 characters").max(72),
+  ownerEmail2: z.string().trim().max(255).optional(),
+  ownerPassword2: z.string().max(72).optional(),
   contactPhone: z.string().trim().max(40).optional(),
+  contactPhone2: z.string().trim().max(40).optional(),
   proprietorPassword: z.string().trim().min(1, "Proprietor password is required").max(100),
   supervisorPassword: z.string().trim().min(1, "Supervisor password is required").max(100),
   petrolPrice: z.coerce.number().min(0, "Petrol price must be 0 or more"),
@@ -32,7 +35,13 @@ const companySchema = z.object({
   pumpCountPetrol: z.coerce.number().int().min(1).max(20),
   pumpCountDiesel: z.coerce.number().int().min(1).max(20),
   cashierGroupCount: z.coerce.number().int().min(1).max(10),
-});
+  logoUrl: z.string().trim().max(500).optional(),
+}).refine((data) => {
+  if (data.ownerEmail2 && data.ownerEmail2.length > 0 && (!data.ownerPassword2 || data.ownerPassword2.length < 8)) {
+    return false;
+  }
+  return true;
+}, { message: "Owner 2 password must be at least 8 characters", path: ["ownerPassword2"] });
 
 type CompanyForm = z.infer<typeof companySchema>;
 
@@ -55,7 +64,10 @@ const defaultFormValues: CompanyForm = {
   companyName: "",
   ownerEmail: "",
   ownerPassword: "",
+  ownerEmail2: "",
+  ownerPassword2: "",
   contactPhone: "",
+  contactPhone2: "",
   proprietorPassword: "",
   supervisorPassword: "",
   petrolPrice: 101.88,
@@ -63,6 +75,7 @@ const defaultFormValues: CompanyForm = {
   pumpCountPetrol: 2,
   pumpCountDiesel: 2,
   cashierGroupCount: 2,
+  logoUrl: "",
 };
 
 type EditForm = {
