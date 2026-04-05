@@ -16,13 +16,18 @@ const createCompanySchema = baseSchema.extend({
   companyName: z.string().trim().min(2).max(120),
   ownerEmail: z.string().trim().email().max(255),
   ownerPassword: z.string().min(8).max(72),
+  ownerEmail2: z.string().trim().email().max(255).optional(),
+  ownerPassword2: z.string().min(8).max(72).optional(),
   contactPhone: z.string().trim().max(40).optional(),
+  contactPhone2: z.string().trim().max(40).optional(),
   proprietorPassword: z.string().trim().min(1).max(100),
   supervisorPassword: z.string().trim().min(1).max(100),
   petrolPrice: z.coerce.number().min(0).max(10000),
   dieselPrice: z.coerce.number().min(0).max(10000),
   pumpCountPetrol: z.coerce.number().int().min(1).max(20),
   pumpCountDiesel: z.coerce.number().int().min(1).max(20),
+  cashierGroupCount: z.coerce.number().int().min(1).max(10).optional(),
+  logoUrl: z.string().trim().max(500).optional(),
 });
 
 const deleteCompanySchema = baseSchema.extend({
@@ -43,6 +48,7 @@ const updateCompanySchema = baseSchema.extend({
   contactPhone: z.string().trim().max(40).optional(),
   companyName: z.string().trim().min(2).max(120).optional(),
   ownerPassword: z.string().min(8).max(72).optional(),
+  ownerPassword2: z.string().min(8).max(72).optional(),
   logoUrl: z.string().trim().max(500).optional(),
 });
 
@@ -54,7 +60,6 @@ const json = (body: unknown, status = 200) =>
 
 class AppError extends Error {
   status: number;
-
   constructor(message: string, status = 400) {
     super(message);
     this.status = status;
@@ -80,7 +85,7 @@ async function listCompanies() {
 
   if (mappingsError) throw new Error(mappingsError.message);
 
-  const userIds = [...new Set((mappings ?? []).map((mapping) => mapping.user_id))];
+  const userIds = [...new Set((mappings ?? []).map((m) => m.user_id))];
 
   const { data: profiles, error: profilesError } = userIds.length
     ? await admin.from("profiles").select("user_id, email").in("user_id", userIds)
@@ -88,13 +93,13 @@ async function listCompanies() {
 
   if (profilesError) throw new Error(profilesError.message);
 
-  const emailByUserId = new Map((profiles ?? []).map((profile) => [profile.user_id, profile.email]));
+  const emailByUserId = new Map((profiles ?? []).map((p) => [p.user_id, p.email]));
   const usersByCompanyId = new Map<string, string[]>();
 
-  for (const mapping of mappings ?? []) {
-    const current = usersByCompanyId.get(mapping.company_id) ?? [];
-    current.push(mapping.user_id);
-    usersByCompanyId.set(mapping.company_id, current);
+  for (const m of mappings ?? []) {
+    const current = usersByCompanyId.get(m.company_id) ?? [];
+    current.push(m.user_id);
+    usersByCompanyId.set(m.company_id, current);
   }
 
   return (companies ?? []).map((company) => {
@@ -103,6 +108,7 @@ async function listCompanies() {
       ...company,
       linked_users: linkedUsers.length,
       primary_email: linkedUsers.length ? emailByUserId.get(linkedUsers[0]) ?? null : null,
+      secondary_email: linkedUsers.length > 1 ? emailByUserId.get(linkedUsers[1]) ?? null : null,
     };
   });
 }
@@ -110,31 +116,51 @@ async function listCompanies() {
 async function findUserIdByEmail(email: string) {
   let page = 1;
   const perPage = 200;
-
   while (true) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
     if (error) throw new Error(error.message);
-
-    const match = data.users.find((user) => user.email?.toLowerCase() === email);
+    const match = data.users.find((u) => u.email?.toLowerCase() === email);
     if (match) return match.id;
-
     if (!data.nextPage) break;
     page = data.nextPage;
   }
-
   return null;
+}
+
+async function resolveOrCreateOwner(email: string, password: string): Promise<{ userId: string; created: boolean }> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("user_id")
+    .ilike("email", normalizedEmail)
+    .maybeSingle();
+
+  if (existingProfile?.user_id) {
+    return { userId: existingProfile.user_id, created: false };
+  }
+
+  const { data: ownerResult, error: ownerError } = await admin.auth.admin.createUser({
+    email: normalizedEmail,
+    password,
+    email_confirm: true,
+  });
+
+  if (ownerError || !ownerResult.user) {
+    const isExisting = ownerError?.message?.toLowerCase().includes("already been registered") ?? false;
+    if (isExisting) {
+      const uid = await findUserIdByEmail(normalizedEmail);
+      if (uid) return { userId: uid, created: false };
+    }
+    throw new AppError(ownerError?.message || "Unable to create owner account");
+  }
+
+  return { userId: ownerResult.user.id, created: true };
 }
 
 async function createCompany(payload: z.infer<typeof createCompanySchema>) {
   const normalizedOwnerEmail = payload.ownerEmail.trim().toLowerCase();
-
-  const { data: existingProfile, error: existingProfileError } = await admin
-    .from("profiles")
-    .select("user_id")
-    .ilike("email", normalizedOwnerEmail)
-    .maybeSingle();
-
-  if (existingProfileError) throw new Error(existingProfileError.message);
+  const normalizedOwnerEmail2 = payload.ownerEmail2?.trim().toLowerCase() || null;
 
   const { data: company, error: companyError } = await admin
     .from("companies")
@@ -148,6 +174,7 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
       cashier_group_count: payload.cashierGroupCount || 2,
       proprietor_password: payload.proprietorPassword,
       supervisor_password: payload.supervisorPassword,
+      logo_url: payload.logoUrl?.trim() || null,
       default_expenses: [],
       default_debtors: [],
     })
@@ -156,100 +183,57 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
 
   if (companyError || !company) throw new Error(companyError?.message || "Unable to create company");
 
-  let ownerId = existingProfile?.user_id ?? null;
-  let createdOwnerAccount = false;
-
-  if (!ownerId) {
-    const { data: ownerResult, error: ownerError } = await admin.auth.admin.createUser({
-      email: normalizedOwnerEmail,
-      password: payload.ownerPassword,
-      email_confirm: true,
-    });
-
-    if (ownerError || !ownerResult.user) {
-      const isExistingEmail = ownerError?.message?.toLowerCase().includes("already been registered") ?? false;
-
-      if (isExistingEmail) {
-        ownerId = await findUserIdByEmail(normalizedOwnerEmail);
-      }
-
-      if (!ownerId) {
-        await admin.from("companies").delete().eq("id", company.id);
-        const ownerMessage = isExistingEmail
-          ? "Owner email already exists but profile lookup failed. Please try again or use a different owner email."
-          : ownerError?.message || "Unable to create owner account";
-        throw new AppError(ownerMessage, ownerError?.status ?? 400);
-      }
-    } else {
-      ownerId = ownerResult.user.id;
-      createdOwnerAccount = true;
-    }
-  }
-
-  if (!ownerId) {
-    await admin.from("companies").delete().eq("id", company.id);
-    throw new AppError("Unable to resolve owner account", 500);
-  }
+  const createdUserIds: string[] = [];
 
   const cleanup = async () => {
-    await admin.from("user_roles").delete().eq("user_id", ownerId);
-    await admin.from("user_companies").delete().eq("user_id", ownerId).eq("company_id", company.id);
+    for (const uid of createdUserIds) {
+      await admin.from("user_roles").delete().eq("user_id", uid);
+      await admin.from("user_companies").delete().eq("user_id", uid).eq("company_id", company.id);
+      await admin.from("profiles").delete().eq("user_id", uid);
+      await admin.auth.admin.deleteUser(uid);
+    }
     await admin.from("lock_settings").delete().eq("company_id", company.id);
     await admin.from("companies").delete().eq("id", company.id);
+  };
 
-    if (createdOwnerAccount) {
-      await admin.from("profiles").delete().eq("user_id", ownerId);
-      await admin.auth.admin.deleteUser(ownerId);
+  try {
+    // Owner 1
+    const owner1 = await resolveOrCreateOwner(normalizedOwnerEmail, payload.ownerPassword);
+    if (owner1.created) createdUserIds.push(owner1.userId);
+
+    await admin.from("profiles").upsert({ user_id: owner1.userId, email: normalizedOwnerEmail }, { onConflict: "user_id" });
+    await admin.from("user_companies").insert({ user_id: owner1.userId, company_id: company.id });
+    await admin.from("user_roles").upsert({ user_id: owner1.userId, role: "Proprietor" }, { onConflict: "user_id,role" });
+
+    // Owner 2 (optional)
+    let owner2Email: string | null = null;
+    if (normalizedOwnerEmail2 && payload.ownerPassword2) {
+      const owner2 = await resolveOrCreateOwner(normalizedOwnerEmail2, payload.ownerPassword2);
+      if (owner2.created) createdUserIds.push(owner2.userId);
+
+      await admin.from("profiles").upsert({ user_id: owner2.userId, email: normalizedOwnerEmail2 }, { onConflict: "user_id" });
+      await admin.from("user_companies").insert({ user_id: owner2.userId, company_id: company.id });
+      await admin.from("user_roles").upsert({ user_id: owner2.userId, role: "Proprietor" }, { onConflict: "user_id,role" });
+      owner2Email = normalizedOwnerEmail2;
     }
-  };
 
-  const { error: profileError } = await admin.from("profiles").upsert({
-    user_id: ownerId,
-    email: normalizedOwnerEmail,
-  }, { onConflict: "user_id" });
+    await admin.from("lock_settings").insert({
+      company_id: company.id,
+      proprietor_locked: false,
+      supervisor_locked: false,
+      updated_by: owner1.userId,
+    });
 
-  if (profileError) {
+    return {
+      ...company,
+      linked_users: owner2Email ? 2 : 1,
+      primary_email: normalizedOwnerEmail,
+      secondary_email: owner2Email,
+    };
+  } catch (err) {
     await cleanup();
-    throw new Error(profileError.message);
+    throw err;
   }
-
-  const { error: mappingError } = await admin.from("user_companies").insert({
-    user_id: ownerId,
-    company_id: company.id,
-  });
-
-  if (mappingError) {
-    await cleanup();
-    throw new Error(mappingError.message);
-  }
-
-  const { error: roleError } = await admin.from("user_roles").upsert({
-    user_id: ownerId,
-    role: "Proprietor",
-  }, { onConflict: "user_id,role" });
-
-  if (roleError) {
-    await cleanup();
-    throw new Error(roleError.message);
-  }
-
-  const { error: lockError } = await admin.from("lock_settings").insert({
-    company_id: company.id,
-    proprietor_locked: false,
-    supervisor_locked: false,
-    updated_by: ownerId,
-  });
-
-  if (lockError) {
-    await cleanup();
-    throw new Error(lockError.message);
-  }
-
-  return {
-    ...company,
-    linked_users: 1,
-    primary_email: normalizedOwnerEmail,
-  };
 }
 
 async function deleteByCompanyId(table: string, companyId: string) {
@@ -278,7 +262,7 @@ async function deleteCompany(companyId: string) {
 
   if (dailySalesError) throw new Error(dailySalesError.message);
 
-  const dailySalesIds = (dailySales ?? []).map((entry) => entry.id);
+  const dailySalesIds = (dailySales ?? []).map((e) => e.id);
 
   await deleteByDailySalesIds("daily_attendance", dailySalesIds);
   await deleteByDailySalesIds("pump_readings", dailySalesIds);
@@ -290,6 +274,7 @@ async function deleteCompany(companyId: string) {
   await deleteByDailySalesIds("repaid_debtors", dailySalesIds);
 
   await deleteByCompanyId("storage_readings", companyId);
+  await deleteByCompanyId("storage_products", companyId);
   await deleteByCompanyId("fiserv_bills", companyId);
   await deleteByCompanyId("bharat_fleet_bills", companyId);
   await deleteByCompanyId("debtor_ledger", companyId);
@@ -299,7 +284,7 @@ async function deleteCompany(companyId: string) {
   const { error: deleteSalesError } = await admin.from("daily_sales").delete().eq("company_id", companyId);
   if (deleteSalesError) throw new Error(deleteSalesError.message);
 
-  const userIds = [...new Set((linkedUsers ?? []).map((user) => user.user_id))];
+  const userIds = [...new Set((linkedUsers ?? []).map((u) => u.user_id))];
 
   const { error: deleteMappingsError } = await admin.from("user_companies").delete().eq("company_id", companyId);
   if (deleteMappingsError) throw new Error(deleteMappingsError.message);
@@ -315,8 +300,8 @@ async function deleteCompany(companyId: string) {
 
     if (remainingMappingsError) throw new Error(remainingMappingsError.message);
 
-    const remainingUserIds = new Set((remainingMappings ?? []).map((row) => row.user_id));
-    const orphanedUserIds = userIds.filter((userId) => !remainingUserIds.has(userId));
+    const remainingUserIds = new Set((remainingMappings ?? []).map((r) => r.user_id));
+    const orphanedUserIds = userIds.filter((uid) => !remainingUserIds.has(uid));
 
     if (orphanedUserIds.length) {
       const { error: deleteRolesError } = await admin.from("user_roles").delete().in("user_id", orphanedUserIds);
@@ -335,8 +320,6 @@ async function deleteCompany(companyId: string) {
 }
 
 async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
-  console.log("updateCompany called, companyId:", payload.companyId);
-  
   const updates: Record<string, unknown> = {};
   if (payload.petrolPrice !== undefined) updates.petrol_price = payload.petrolPrice;
   if (payload.dieselPrice !== undefined) updates.diesel_price = payload.dieselPrice;
@@ -351,49 +334,42 @@ async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
 
   const hasCompanyUpdates = Object.keys(updates).length > 0;
   const hasOwnerPasswordUpdate = !!payload.ownerPassword;
+  const hasOwner2PasswordUpdate = !!payload.ownerPassword2;
 
-  if (!hasCompanyUpdates && !hasOwnerPasswordUpdate) {
+  if (!hasCompanyUpdates && !hasOwnerPasswordUpdate && !hasOwner2PasswordUpdate) {
     throw new AppError("No fields to update", 400);
   }
 
   if (hasCompanyUpdates) {
-    console.log("Updating company fields:", Object.keys(updates));
-    const { error } = await admin
-      .from("companies")
-      .update(updates)
-      .eq("id", payload.companyId);
-    if (error) {
-      console.error("Company update error:", error.message);
-      throw new Error(error.message);
-    }
+    const { error } = await admin.from("companies").update(updates).eq("id", payload.companyId);
+    if (error) throw new Error(error.message);
   }
 
-  if (hasOwnerPasswordUpdate) {
-    console.log("Updating owner password for company:", payload.companyId);
+  // Get all linked users for password updates
+  if (hasOwnerPasswordUpdate || hasOwner2PasswordUpdate) {
     const { data: mappings, error: mappingsError } = await admin
       .from("user_companies")
       .select("user_id")
       .eq("company_id", payload.companyId);
-    if (mappingsError) {
-      console.error("Mapping lookup error:", mappingsError.message);
-      throw new Error(mappingsError.message);
-    }
+    if (mappingsError) throw new Error(mappingsError.message);
 
     if (!mappings || mappings.length === 0) {
-      console.error("No owner found for company:", payload.companyId);
-      throw new AppError("No owner found for this company", 404);
+      throw new AppError("No owners found for this company", 404);
     }
 
-    const ownerId = mappings[0].user_id;
-    console.log("Found owner:", ownerId, "updating password...");
-    const { data: updatedUser, error: pwError } = await admin.auth.admin.updateUserById(ownerId, {
-      password: payload.ownerPassword,
-    });
-    if (pwError) {
-      console.error("Password update error:", pwError.message);
-      throw new AppError(pwError.message, 400);
+    if (hasOwnerPasswordUpdate && mappings[0]) {
+      const { error: pwError } = await admin.auth.admin.updateUserById(mappings[0].user_id, {
+        password: payload.ownerPassword,
+      });
+      if (pwError) throw new AppError(pwError.message, 400);
     }
-    console.log("Password updated successfully for user:", updatedUser?.user?.id);
+
+    if (hasOwner2PasswordUpdate && mappings[1]) {
+      const { error: pwError } = await admin.auth.admin.updateUserById(mappings[1].user_id, {
+        password: payload.ownerPassword2,
+      });
+      if (pwError) throw new AppError(pwError.message, 400);
+    }
   }
 
   return "Company updated successfully";
@@ -427,7 +403,6 @@ Deno.serve(async (req) => {
       if (!parsedCreate.success) {
         return json({ error: parsedCreate.error.issues[0]?.message ?? "Invalid company details" }, 400);
       }
-
       const company = await createCompany(parsedCreate.data);
       return json({ company }, 201);
     }
@@ -437,7 +412,6 @@ Deno.serve(async (req) => {
       if (!parsedUpdate.success) {
         return json({ error: parsedUpdate.error.issues[0]?.message ?? "Invalid update details" }, 400);
       }
-
       const message = await updateCompany(parsedUpdate.data);
       return json({ message });
     }

@@ -24,7 +24,10 @@ const companySchema = z.object({
   companyName: z.string().trim().min(2, "Company name is required").max(120),
   ownerEmail: z.string().trim().email("Valid owner email is required").max(255),
   ownerPassword: z.string().min(8, "Owner password must be at least 8 characters").max(72),
+  ownerEmail2: z.string().trim().max(255).optional(),
+  ownerPassword2: z.string().max(72).optional(),
   contactPhone: z.string().trim().max(40).optional(),
+  contactPhone2: z.string().trim().max(40).optional(),
   proprietorPassword: z.string().trim().min(1, "Proprietor password is required").max(100),
   supervisorPassword: z.string().trim().min(1, "Supervisor password is required").max(100),
   petrolPrice: z.coerce.number().min(0, "Petrol price must be 0 or more"),
@@ -32,7 +35,13 @@ const companySchema = z.object({
   pumpCountPetrol: z.coerce.number().int().min(1).max(20),
   pumpCountDiesel: z.coerce.number().int().min(1).max(20),
   cashierGroupCount: z.coerce.number().int().min(1).max(10),
-});
+  logoUrl: z.string().trim().max(500).optional(),
+}).refine((data) => {
+  if (data.ownerEmail2 && data.ownerEmail2.length > 0 && (!data.ownerPassword2 || data.ownerPassword2.length < 8)) {
+    return false;
+  }
+  return true;
+}, { message: "Owner 2 password must be at least 8 characters", path: ["ownerPassword2"] });
 
 type CompanyForm = z.infer<typeof companySchema>;
 
@@ -49,13 +58,17 @@ type CompanyRecord = {
   created_at: string;
   linked_users: number;
   primary_email: string | null;
+  secondary_email: string | null;
 };
 
 const defaultFormValues: CompanyForm = {
   companyName: "",
   ownerEmail: "",
   ownerPassword: "",
+  ownerEmail2: "",
+  ownerPassword2: "",
   contactPhone: "",
+  contactPhone2: "",
   proprietorPassword: "",
   supervisorPassword: "",
   petrolPrice: 101.88,
@@ -63,6 +76,7 @@ const defaultFormValues: CompanyForm = {
   pumpCountPetrol: 2,
   pumpCountDiesel: 2,
   cashierGroupCount: 2,
+  logoUrl: "",
 };
 
 type EditForm = {
@@ -76,6 +90,7 @@ type EditForm = {
   proprietorPassword: string;
   supervisorPassword: string;
   ownerPassword: string;
+  ownerPassword2: string;
   logoUrl: string;
 };
 
@@ -91,14 +106,12 @@ const DeveloperAdmin = () => {
   const [editingCompany, setEditingCompany] = useState<CompanyRecord | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
 
-  // Only allow access if navigated from login page via the logo tap flow
   useEffect(() => {
     const hasAccess = sessionStorage.getItem("developerAccess");
     if (!hasAccess) {
       navigate("/login", { replace: true });
       return;
     }
-    // Clear the flag on refresh (reload clears it naturally since we check on mount)
     const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
     if (navEntries.length > 0 && navEntries[0].type === "reload") {
       sessionStorage.removeItem("developerAccess");
@@ -111,11 +124,7 @@ const DeveloperAdmin = () => {
 
   const invokeAdmin = async <T,>(action: string, payload?: Record<string, unknown>): Promise<T> => {
     const { data, error } = await supabase.functions.invoke("developer-company-admin", {
-      body: {
-        action,
-        password,
-        ...payload,
-      },
+      body: { action, password, ...payload },
     });
 
     if (error) {
@@ -146,32 +155,21 @@ const DeveloperAdmin = () => {
       setUnlocked(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to load companies";
-      toast({
-        title: "Access denied",
-        description: message,
-        variant: "destructive",
-      });
+      toast({ title: "Access denied", description: message, variant: "destructive" });
       setUnlocked(false);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    document.title = "Developer Admin";
-  }, []);
+  useEffect(() => { document.title = "Developer Admin"; }, []);
 
   const handleUnlock = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!password.trim()) {
-      toast({
-        title: "Password required",
-        description: "Enter the developer password to continue.",
-        variant: "destructive",
-      });
+      toast({ title: "Password required", description: "Enter the developer password to continue.", variant: "destructive" });
       return;
     }
-
     await loadCompanies();
   };
 
@@ -184,21 +182,14 @@ const DeveloperAdmin = () => {
     const parsed = companySchema.safeParse(form);
 
     if (!parsed.success) {
-      toast({
-        title: "Check the form",
-        description: parsed.error.issues[0]?.message ?? "Please review the company details.",
-        variant: "destructive",
-      });
+      toast({ title: "Check the form", description: parsed.error.issues[0]?.message ?? "Please review the company details.", variant: "destructive" });
       return;
     }
 
     setSubmitting(true);
     try {
       await invokeAdmin<{ company: CompanyRecord }>("createCompany", parsed.data);
-      toast({
-        title: "Company created",
-        description: "The company and owner account were created successfully.",
-      });
+      toast({ title: "Company created", description: "The company and owner account(s) were created successfully." });
       setForm({
         ...defaultFormValues,
         petrolPrice: parsed.data.petrolPrice,
@@ -208,11 +199,7 @@ const DeveloperAdmin = () => {
       });
       await loadCompanies();
     } catch (error) {
-      toast({
-        title: "Create failed",
-        description: error instanceof Error ? error.message : "Unable to create company.",
-        variant: "destructive",
-      });
+      toast({ title: "Create failed", description: error instanceof Error ? error.message : "Unable to create company.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -222,17 +209,10 @@ const DeveloperAdmin = () => {
     setSubmitting(true);
     try {
       const response = await invokeAdmin<{ message: string }>("deleteCompany", { companyId });
-      toast({
-        title: "Company deleted",
-        description: response.message,
-      });
+      toast({ title: "Company deleted", description: response.message });
       await loadCompanies();
     } catch (error) {
-      toast({
-        title: "Delete failed",
-        description: error instanceof Error ? error.message : "Unable to delete company.",
-        variant: "destructive",
-      });
+      toast({ title: "Delete failed", description: error instanceof Error ? error.message : "Unable to delete company.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -251,6 +231,7 @@ const DeveloperAdmin = () => {
       proprietorPassword: "",
       supervisorPassword: "",
       ownerPassword: "",
+      ownerPassword2: "",
       logoUrl: company.logo_url || "",
     });
   };
@@ -271,6 +252,7 @@ const DeveloperAdmin = () => {
       if (editForm.proprietorPassword) payload.proprietorPassword = editForm.proprietorPassword;
       if (editForm.supervisorPassword) payload.supervisorPassword = editForm.supervisorPassword;
       if (editForm.ownerPassword) payload.ownerPassword = editForm.ownerPassword;
+      if (editForm.ownerPassword2) payload.ownerPassword2 = editForm.ownerPassword2;
 
       if (Object.keys(payload).length <= 1) {
         toast({ title: "No changes", description: "Nothing was modified." });
@@ -283,11 +265,7 @@ const DeveloperAdmin = () => {
       setEditForm(null);
       await loadCompanies();
     } catch (error) {
-      toast({
-        title: "Update failed",
-        description: error instanceof Error ? error.message : "Unable to update company.",
-        variant: "destructive",
-      });
+      toast({ title: "Update failed", description: error instanceof Error ? error.message : "Unable to update company.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -365,7 +343,7 @@ const DeveloperAdmin = () => {
                   Add new company
                 </CardTitle>
                 <CardDescription>
-                  This creates the company, owner login, company mapping, proprietor role, and lock settings.
+                  This creates the company, owner login(s), company mapping, proprietor role, and lock settings.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -375,51 +353,77 @@ const DeveloperAdmin = () => {
                     <Input id="companyName" value={form.companyName} onChange={(event) => handleFieldChange("companyName", event.target.value)} />
                   </div>
 
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="logoUrl">Company logo URL (optional)</Label>
+                    <Input id="logoUrl" placeholder="https://example.com/logo.png" value={form.logoUrl ?? ""} onChange={(event) => handleFieldChange("logoUrl", event.target.value)} />
+                    <p className="text-xs text-muted-foreground">Paste a direct image URL. You can upload an image to any free image hosting service (e.g. imgbb.com, postimages.org) and paste the direct link here.</p>
+                  </div>
+
+                  {/* Owner 1 */}
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium text-foreground mb-2">Owner 1 (required)</p>
+                  </div>
                   <div className="space-y-2">
-                    <Label htmlFor="ownerEmail">Owner email</Label>
+                    <Label htmlFor="ownerEmail">Email</Label>
                     <Input id="ownerEmail" type="email" value={form.ownerEmail} onChange={(event) => handleFieldChange("ownerEmail", event.target.value)} />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="ownerPassword">Owner login password</Label>
+                    <Label htmlFor="ownerPassword">Login password</Label>
                     <Input id="ownerPassword" type="password" value={form.ownerPassword} onChange={(event) => handleFieldChange("ownerPassword", event.target.value)} />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contactPhone">Contact phone (optional)</Label>
+                    <Input id="contactPhone" value={form.contactPhone ?? ""} onChange={(event) => handleFieldChange("contactPhone", event.target.value)} />
+                  </div>
 
+                  {/* Owner 2 */}
+                  <div className="md:col-span-2 mt-2">
+                    <p className="text-sm font-medium text-foreground mb-2">Owner 2 (optional)</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ownerEmail2">Email</Label>
+                    <Input id="ownerEmail2" type="email" placeholder="Optional" value={form.ownerEmail2 ?? ""} onChange={(event) => handleFieldChange("ownerEmail2", event.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ownerPassword2">Login password</Label>
+                    <Input id="ownerPassword2" type="password" placeholder="Optional" value={form.ownerPassword2 ?? ""} onChange={(event) => handleFieldChange("ownerPassword2", event.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contactPhone2">Contact phone (optional)</Label>
+                    <Input id="contactPhone2" value={form.contactPhone2 ?? ""} onChange={(event) => handleFieldChange("contactPhone2", event.target.value)} />
+                  </div>
+
+                  <div className="md:col-span-2 mt-2">
+                    <p className="text-sm font-medium text-foreground mb-2">Role Passwords</p>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="proprietorPassword">Proprietor role password</Label>
                     <Input id="proprietorPassword" value={form.proprietorPassword} onChange={(event) => handleFieldChange("proprietorPassword", event.target.value)} />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="supervisorPassword">Supervisor role password</Label>
                     <Input id="supervisorPassword" value={form.supervisorPassword} onChange={(event) => handleFieldChange("supervisorPassword", event.target.value)} />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="contactPhone">Contact phone</Label>
-                    <Input id="contactPhone" value={form.contactPhone ?? ""} onChange={(event) => handleFieldChange("contactPhone", event.target.value)} />
+                  <div className="md:col-span-2 mt-2">
+                    <p className="text-sm font-medium text-foreground mb-2">Station Settings</p>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="petrolPrice">Petrol price</Label>
                     <Input id="petrolPrice" type="number" min="0" step="0.01" value={form.petrolPrice} onChange={(event) => handleFieldChange("petrolPrice", Number(event.target.value))} />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="dieselPrice">Diesel price</Label>
                     <Input id="dieselPrice" type="number" min="0" step="0.01" value={form.dieselPrice} onChange={(event) => handleFieldChange("dieselPrice", Number(event.target.value))} />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="pumpCountPetrol">Petrol pumps</Label>
                     <Input id="pumpCountPetrol" type="number" min="1" step="1" value={form.pumpCountPetrol} onChange={(event) => handleFieldChange("pumpCountPetrol", Number(event.target.value))} />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="pumpCountDiesel">Diesel pumps</Label>
                     <Input id="pumpCountDiesel" type="number" min="1" step="1" value={form.pumpCountDiesel} onChange={(event) => handleFieldChange("pumpCountDiesel", Number(event.target.value))} />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="cashierGroupCount">Cashier groups (Payment & Cash)</Label>
                     <Input id="cashierGroupCount" type="number" min="1" max="10" step="1" value={form.cashierGroupCount} onChange={(event) => handleFieldChange("cashierGroupCount", Number(event.target.value))} />
@@ -441,7 +445,7 @@ const DeveloperAdmin = () => {
                   Existing companies
                 </CardTitle>
                 <CardDescription>
-                  Deleting a company removes its operational records and company links, but leaves auth accounts intact.
+                  Deleting a company removes all data and associated auth accounts.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -454,7 +458,7 @@ const DeveloperAdmin = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Company</TableHead>
-                        <TableHead>Owner</TableHead>
+                        <TableHead>Owners</TableHead>
                         <TableHead>Users</TableHead>
                         <TableHead>Fuel</TableHead>
                         <TableHead className="w-[100px] text-right">Action</TableHead>
@@ -469,7 +473,10 @@ const DeveloperAdmin = () => {
                               <div className="text-xs text-muted-foreground">{company.contact_phone || "No contact"}</div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{company.primary_email || "—"}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            <div>{company.primary_email || "—"}</div>
+                            {company.secondary_email && <div className="text-xs">{company.secondary_email}</div>}
+                          </TableCell>
                           <TableCell>{company.linked_users}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             P {company.petrol_price} / D {company.diesel_price}
@@ -557,6 +564,7 @@ const DeveloperAdmin = () => {
             <div className="space-y-2">
               <Label>Company logo URL</Label>
               <Input placeholder="Leave blank for default" value={editForm.logoUrl} onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Upload image to imgbb.com or postimages.org and paste the direct link.</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -568,9 +576,15 @@ const DeveloperAdmin = () => {
                 <Input placeholder="Leave blank to keep" value={editForm.supervisorPassword} onChange={(e) => setEditForm({ ...editForm, supervisorPassword: e.target.value })} />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Owner login password</Label>
-              <Input type="password" placeholder="Leave blank to keep" value={editForm.ownerPassword} onChange={(e) => setEditForm({ ...editForm, ownerPassword: e.target.value })} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Owner 1 login password</Label>
+                <Input type="password" placeholder="Leave blank to keep" value={editForm.ownerPassword} onChange={(e) => setEditForm({ ...editForm, ownerPassword: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Owner 2 login password</Label>
+                <Input type="password" placeholder="Leave blank to keep" value={editForm.ownerPassword2} onChange={(e) => setEditForm({ ...editForm, ownerPassword2: e.target.value })} />
+              </div>
             </div>
           </div>
         )}
