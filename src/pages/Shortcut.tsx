@@ -127,7 +127,7 @@ const Shortcut = () => {
             <div className="flex items-center gap-3">
               <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Shortcut</h1>
+                <h1 className="text-2xl font-bold text-foreground">{companyName}</h1>
                 <p className="text-sm text-muted-foreground">Quick navigation hub</p>
               </div>
             </div>
