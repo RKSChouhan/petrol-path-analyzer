@@ -45,20 +45,6 @@ const companySchema = z.object({
 
 type CompanyForm = z.infer<typeof companySchema>;
 
-type CompanyRecord = {
-  id: string;
-  name: string;
-  contact_phone: string | null;
-  petrol_price: number;
-  diesel_price: number;
-  pump_count_petrol: number;
-  pump_count_diesel: number;
-  cashier_group_count: number;
-  logo_url: string | null;
-  created_at: string;
-  linked_users: number;
-  primary_email: string | null;
-};
 
 const defaultFormValues: CompanyForm = {
   companyName: "",
