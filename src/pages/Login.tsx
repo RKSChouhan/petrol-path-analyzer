@@ -158,7 +158,7 @@ const Login = () => {
         <div className="w-full max-w-md space-y-6">
           <div className="text-center">
             <div className="flex justify-center mb-3">
-              <img src={companyLogo} alt={companyName} className="h-20 sm:h-24 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-20 sm:h-24 w-auto object-contain" referrerPolicy="no-referrer" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Select Your Role</h1>
             <p className="text-sm text-muted-foreground mt-1 truncate px-4">{authUser.email}</p>
