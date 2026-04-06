@@ -992,7 +992,7 @@ const Index = () => {
             {/* First row: Logo, Entry buttons, Date, Stat, Logout */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
+                <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" referrerPolicy="no-referrer" />
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">Daily tree</h1>
                   <p className="text-sm text-muted-foreground">Digital Sales Tracking System</p>

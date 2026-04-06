@@ -30,7 +30,7 @@ interface AttendanceBoxProps {
 }
 
 const SHIFT_OPTIONS = ["Full", "Day", "Night"];
-const JOB_OPTIONS = ["Supervisor", "Cashier", "Pump Operator", "Scavenger", "Air boy"];
+const JOB_OPTIONS = ["Supervisor", "Cashier", "Pump Operator", "Scavenger", "Air boy", "Office Assistance"];
 
 const AttendanceBox = ({ userId, dailySalesId, disabled, selectedAttendance, onAttendanceChange }: AttendanceBoxProps) => {
   const { toast } = useToast();
