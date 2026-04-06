@@ -157,7 +157,7 @@ const Trends = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" referrerPolicy="no-referrer" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Trends</h1>
                 <p className="text-sm text-muted-foreground">Sales & Expense Trends</p>

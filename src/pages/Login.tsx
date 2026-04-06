@@ -265,7 +265,7 @@ const Login = () => {
               className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Open developer access confirmation"
             >
-              <img src={companyLogo} alt={companyName} className="h-24 sm:h-28 w-auto object-contain" />
+              <img src={companyLogo} alt={companyName} className="h-24 sm:h-28 w-auto object-contain" referrerPolicy="no-referrer" />
             </button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{companyName}</h1>
