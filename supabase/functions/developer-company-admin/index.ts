@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const IMG_BB_PAGE_HOSTS = new Set(["ibb.co", "www.ibb.co", "imgbb.com", "www.imgbb.com"]);
+
 const baseSchema = z.object({
   password: z.string().min(1),
   action: z.enum(["listCompanies", "createCompany", "deleteCompany", "updateCompany"]),
@@ -70,6 +72,68 @@ const admin = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
+
+const getHostname = (value: string) => {
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+};
+
+const isImgBbPageUrl = (value: string) => {
+  const hostname = getHostname(value);
+  return hostname ? IMG_BB_PAGE_HOSTS.has(hostname) : false;
+};
+
+const extractMetaImageUrl = (html: string) => {
+  const patterns = [
+    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+    /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match?.[1]) {
+      return match[1].replace(/&amp;/g, "&");
+    }
+  }
+
+  return null;
+};
+
+async function normalizeLogoUrl(value?: string) {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) {
+    return null;
+  }
+
+  if (!isImgBbPageUrl(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  try {
+    const response = await fetch(trimmedValue, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (compatible; LovableLogoResolver/1.0)",
+        accept: "text/html,application/xhtml+xml",
+      },
+      redirect: "follow",
+    });
+
+    if (!response.ok) {
+      return trimmedValue;
+    }
+
+    const html = await response.text();
+    return extractMetaImageUrl(html) || trimmedValue;
+  } catch {
+    return trimmedValue;
+  }
+}
 
 async function listCompanies() {
   const { data: companies, error: companiesError } = await admin
@@ -161,6 +225,7 @@ async function resolveOrCreateOwner(email: string, password: string): Promise<{ 
 async function createCompany(payload: z.infer<typeof createCompanySchema>) {
   const normalizedOwnerEmail = payload.ownerEmail.trim().toLowerCase();
   const normalizedOwnerEmail2 = payload.ownerEmail2?.trim().toLowerCase() || null;
+  const normalizedLogoUrl = await normalizeLogoUrl(payload.logoUrl);
 
   const { data: company, error: companyError } = await admin
     .from("companies")
@@ -174,7 +239,7 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
       cashier_group_count: payload.cashierGroupCount || 2,
       proprietor_password: payload.proprietorPassword,
       supervisor_password: payload.supervisorPassword,
-      logo_url: payload.logoUrl?.trim() || null,
+      logo_url: normalizedLogoUrl,
       default_expenses: [],
       default_debtors: [],
     })
@@ -197,7 +262,6 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
   };
 
   try {
-    // Owner 1
     const owner1 = await resolveOrCreateOwner(normalizedOwnerEmail, payload.ownerPassword);
     if (owner1.created) createdUserIds.push(owner1.userId);
 
@@ -205,7 +269,6 @@ async function createCompany(payload: z.infer<typeof createCompanySchema>) {
     await admin.from("user_companies").insert({ user_id: owner1.userId, company_id: company.id });
     await admin.from("user_roles").upsert({ user_id: owner1.userId, role: "Proprietor" }, { onConflict: "user_id,role" });
 
-    // Owner 2 (optional)
     let owner2Email: string | null = null;
     if (normalizedOwnerEmail2 && payload.ownerPassword2) {
       const owner2 = await resolveOrCreateOwner(normalizedOwnerEmail2, payload.ownerPassword2);
@@ -330,7 +393,7 @@ async function updateCompany(payload: z.infer<typeof updateCompanySchema>) {
   if (payload.supervisorPassword !== undefined) updates.supervisor_password = payload.supervisorPassword;
   if (payload.contactPhone !== undefined) updates.contact_phone = payload.contactPhone.trim() || null;
   if (payload.companyName !== undefined) updates.name = payload.companyName;
-  if (payload.logoUrl !== undefined) updates.logo_url = payload.logoUrl.trim() || null;
+  if (payload.logoUrl !== undefined) updates.logo_url = await normalizeLogoUrl(payload.logoUrl);
 
   const hasCompanyUpdates = Object.keys(updates).length > 0;
   const hasOwnerPasswordUpdate = !!payload.ownerPassword;
