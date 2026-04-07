@@ -355,8 +355,8 @@ const DeveloperAdmin = () => {
 
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="logoUrl">Company logo URL (optional)</Label>
-                    <Input id="logoUrl" placeholder="https://example.com/logo.png" value={form.logoUrl ?? ""} onChange={(event) => handleFieldChange("logoUrl", event.target.value)} />
-                    <p className="text-xs text-muted-foreground">Paste a direct image URL. You can upload an image to any free image hosting service (e.g. imgbb.com, postimages.org) and paste the direct link here.</p>
+                    <Input id="logoUrl" placeholder="https://example.com/logo.png or https://ibb.co/..." value={form.logoUrl ?? ""} onChange={(event) => handleFieldChange("logoUrl", event.target.value)} />
+                    <p className="text-xs text-muted-foreground">Paste a direct image URL or an imgBB share link. imgBB links like https://ibb.co/... are now converted automatically.</p>
                   </div>
 
                   {/* Owner 1 */}
@@ -563,8 +563,8 @@ const DeveloperAdmin = () => {
             </div>
             <div className="space-y-2">
               <Label>Company logo URL</Label>
-              <Input placeholder="Leave blank for default" value={editForm.logoUrl} onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })} />
-              <p className="text-xs text-muted-foreground">Upload image to imgbb.com or postimages.org and paste the direct link.</p>
+              <Input placeholder="Direct image URL or https://ibb.co/..." value={editForm.logoUrl} onChange={(e) => setEditForm({ ...editForm, logoUrl: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Direct image links and imgBB share links are both supported.</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

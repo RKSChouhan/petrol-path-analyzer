@@ -22,6 +22,18 @@ interface CompanyContextType {
   refetch: () => Promise<void>;
 }
 
+const IMG_BB_PAGE_HOSTS = new Set(['ibb.co', 'www.ibb.co', 'imgbb.com', 'www.imgbb.com']);
+
+const isImgBbPageUrl = (value: string | null | undefined) => {
+  if (!value) return false;
+
+  try {
+    return IMG_BB_PAGE_HOSTS.has(new URL(value).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+};
+
 const CompanyContext = createContext<CompanyContextType>({
   companyId: null,
   company: null,
@@ -34,6 +46,28 @@ export const useCompany = () => useContext(CompanyContext);
 export const CompanyProvider = ({ children }: { children: ReactNode }) => {
   const [company, setCompany] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const resolveLogoUrl = async (logoUrl: string | null) => {
+    if (!isImgBbPageUrl(logoUrl)) {
+      return logoUrl;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('resolve-logo-url', {
+        body: { url: logoUrl },
+      });
+
+      if (error) {
+        console.warn('Error resolving imgBB logo URL:', error);
+        return logoUrl;
+      }
+
+      return typeof data?.url === 'string' && data.url.length > 0 ? data.url : logoUrl;
+    } catch (err) {
+      console.warn('Error resolving imgBB logo URL:', err);
+      return logoUrl;
+    }
+  };
 
   const fetchCompany = async () => {
     try {
@@ -54,10 +88,12 @@ export const CompanyProvider = ({ children }: { children: ReactNode }) => {
 
       if (data && Array.isArray(data) && data.length > 0) {
         const c = data[0];
+        const resolvedLogoUrl = await resolveLogoUrl(c.logo_url);
+
         setCompany({
           id: c.id,
           name: c.name,
-          logo_url: c.logo_url,
+          logo_url: resolvedLogoUrl,
           contact_phone: c.contact_phone,
           petrol_price: Number(c.petrol_price),
           diesel_price: Number(c.diesel_price),
