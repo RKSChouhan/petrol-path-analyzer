@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, LogOut, Users, Calculator as CalcIcon, RotateCcw } from "lucide-react";
+import { LayoutGrid, LogOut, Users, Calculator as CalcIcon, RotateCcw, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import Calculator from "@/components/Calculator";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +11,7 @@ import { useCompany } from "@/contexts/CompanyContext";
 import SalesCharts from "@/components/SalesCharts";
 import DebtorLedger from "@/components/DebtorLedger";
 import { usePresence } from "@/hooks/use-presence";
+import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
 const Stat = () => {
