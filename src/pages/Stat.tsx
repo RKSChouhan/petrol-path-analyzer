@@ -138,6 +138,45 @@ const Stat = () => {
     navigate("/shortcut");
   };
 
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+
+  const handleResetAllData = async () => {
+    if (!companyId || resetConfirmText !== "RESET") return;
+    setIsResetting(true);
+    try {
+      // 1. Get all daily_sales ids
+      const { data: sales } = await supabase.from("daily_sales").select("id").eq("company_id", companyId);
+      const dsIds = (sales ?? []).map(s => s.id);
+
+      if (dsIds.length) {
+        // Delete child tables of daily_sales
+        for (const table of ["daily_attendance", "pump_readings", "oil_sales", "payment_methods", "cash_denominations", "expenses", "debtors", "repaid_debtors"] as const) {
+          await supabase.from(table).delete().in("daily_sales_id", dsIds);
+        }
+        // Delete daily_sales
+        await supabase.from("daily_sales").delete().eq("company_id", companyId);
+      }
+
+      // 2. Delete company-level tables
+      for (const table of ["storage_readings", "storage_products", "fiserv_bills", "bharat_fleet_bills", "debtor_ledger", "employees"] as const) {
+        await supabase.from(table).delete().eq("company_id", companyId);
+      }
+
+      toast.success("All company data has been reset successfully");
+      setResetDialogOpen(false);
+      setResetConfirmText("");
+      setSalesData([]);
+      fetchSalesData();
+    } catch (err: any) {
+      console.error("Reset error:", err);
+      toast.error(err.message || "Failed to reset data");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
