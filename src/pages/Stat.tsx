@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, LogOut, Users, Calculator as CalcIcon, RotateCcw } from "lucide-react";
+import { LayoutGrid, LogOut, Users, Calculator as CalcIcon, RotateCcw, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import Calculator from "@/components/Calculator";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +11,7 @@ import { useCompany } from "@/contexts/CompanyContext";
 import SalesCharts from "@/components/SalesCharts";
 import DebtorLedger from "@/components/DebtorLedger";
 import { usePresence } from "@/hooks/use-presence";
+import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 
 const Stat = () => {
@@ -135,6 +138,45 @@ const Stat = () => {
     navigate("/shortcut");
   };
 
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+
+  const handleResetAllData = async () => {
+    if (!companyId || resetConfirmText !== "RESET") return;
+    setIsResetting(true);
+    try {
+      // 1. Get all daily_sales ids
+      const { data: sales } = await supabase.from("daily_sales").select("id").eq("company_id", companyId);
+      const dsIds = (sales ?? []).map(s => s.id);
+
+      if (dsIds.length) {
+        // Delete child tables of daily_sales
+        for (const table of ["daily_attendance", "pump_readings", "oil_sales", "payment_methods", "cash_denominations", "expenses", "debtors", "repaid_debtors"] as const) {
+          await supabase.from(table).delete().in("daily_sales_id", dsIds);
+        }
+        // Delete daily_sales
+        await supabase.from("daily_sales").delete().eq("company_id", companyId);
+      }
+
+      // 2. Delete company-level tables
+      for (const table of ["storage_readings", "storage_products", "fiserv_bills", "bharat_fleet_bills", "debtor_ledger", "employees"] as const) {
+        await supabase.from(table).delete().eq("company_id", companyId);
+      }
+
+      toast.success("All company data has been reset successfully");
+      setResetDialogOpen(false);
+      setResetConfirmText("");
+      setSalesData([]);
+      fetchSalesData();
+    } catch (err: any) {
+      console.error("Reset error:", err);
+      toast.error(err.message || "Failed to reset data");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card shadow-sm">
@@ -177,10 +219,52 @@ const Stat = () => {
                   <div className="text-3xl font-bold text-primary">{onlineUsers}</div>
                   <p className="text-xs text-muted-foreground mt-1">Currently active</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={fetchSalesData} className="h-8">
-                  <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                  Refresh
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" size="sm" onClick={fetchSalesData} className="h-8">
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                    Refresh
+                  </Button>
+                  {userRole === "Proprietor" && (
+                    <AlertDialog open={resetDialogOpen} onOpenChange={(open) => { setResetDialogOpen(open); if (!open) setResetConfirmText(""); }}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="h-8">
+                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          Reset
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Reset All Company Data?</AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-2">
+                            <span className="block">This will permanently delete <strong>ALL</strong> data for this company including:</span>
+                            <span className="block text-sm">• Daily sales entries & pump readings</span>
+                            <span className="block text-sm">• Attendance, expenses, debtors</span>
+                            <span className="block text-sm">• Storage readings & products</span>
+                            <span className="block text-sm">• Fiserv & Bharat Fleet bills</span>
+                            <span className="block text-sm">• Employees & debtor ledger</span>
+                            <span className="block mt-3 font-semibold text-destructive">Type "RESET" to confirm:</span>
+                          </AlertDialogDescription>
+                          <Input
+                            value={resetConfirmText}
+                            onChange={(e) => setResetConfirmText(e.target.value)}
+                            placeholder='Type "RESET" here'
+                            className="mt-2"
+                          />
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleResetAllData}
+                            disabled={resetConfirmText !== "RESET" || isResetting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {isResetting ? "Resetting..." : "Reset All Data"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
