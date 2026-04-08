@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StorageData {
@@ -280,35 +282,42 @@ const Storage = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-6">
-        {/* Calendar - Inline single line at top */}
+        {/* Calendar - Compact popover style like Daily Tree */}
         <Card className="shadow-[var(--shadow-card)]">
           <CardContent className="py-4">
             <div className="flex flex-wrap items-center gap-4 justify-between">
               <div className="flex items-center gap-3">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => date && setSelectedDate(date)}
-                  className={cn("rounded-md border")}
-                  modifiers={{
-                    saved: (date) => savedDates.includes(format(date, 'yyyy-MM-dd'))
-                  }}
-                  modifiersClassNames={{
-                    saved: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
-                  }}
-                />
+                <div className="flex items-center gap-2 px-3 py-1 border-2 border-primary rounded-md bg-primary/10">
+                  <span className="text-sm font-bold text-primary">{format(selectedDate, "EEEE")}</span>
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(selectedDate, "PPP")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                      modifiers={{
+                        saved: (date) => savedDates.includes(format(date, 'yyyy-MM-dd'))
+                      }}
+                      modifiersClassNames={{
+                        saved: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {savedDates.includes(format(selectedDate, 'yyyy-MM-dd')) && (
+                  <span className="text-xs text-green-600 dark:text-green-400">✓ Saved</span>
+                )}
               </div>
-              <div className="text-right flex-1 space-y-2">
-                <p className="text-xl font-bold text-primary">
-                  {format(selectedDate, "EEEE, dd MMMM yyyy")}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {savedDates.includes(format(selectedDate, 'yyyy-MM-dd')) ? (
-                    <span className="text-green-600 dark:text-green-400">✓ Data saved for this date</span>
-                  ) : (
-                    <span>No data saved for this date</span>
-                  )}
-                </p>
+              <div className="flex items-center gap-3">
                 <StorageOCRUpload
                   onDataExtracted={(extracted) => {
                     setData(prev => ({

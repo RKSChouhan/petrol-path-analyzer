@@ -142,31 +142,6 @@ const Shortcut = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Alert Section */}
-        {hasAlerts && (
-          <Card className="mb-6 border-red-400 bg-red-50 dark:bg-red-900/20 dark:border-red-700">
-            <CardContent className="py-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-red-800 dark:text-red-300">Today's Incomplete Tasks</h3>
-                  <ul className="mt-2 space-y-1 text-sm text-red-700 dark:text-red-400">
-                    {alerts.dailyTree && (
-                      <li>• Daily Tree entry not saved for today</li>
-                    )}
-                    {alerts.storage && (
-                      <li>• Storage data not saved for today</li>
-                    )}
-                    {alerts.fiservBills && (
-                      <li>• Fiserv Bills not saved for today</li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-3 max-w-4xl mx-auto">
           {shortcuts.map((shortcut) => (
             <Card 
@@ -191,6 +166,35 @@ const Shortcut = () => {
           ))}
         </div>
       </main>
+
+      {/* Floating bottom banner for incomplete tasks */}
+      {hasAlerts && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-red-600 dark:bg-red-800 text-white shadow-lg">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center gap-3 overflow-x-auto">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 animate-pulse" />
+              <span className="font-semibold flex-shrink-0">Pending:</span>
+              <div className="flex items-center gap-4 text-sm">
+                {alerts.dailyTree && (
+                  <span className="flex items-center gap-1 cursor-pointer hover:underline flex-shrink-0" onClick={() => navigate("/")}>
+                    • Daily Tree
+                  </span>
+                )}
+                {alerts.storage && (
+                  <span className="flex items-center gap-1 cursor-pointer hover:underline flex-shrink-0" onClick={() => navigate("/storage")}>
+                    • Storage
+                  </span>
+                )}
+                {alerts.fiservBills && (
+                  <span className="flex items-center gap-1 cursor-pointer hover:underline flex-shrink-0" onClick={() => navigate("/fiserv-bills")}>
+                    • Fiserv Bills
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

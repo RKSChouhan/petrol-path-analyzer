@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, LogOut, Users, Calculator as CalcIcon } from "lucide-react";
+import { LayoutGrid, LogOut, Users, Calculator as CalcIcon, RotateCcw } from "lucide-react";
 import Calculator from "@/components/Calculator";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -172,8 +172,16 @@ const Stat = () => {
               <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">{onlineUsers}</div>
-              <p className="text-xs text-muted-foreground mt-1">Currently active</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-primary">{onlineUsers}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Currently active</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={fetchSalesData} className="h-8">
+                  <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                  Refresh
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
