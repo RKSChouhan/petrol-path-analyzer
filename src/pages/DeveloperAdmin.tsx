@@ -59,6 +59,8 @@ type CompanyRecord = {
   linked_users: number;
   primary_email: string | null;
   secondary_email: string | null;
+  proprietor_password: string;
+  supervisor_password: string;
 };
 
 const defaultFormValues: CompanyForm = {
@@ -569,11 +571,11 @@ const DeveloperAdmin = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Proprietor password</Label>
-                <Input placeholder="Leave blank to keep" value={editForm.proprietorPassword} onChange={(e) => setEditForm({ ...editForm, proprietorPassword: e.target.value })} />
+                <Input placeholder={editingCompany?.proprietor_password || "Leave blank to keep"} value={editForm.proprietorPassword} onChange={(e) => setEditForm({ ...editForm, proprietorPassword: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Supervisor password</Label>
-                <Input placeholder="Leave blank to keep" value={editForm.supervisorPassword} onChange={(e) => setEditForm({ ...editForm, supervisorPassword: e.target.value })} />
+                <Input placeholder={editingCompany?.supervisor_password || "Leave blank to keep"} value={editForm.supervisorPassword} onChange={(e) => setEditForm({ ...editForm, supervisorPassword: e.target.value })} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
