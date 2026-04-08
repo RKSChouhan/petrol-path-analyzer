@@ -219,10 +219,52 @@ const Stat = () => {
                   <div className="text-3xl font-bold text-primary">{onlineUsers}</div>
                   <p className="text-xs text-muted-foreground mt-1">Currently active</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={fetchSalesData} className="h-8">
-                  <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                  Refresh
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" size="sm" onClick={fetchSalesData} className="h-8">
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                    Refresh
+                  </Button>
+                  {userRole === "Proprietor" && (
+                    <AlertDialog open={resetDialogOpen} onOpenChange={(open) => { setResetDialogOpen(open); if (!open) setResetConfirmText(""); }}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="h-8">
+                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          Reset
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Reset All Company Data?</AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-2">
+                            <span className="block">This will permanently delete <strong>ALL</strong> data for this company including:</span>
+                            <span className="block text-sm">• Daily sales entries & pump readings</span>
+                            <span className="block text-sm">• Attendance, expenses, debtors</span>
+                            <span className="block text-sm">• Storage readings & products</span>
+                            <span className="block text-sm">• Fiserv & Bharat Fleet bills</span>
+                            <span className="block text-sm">• Employees & debtor ledger</span>
+                            <span className="block mt-3 font-semibold text-destructive">Type "RESET" to confirm:</span>
+                          </AlertDialogDescription>
+                          <Input
+                            value={resetConfirmText}
+                            onChange={(e) => setResetConfirmText(e.target.value)}
+                            placeholder='Type "RESET" here'
+                            className="mt-2"
+                          />
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleResetAllData}
+                            disabled={resetConfirmText !== "RESET" || isResetting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {isResetting ? "Resetting..." : "Reset All Data"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
