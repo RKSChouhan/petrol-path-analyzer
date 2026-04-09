@@ -114,30 +114,14 @@ const DebtorForm = ({ items, onChange, disabled = false, employees = [] }: Debto
                   />
                 ) : employees.length > 0 ? (
                   item.name === 'OTHER_MANUAL' || (item.name && !employees.find(emp => formatName(emp.name) === item.name) && item.name !== '') ? (
-                    <div className="flex gap-1">
-                      <Input
-                        type="text"
-                        value={item.name === 'OTHER_MANUAL' ? '' : item.name}
-                        onChange={(e) => handleChange(index, "name", e.target.value)}
-                        placeholder="Enter debtor name"
-                        className="h-9 flex-1"
-                        disabled={disabled}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 shrink-0"
-                        onClick={() => {
-                          const newItems = [...items];
-                          newItems[index].name = '';
-                          onChange(newItems);
-                        }}
-                        disabled={disabled}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Input
+                      type="text"
+                      value={item.name === 'OTHER_MANUAL' ? '' : item.name}
+                      onChange={(e) => handleChange(index, "name", e.target.value)}
+                      placeholder="Enter debtor name"
+                      className="h-9"
+                      disabled={disabled}
+                    />
                   ) : (
                     <Select
                       value={item.name}
