@@ -243,6 +243,7 @@ const Login = () => {
             </DialogHeader>
             <div className="flex flex-col items-center gap-4 py-4">
               <p className="text-lg font-medium text-foreground">{contactPhone || "Contact the owner"}</p>
+              <a href="mailto:rkschouhan2012@gmail.com" className="text-base text-primary hover:underline break-all">rkschouhan2012@gmail.com</a>
               <Button onClick={() => setShowForgetDialog(false)} className="w-full h-12">
                 Back
               </Button>
@@ -362,6 +363,7 @@ const Login = () => {
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
             <p className="text-lg font-medium text-foreground">{contactPhone || "Contact the owner"}</p>
+            <a href="mailto:rkschouhan2012@gmail.com" className="text-base text-primary hover:underline break-all">rkschouhan2012@gmail.com</a>
             <Button onClick={() => setShowForgetDialog(false)} className="w-full h-12">
               Back
             </Button>
