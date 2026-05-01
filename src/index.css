@@ -12,108 +12,122 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ============================================
+   RETRO COMIC BOOK DESIGN SYSTEM
+   Bold outlines, halftones, pop-art colors
+   ============================================ */
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 215 25% 15%;
+    /* Comic paper background (cream/off-white) */
+    --background: 45 50% 96%;
+    --foreground: 0 0% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 0 0% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 0 0% 8%;
 
-    --primary: 210 65% 35%;
+    /* Bold pop-art blue */
+    --primary: 220 90% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 215 25% 15%;
+    /* Comic yellow */
+    --secondary: 50 100% 60%;
+    --secondary-foreground: 0 0% 8%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 45 30% 90%;
+    --muted-foreground: 0 0% 30%;
 
-    --accent: 25 95% 53%;
+    /* Hot comic red */
+    --accent: 0 85% 55%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 85% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 210 65% 35%;
+    /* Black borders everywhere */
+    --border: 0 0% 8%;
+    --input: 0 0% 8%;
+    --ring: 220 90% 50%;
 
-    --chart-1: 210 65% 45%;
-    --chart-2: 25 95% 53%;
-    --chart-3: 142 76% 36%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 82% 52%;
+    --chart-1: 220 90% 50%;
+    --chart-2: 50 100% 55%;
+    --chart-3: 0 85% 55%;
+    --chart-4: 142 70% 45%;
+    --chart-5: 280 75% 55%;
 
-    --radius: 0.75rem;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(210 65% 35%), hsl(210 75% 45%));
-    --gradient-accent: linear-gradient(135deg, hsl(25 95% 53%), hsl(35 95% 58%));
-    --shadow-card: 0 4px 24px -4px hsl(210 65% 35% / 0.08);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Comic-specific tokens */
+    --comic-black: 0 0% 8%;
+    --comic-yellow: 50 100% 60%;
+    --comic-red: 0 85% 55%;
+    --comic-blue: 220 90% 50%;
+    --comic-pink: 330 85% 65%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --shadow-comic: 4px 4px 0 0 hsl(var(--comic-black));
+    --shadow-comic-sm: 2px 2px 0 0 hsl(var(--comic-black));
+    --shadow-comic-lg: 6px 6px 0 0 hsl(var(--comic-black));
+    --shadow-card: 4px 4px 0 0 hsl(var(--comic-black));
 
-    --sidebar-primary: 240 5.9% 10%;
+    --gradient-primary: linear-gradient(135deg, hsl(220 90% 50%), hsl(220 90% 60%));
+    --gradient-accent: linear-gradient(135deg, hsl(0 85% 55%), hsl(15 90% 60%));
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 45 50% 96%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 220 90% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 50 100% 60%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 8%;
+    --sidebar-ring: 220 90% 50%;
   }
 
   .dark {
-    --background: 215 30% 8%;
-    --foreground: 210 40% 98%;
+    --background: 230 30% 10%;
+    --foreground: 45 50% 96%;
 
-    --card: 215 28% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 230 25% 14%;
+    --card-foreground: 45 50% 96%;
 
-    --popover: 215 28% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 230 25% 14%;
+    --popover-foreground: 45 50% 96%;
 
-    --primary: 210 75% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 50 100% 60%;
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 215 25% 16%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 90% 55%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 25% 16%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 230 20% 20%;
+    --muted-foreground: 45 30% 75%;
 
-    --accent: 25 95% 53%;
+    --accent: 0 85% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 20%;
-    --input: 215 25% 20%;
-    --ring: 210 75% 55%;
-    
-    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.25);
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 45 50% 96%;
+    --input: 45 50% 96%;
+    --ring: 50 100% 60%;
+
+    --shadow-comic: 4px 4px 0 0 hsl(45 50% 96%);
+    --shadow-comic-sm: 2px 2px 0 0 hsl(45 50% 96%);
+    --shadow-comic-lg: 6px 6px 0 0 hsl(45 50% 96%);
+    --shadow-card: 4px 4px 0 0 hsl(45 50% 96%);
+
+    --sidebar-background: 230 30% 10%;
+    --sidebar-foreground: 45 50% 96%;
+    --sidebar-primary: 50 100% 60%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 220 90% 55%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 45 50% 96%;
+    --sidebar-ring: 50 100% 60%;
   }
 }
 
@@ -124,6 +138,76 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive, system-ui;
+    font-weight: 700;
+    /* Halftone dot background */
+    background-image:
+      radial-gradient(circle, hsl(var(--foreground) / 0.06) 1px, transparent 1.5px);
+    background-size: 18px 18px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Bangers', 'Impact', sans-serif;
+    letter-spacing: 0.04em;
+    font-weight: 400;
+  }
+}
+
+@layer components {
+  /* Comic card: thick black border + hard-offset shadow */
+  .comic-border {
+    @apply border-[3px] border-foreground;
+    box-shadow: var(--shadow-comic);
+  }
+  .comic-border-sm {
+    @apply border-2 border-foreground;
+    box-shadow: var(--shadow-comic-sm);
+  }
+  .comic-pop {
+    transition: var(--transition-smooth);
+  }
+  .comic-pop:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-comic-lg);
+  }
+  .comic-pop:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 0 hsl(var(--foreground));
+  }
+
+  /* Halftone overlay */
+  .halftone {
+    background-image:
+      radial-gradient(circle, hsl(var(--foreground) / 0.15) 1.5px, transparent 1.5px);
+    background-size: 10px 10px;
+  }
+
+  /* Speech bubble tail */
+  .speech-bubble {
+    position: relative;
+  }
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -16px;
+    left: 32px;
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 18px solid hsl(var(--foreground));
+  }
+  .speech-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 35px;
+    width: 0;
+    height: 0;
+    z-index: 1;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 14px solid hsl(var(--card));
   }
 }
 
@@ -133,5 +217,21 @@ All colors MUST be HSL.
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+  }
+  .font-comic {
+    font-family: 'Bangers', 'Impact', sans-serif;
+    letter-spacing: 0.04em;
+  }
+  .font-comic-body {
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive;
+  }
+  .shadow-comic {
+    box-shadow: var(--shadow-comic);
+  }
+  .shadow-comic-sm {
+    box-shadow: var(--shadow-comic-sm);
+  }
+  .shadow-comic-lg {
+    box-shadow: var(--shadow-comic-lg);
   }
 }
