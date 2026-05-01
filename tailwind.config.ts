@@ -63,6 +63,15 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        comic: ["Bangers", "Impact", "sans-serif"],
+        "comic-body": ["Comic Neue", "Comic Sans MS", "cursive"],
+      },
+      boxShadow: {
+        comic: "4px 4px 0 0 hsl(var(--border))",
+        "comic-sm": "2px 2px 0 0 hsl(var(--border))",
+        "comic-lg": "6px 6px 0 0 hsl(var(--border))",
+      },
       keyframes: {
         "accordion-down": {
           from: {
