@@ -15,6 +15,7 @@ import Attendance from "./pages/Attendance";
 import Storage from "./pages/Storage";
 import Trends from "./pages/Trends";
 import Salary from "./pages/Salary";
+import Branding from "./pages/Branding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/storage" element={<Storage />} />
             <Route path="/trends" element={<Trends />} />
             <Route path="/salary" element={<Salary />} />
+            <Route path="/branding" element={<Branding />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

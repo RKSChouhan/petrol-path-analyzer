@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/fleur-logo.png";
 
 type Role = "Proprietor" | "Supervisor";
 
@@ -243,6 +243,7 @@ const Login = () => {
             </DialogHeader>
             <div className="flex flex-col items-center gap-4 py-4">
               <p className="text-lg font-medium text-foreground">{contactPhone || "Contact the owner"}</p>
+              <a href="mailto:rkschouhan2012@gmail.com" className="text-base text-primary hover:underline break-all">rkschouhan2012@gmail.com</a>
               <Button onClick={() => setShowForgetDialog(false)} className="w-full h-12">
                 Back
               </Button>
@@ -265,7 +266,7 @@ const Login = () => {
               className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label="Open developer access confirmation"
             >
-              <img src={companyLogo} alt={companyName} className="h-24 sm:h-28 w-auto object-contain" referrerPolicy="no-referrer" />
+              <img src={logo} alt={companyName} className="h-24 sm:h-28 w-auto object-contain drop-shadow-[0_0_18px_hsl(280_75%_55%/0.55)]" referrerPolicy="no-referrer" />
             </button>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{companyName}</h1>
@@ -322,14 +323,22 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="text-center mt-5">
+          <div className="text-center mt-5 space-y-2">
             <button
               type="button"
               onClick={() => setShowForgetDialog(true)}
-              className="text-sm text-primary hover:underline py-2 px-4"
+              className="text-sm text-primary hover:underline py-2 px-4 block w-full"
             >
               Forget detail
             </button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11 text-base"
+              onClick={() => navigate("/branding")}
+            >
+              About the Website
+            </Button>
           </div>
         </div>
         
@@ -354,6 +363,7 @@ const Login = () => {
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-4">
             <p className="text-lg font-medium text-foreground">{contactPhone || "Contact the owner"}</p>
+            <a href="mailto:rkschouhan2012@gmail.com" className="text-base text-primary hover:underline break-all">rkschouhan2012@gmail.com</a>
             <Button onClick={() => setShowForgetDialog(false)} className="w-full h-12">
               Back
             </Button>

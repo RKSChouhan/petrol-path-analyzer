@@ -140,10 +140,22 @@ input[type="number"] {
     @apply bg-background text-foreground;
     font-family: 'Comic Neue', 'Comic Sans MS', cursive, system-ui;
     font-weight: 700;
-    /* Halftone dot background */
+    /* Subtle cartoon wallpaper: layered halftone dots + soft diagonal comic stripes.
+       Kept low-opacity so real content always reads first. */
     background-image:
+      radial-gradient(circle at 20% 30%, hsl(var(--comic-blue) / 0.05) 0, transparent 40%),
+      radial-gradient(circle at 80% 70%, hsl(var(--comic-red) / 0.05) 0, transparent 40%),
+      radial-gradient(circle at 50% 90%, hsl(var(--comic-yellow) / 0.06) 0, transparent 45%),
+      repeating-linear-gradient(
+        45deg,
+        hsl(var(--foreground) / 0.025) 0,
+        hsl(var(--foreground) / 0.025) 2px,
+        transparent 2px,
+        transparent 14px
+      ),
       radial-gradient(circle, hsl(var(--foreground) / 0.06) 1px, transparent 1.5px);
-    background-size: 18px 18px;
+    background-size: 100% 100%, 100% 100%, 100% 100%, auto, 18px 18px;
+    background-attachment: fixed, fixed, fixed, fixed, fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
