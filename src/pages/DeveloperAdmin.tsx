@@ -320,7 +320,7 @@ const DeveloperAdmin = () => {
             <CardContent>
               <form className="space-y-4" onSubmit={handleUnlock}>
                 <div className="space-y-2">
-                  <Label htmlFor="developer-password">Developer password (last 4 abp)</Label>
+                  <Label htmlFor="developer-password">Developer password (first 4 digit op)</Label>
                   <Input
                     id="developer-password"
                     type="password"
