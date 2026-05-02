@@ -101,10 +101,10 @@ Rules:
            { 
              role: "user", 
              content: [
-               {
-                 type: "text",
-                 text: "Please analyze this bill/receipt image and extract the data. Return the data as JSON."
-               },
+                {
+                  type: "text",
+                  text: "Analyze this image carefully. If it shows a TABLE or SETTLEMENT REPORT with multiple rows/transactions, extract EVERY row into the entries array. If it's a single slip, return one entry. Return JSON only."
+                },
                {
                  type: "image_url",
                  image_url: {
