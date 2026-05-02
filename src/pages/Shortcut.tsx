@@ -108,7 +108,7 @@ const Shortcut = () => {
 
   const shortcuts = [
     { name: "Daily Tree", icon: FuelIcon, path: "/", color: "text-green-600 dark:text-green-400", bgColor: "bg-green-100 dark:bg-green-900/30", alert: alerts.dailyTree },
-    { name: "Fiserv Bills", icon: Receipt, path: "/fiserv-bills", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-100 dark:bg-blue-900/30", alert: alerts.fiservBills },
+    { name: "Bank Card Bills", icon: Receipt, path: "/fiserv-bills", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-100 dark:bg-blue-900/30", alert: alerts.fiservBills },
     { name: "Stat", icon: BarChart3, path: "/stat", color: "text-purple-600 dark:text-purple-400", bgColor: "bg-purple-100 dark:bg-purple-900/30", alert: false },
     { name: "Lotus", icon: Flower2, path: "/lotus", color: "text-pink-600 dark:text-pink-400", bgColor: "bg-pink-100 dark:bg-pink-900/30", alert: false },
     { name: "Attendance", icon: Users, path: "/attendance", color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-100 dark:bg-orange-900/30", alert: false },
@@ -187,7 +187,7 @@ const Shortcut = () => {
                 )}
                 {alerts.fiservBills && (
                   <span className="flex items-center gap-1 cursor-pointer hover:underline flex-shrink-0" onClick={() => navigate("/fiserv-bills")}>
-                    • Fiserv Bills
+                    • Bank Card Bills
                   </span>
                 )}
               </div>
