@@ -323,7 +323,7 @@ const FiservBills = () => {
 
       if (error) throw error;
 
-      toast.success(`${validEntries.length} Fiserv bill(s) saved successfully`);
+      toast.success(`${validEntries.length} Bank Card bill(s) saved successfully`);
       setFiservEntries([{ bill_date: new Date(), bill_time: '', invoice_number: '', card_last_four: '', amount: 0 }]);
       fetchSavedBills();
     } catch (error: any) {
@@ -535,7 +535,7 @@ const FiservBills = () => {
               <img src={companyLogo} alt={companyName} className="h-14 w-auto object-contain" referrerPolicy="no-referrer" />
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Bill Entry</h1>
-                <p className="text-sm text-muted-foreground">Manage Fiserv & Bharat Fleet transactions</p>
+                <p className="text-sm text-muted-foreground">Manage Bank Card & Bharat Fleet transactions</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -570,7 +570,7 @@ const FiservBills = () => {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="fiserv" className="flex items-center gap-2">
               <Receipt className="h-4 w-4" />
-              Fiserv Bills
+              Bank Card Bills
             </TabsTrigger>
             <TabsTrigger value="bharat" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
@@ -584,7 +584,7 @@ const FiservBills = () => {
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Receipt className="h-5 w-5" />
-                  New Fiserv Bill Entry
+                  New Bank Card Bill Entry
                 </CardTitle>
                 <div className="flex gap-2">
                   <BillOCRUpload 
@@ -594,7 +594,7 @@ const FiservBills = () => {
                   />
                   <Button variant="outline" size="sm" onClick={addFiservEntry}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Fiserv Bill
+                    Bank Card Bill
                   </Button>
                   <Button onClick={handleSaveFiserv} disabled={saving} size="sm">
                     <Save className="mr-2 h-4 w-4" />
@@ -695,7 +695,7 @@ const FiservBills = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Receipt className="h-5 w-5" />
-                  Saved Fiserv Bills
+                  Saved Bank Card Bills
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -706,7 +706,7 @@ const FiservBills = () => {
                 ) : savedFiservBills.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center">
                     <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No Fiserv bills saved yet.</p>
+                    <p className="text-muted-foreground">No Bank Card bills saved yet.</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
