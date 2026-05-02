@@ -433,27 +433,65 @@ const FiservBills = () => {
   };
 
   const handleFiservOCRData = (data: any) => {
-    const newEntry: FiservBillEntry = {
-      bill_date: data.bill_date ? new Date(data.bill_date) : new Date(),
-      bill_time: data.bill_time || '',
-      invoice_number: data.invoice_number || '',
-      card_last_four: data.card_last_four || '',
-      amount: data.amount || 0,
-    };
-    setFiservEntries(prev => [...prev, newEntry]);
-    toast.success("Bill data extracted and added");
+    const rows: any[] = Array.isArray(data?.entries) && data.entries.length > 0
+      ? data.entries
+      : [data];
+
+    const newEntries: FiservBillEntry[] = rows
+      .filter((r) => r && (r.invoice_number || r.amount || r.card_last_four))
+      .map((r) => ({
+        bill_date: r.bill_date ? new Date(r.bill_date) : new Date(),
+        bill_time: r.bill_time || '',
+        invoice_number: r.invoice_number ? String(r.invoice_number) : '',
+        card_last_four: r.card_last_four ? String(r.card_last_four) : '',
+        amount: Number(r.amount) || 0,
+      }));
+
+    if (newEntries.length === 0) {
+      toast.error("No bill data could be extracted");
+      return;
+    }
+
+    setFiservEntries((prev) => {
+      const isPrevEmpty =
+        prev.length === 1 &&
+        !prev[0].invoice_number &&
+        !prev[0].card_last_four &&
+        !prev[0].amount;
+      return isPrevEmpty ? newEntries : [...prev, ...newEntries];
+    });
+    toast.success(`${newEntries.length} bill row(s) extracted`);
   };
 
   const handleBharatOCRData = (data: any) => {
-    const newEntry: BharatFleetEntry = {
-      bill_date: data.bill_date ? new Date(data.bill_date) : new Date(),
-      bill_time: data.bill_time || '',
-      account_no: data.account_no || '',
-      card_id: data.card_id || '',
-      amount: data.amount || 0,
-    };
-    setBharatEntries(prev => [...prev, newEntry]);
-    toast.success("Bill data extracted and added");
+    const rows: any[] = Array.isArray(data?.entries) && data.entries.length > 0
+      ? data.entries
+      : [data];
+
+    const newEntries: BharatFleetEntry[] = rows
+      .filter((r) => r && (r.account_no || r.card_id || r.amount))
+      .map((r) => ({
+        bill_date: r.bill_date ? new Date(r.bill_date) : new Date(),
+        bill_time: r.bill_time || '',
+        account_no: r.account_no ? String(r.account_no) : '',
+        card_id: r.card_id ? String(r.card_id) : '',
+        amount: Number(r.amount) || 0,
+      }));
+
+    if (newEntries.length === 0) {
+      toast.error("No bill data could be extracted");
+      return;
+    }
+
+    setBharatEntries((prev) => {
+      const isPrevEmpty =
+        prev.length === 1 &&
+        !prev[0].account_no &&
+        !prev[0].card_id &&
+        !prev[0].amount;
+      return isPrevEmpty ? newEntries : [...prev, ...newEntries];
+    });
+    toast.success(`${newEntries.length} bill row(s) extracted`);
   };
 
   const handleExportBills = () => {
