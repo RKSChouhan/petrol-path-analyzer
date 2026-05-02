@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles, Heart, Code2, Mail } from "lucide-react";
+import { ArrowLeft, Sparkles, Heart, Code2, Mail, LayoutList, FileText, CreditCard, BarChart3, Database, Users, Package, TrendingUp, Wallet } from "lucide-react";
 import fleurLogo from "@/assets/fleur-logo.png";
 
 const Branding = () => {
@@ -71,6 +71,37 @@ const Branding = () => {
               rkschouhan2012@gmail.com
             </p>
           </div>
+        </div>
+
+        {/* Content */}
+        <div className="bg-card comic-border rounded-xl p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <LayoutList className="h-6 w-6 text-primary" />
+            <h2 className="font-comic text-2xl">Content</h2>
+          </div>
+          <p className="font-comic-body text-sm text-muted-foreground">
+            Everything this website helps you manage:
+          </p>
+          <ul className="grid sm:grid-cols-2 gap-3 font-comic-body text-sm">
+            {[
+              { icon: FileText, label: "Daily Entry" },
+              { icon: CreditCard, label: "Card Transaction Bills" },
+              { icon: BarChart3, label: "Statistics" },
+              { icon: Database, label: "All Data Dump" },
+              { icon: Users, label: "Attendance" },
+              { icon: Package, label: "Storage Products" },
+              { icon: TrendingUp, label: "Graphical Trends" },
+              { icon: Wallet, label: "Salary" },
+            ].map(({ icon: Icon, label }) => (
+              <li
+                key={label}
+                className="flex items-center gap-2 bg-muted/40 rounded-lg p-2 border-2 border-foreground/10"
+              >
+                <Icon className="h-4 w-4 text-accent-foreground" />
+                <span>{label}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Footer */}
