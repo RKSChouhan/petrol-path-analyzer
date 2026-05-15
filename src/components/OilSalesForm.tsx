@@ -77,6 +77,7 @@ const OilSalesForm = ({
   disabled = false,
   userRole,
 }: OilSalesFormProps) => {
+  const [twoTPrice, setTwoTPrice] = useState<number>(371);
   const [deletedDefaults, setDeletedDefaults] = useState<string[]>([]);
   const [customVarieties, setCustomVarieties] = useState<{ name: string; price: number }[]>([]);
   const [showNewProductDialog, setShowNewProductDialog] = useState(false);
@@ -117,9 +118,15 @@ const OilSalesForm = ({
       const yesterday = field === 'yesterday_reading' ? (parseFloat(value as string) || 0) : data.yesterday_reading;
       const today = field === 'today_reading' ? (parseFloat(value as string) || 0) : data.today_reading;
       updatedData.total_litres = today - yesterday;
-      updatedData.total_amount = updatedData.total_litres * 330;
+      updatedData.total_amount = updatedData.total_litres * twoTPrice;
     }
     onChange(updatedData);
+  };
+
+  const handleTwoTPriceChange = (value: string) => {
+    const price = parseFloat(value) || 0;
+    setTwoTPrice(price);
+    onChange({ ...data, total_amount: data.total_litres * price });
   };
 
   const addOilItem = () => {
@@ -168,7 +175,7 @@ const OilSalesForm = ({
           <CardTitle className="text-base">2T Oil</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-5 gap-4">
             <div>
               <Label className="text-xs">Today Reading</Label>
               <Input type="number" step="0.001" value={data.today_reading === 0 ? '' : data.today_reading} onChange={e => handleChange('today_reading', e.target.value)} onFocus={e => e.target.select()} className="h-9" placeholder="0" disabled={disabled} />
@@ -180,6 +187,10 @@ const OilSalesForm = ({
             <div>
               <Label className="text-xs">Total 2T Oil Liters</Label>
               <Input type="number" step="0.001" value={data.total_litres.toFixed(3)} readOnly disabled className="h-9 bg-muted font-semibold" />
+            </div>
+            <div>
+              <Label className="text-xs">2T Oil Price (₹/L)</Label>
+              <Input type="number" step="0.01" value={twoTPrice === 0 ? '' : twoTPrice} onChange={e => handleTwoTPriceChange(e.target.value)} onFocus={e => e.target.select()} className="h-9 font-semibold" placeholder="371" disabled={disabled} />
             </div>
             <div>
               <Label className="text-xs">Total 2T Oil Amount (₹)</Label>
